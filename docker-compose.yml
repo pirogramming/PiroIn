@@ -1,0 +1,24 @@
+services:
+  # 1. 데이터베이스 설정
+  db:
+    image: postgres:17               # 포스트그레 17버전 사용
+    container_name: piroin-db        # 컨테이너 이름
+    restart: always                  # 꺼지면 자동으로 다시 켜라
+    environment:
+      POSTGRES_DB: ${DB_NAME}         # DB 이름 (yml 설정과 일치해야 함)
+      POSTGRES_USER: ${DB_USER}        # 유저명
+      POSTGRES_PASSWORD: ${DB_PASSWORD}        # 비밀번호
+    ports:
+      - "5433:5432"                  # 내 컴퓨터 포트 : 컨테이너 포트 연결
+
+  # 2. 백엔드 서버 설정
+  backend:
+    build: ./backend                 # backend 폴더에 있는 Dockerfile을 읽어라
+    container_name: piroin-backend
+    ports:
+      - "8080:8080"                  # 스프링 서버 포트 연결
+    environment:
+      # DB 주소를 'localhost'가 아닌 서비스 이름인 'db'로 연결해야 합니다!
+      SPRING_DATASOURCE_URL: ${DB_URL}
+    depends_on:
+      - db                           # DB가 먼저 켜진 다음에 서버를 켜라

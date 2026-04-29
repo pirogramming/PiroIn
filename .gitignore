@@ -1,0 +1,51 @@
+# === OS 전용 파일 (맥북 전용) ===
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+
+# === IDE (인텔리제이 / VS Code) ===
+.idea/
+*.iml
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+
+# === 빌드 결과물 (용량이 크고 실행 시마다 생성됨) ===
+# Java/Gradle
+build/
+.gradle/
+out/
+
+# React (Node)
+node_modules/
+dist/
+/frontend/build/
+.npm
+*.log
+
+
+# === 보안 및 환경 설정 (가장 중요!) ===
+# 비밀번호나 API 키가 담긴 파일은 절대 올리지 마세요.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 스프링 설정 파일 (중요한 정보가 있다면 제외)
+# 만약 application.yml에 비밀번호를 직접 적으셨다면 제외하는 게 좋습니다.
+# 하지만 팀원과 공유용이라면 주석 처리하거나 포함시키세요.
+# src/main/resources/application-secret.yml
+
+
+# === Docker ===
+# 도커 데이터 폴더가 생길 경우 제외
+docker-data/
+
+
+# === 피로체크 코드 (참고용이라면 올리지 않는 것이 원칙) ===
+# 만약 별도의 레포지토리라면 아래처럼 폴더명을 적어 제외하세요.
+# legacy-pirocheck/

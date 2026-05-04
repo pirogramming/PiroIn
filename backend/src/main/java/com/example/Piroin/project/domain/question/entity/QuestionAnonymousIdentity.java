@@ -1,0 +1,47 @@
+package com.example.Piroin.project.domain.question.entity;
+
+import com.example.Piroin.project.domain.user.entity.User;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(
+        name = "question_anonymous_identity",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_question_anon_question_user",
+                        columnNames = {"question_id", "user_id"}
+                ),
+                @UniqueConstraint(
+                        name = "uq_question_anon_question_no",
+                        columnNames = {"question_id", "anonymous_no"}
+                )
+        }
+)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+public class QuestionAnonymousIdentity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
+
+    @Column(name = "anonymous_no", nullable = false)
+    private Integer anonymousNo;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+}
+

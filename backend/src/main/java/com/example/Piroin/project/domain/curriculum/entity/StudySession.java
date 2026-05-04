@@ -1,13 +1,14 @@
 package com.example.Piroin.project.domain.curriculum.entity;
 
-import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
-import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import com.example.Piroin.project.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
+import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 
 @Entity
 @Table(name = "study_session")
@@ -16,7 +17,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class StudySession {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -62,3 +62,4 @@ public class StudySession {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
+

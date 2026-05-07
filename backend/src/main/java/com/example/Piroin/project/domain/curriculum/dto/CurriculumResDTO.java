@@ -1,19 +1,30 @@
 package com.example.Piroin.project.domain.curriculum.dto;
 
+import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
+import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 public class CurriculumResDTO {
-    private Long id;
-    private String title;
 
-    public CurriculumResDTO(Long id, String title) {
-        this.id = id;
-        this.title = title;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
+    @Getter
+    @AllArgsConstructor
+    public static class CreateSessionRes {
+        private Long id;
+        private Integer generation;
+        private Long week;
+        private LocalDate sessionDate;
+        private SessionDayPart dayPart;
+        private String title;
+        private String hostName;
+        private SessionStatus status;
+        private String description;
+        private String sessionMaterialUrl;
+        private String assignmentUrl;
+        private String recordingUrl;
+        private LocalDateTime createdAt;
     }
 }

@@ -22,6 +22,12 @@ public class CurriculumService {
 
     @Transactional
     public CurriculumResDTO.CreateSessionRes createSession(CurriculumReqDTO.CreateSessionReq req) {
+        if (req.getGeneration() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "기수는 필수입니다.");
+        if (req.getWeek() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "주차는 필수입니다.");
+        if (req.getSessionDate() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 날짜는 필수입니다.");
+        if (req.getDayPart() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "오전/오후는 필수입니다.");
+        if (req.getTitle() == null || req.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "제목은 필수입니다.");
+
         User user = userRepository.findById(req.getUserId())
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 

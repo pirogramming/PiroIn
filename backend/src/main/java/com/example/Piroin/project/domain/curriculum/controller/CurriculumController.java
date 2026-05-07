@@ -21,4 +21,12 @@ public class CurriculumController {
         CurriculumResDTO.CreateSessionRes response = curriculumService.createSession(req);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
+
+    @PatchMapping("/{sessionId}")
+    public ResponseEntity<CurriculumResDTO.UpdateSessionRes> updateSession(
+            @PathVariable Long sessionId,
+            @RequestBody CurriculumReqDTO.UpdateSessionReq req) {
+        CurriculumResDTO.UpdateSessionRes response = curriculumService.updateSession(sessionId, req);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -75,5 +75,22 @@ public class StudySession {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void update(Integer generation, Long week, LocalDate sessionDate, SessionDayPart dayPart,
+                       String title, String hostName, SessionStatus status, String description,
+                       String sessionMaterialUrl, String assignmentUrl, String recordingUrl) {
+        if (generation != null) this.generation = generation;
+        if (week != null) this.week = week;
+        if (sessionDate != null) this.sessionDate = sessionDate;
+        if (dayPart != null) this.dayPart = dayPart;
+        if (title != null) this.title = title;
+        if (hostName != null) this.hostName = hostName;
+        if (status != null) this.status = status;
+        if (description != null) this.description = description;
+        if (sessionMaterialUrl != null) this.sessionMaterialUrl = sessionMaterialUrl;
+        if (assignmentUrl != null) this.assignmentUrl = assignmentUrl;
+        if (recordingUrl != null) this.recordingUrl = recordingUrl;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 

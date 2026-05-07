@@ -46,4 +46,22 @@ public class CurriculumConverter {
                 session.getCreatedAt()
         );
     }
+
+    public static CurriculumResDTO.UpdateSessionRes toUpdateSessionRes(StudySession session) {
+        return new CurriculumResDTO.UpdateSessionRes(
+                session.getId(),
+                session.getGeneration(),
+                session.getWeek(),
+                session.getSessionDate(),
+                session.getDayPart(),
+                session.getTitle(),
+                session.getHostName(),
+                session.getStatus(),
+                session.getDescription(),
+                session.getSessionMaterialUrl(),
+                session.getAssignmentUrl(),
+                session.getRecordingUrl(),
+                session.getUpdatedAt()
+        );
+    }
 }

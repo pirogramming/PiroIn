@@ -30,4 +30,16 @@ public class CurriculumService {
 
         return CurriculumConverter.toCreateSessionRes(savedSession);
     }
+
+    @Transactional
+    public CurriculumResDTO.UpdateSessionRes updateSession(Long sessionId, CurriculumReqDTO.UpdateSessionReq req) {
+        StudySession session = curriculumRepository.findById(sessionId)
+                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
+
+        session.update(req.getGeneration(), req.getWeek(), req.getSessionDate(), req.getDayPart(),
+                req.getTitle(), req.getHostName(), req.getStatus(), req.getDescription(),
+                req.getSessionMaterialUrl(), req.getAssignmentUrl(), req.getRecordingUrl());
+
+        return CurriculumConverter.toUpdateSessionRes(session);
+    }
 }

@@ -42,4 +42,12 @@ public class CurriculumService {
 
         return CurriculumConverter.toUpdateSessionRes(session);
     }
+
+    @Transactional
+    public void deleteSession(Long sessionId) {
+        StudySession session = curriculumRepository.findById(sessionId)
+                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
+
+        curriculumRepository.delete(session);
+    }
 }

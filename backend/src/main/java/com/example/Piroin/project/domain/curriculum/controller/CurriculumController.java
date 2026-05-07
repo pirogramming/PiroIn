@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/curriculums")
 @RequiredArgsConstructor
@@ -28,5 +30,11 @@ public class CurriculumController {
             @RequestBody CurriculumReqDTO.UpdateSessionReq req) {
         CurriculumResDTO.UpdateSessionRes response = curriculumService.updateSession(sessionId, req);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<Map<String, String>> deleteSession(@PathVariable Long sessionId) {
+        curriculumService.deleteSession(sessionId);
+        return ResponseEntity.ok(Map.of("message", "세션이 정상적으로 삭제되었습니다."));
     }
 }

@@ -18,7 +18,7 @@ public class CurriculumConverter {
                 .sessionDate(req.getSessionDate())
                 .dayPart(req.getDayPart())
                 .title(req.getTitle())
-                .hostName(req.getHostName())
+                .hostName(req.getHostName() != null ? req.getHostName() : "(미정)")
                 .status(SessionStatus.BEFORE_SESSION)
                 .description(req.getDescription())
                 .sessionMaterialUrl(req.getSessionMaterialUrl())
@@ -32,6 +32,7 @@ public class CurriculumConverter {
     public static CurriculumResDTO.CreateSessionRes toCreateSessionRes(StudySession session) {
         return new CurriculumResDTO.CreateSessionRes(
                 session.getId(),
+                session.getCreatedBy().getName(),
                 session.getGeneration(),
                 session.getWeek(),
                 session.getSessionDate(),
@@ -50,6 +51,7 @@ public class CurriculumConverter {
     public static CurriculumResDTO.UpdateSessionRes toUpdateSessionRes(StudySession session) {
         return new CurriculumResDTO.UpdateSessionRes(
                 session.getId(),
+                session.getCreatedBy().getName(),
                 session.getGeneration(),
                 session.getWeek(),
                 session.getSessionDate(),

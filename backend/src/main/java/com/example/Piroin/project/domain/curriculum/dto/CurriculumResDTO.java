@@ -14,6 +14,7 @@ public class CurriculumResDTO {
     @AllArgsConstructor
     public static class CreateSessionRes {
         private Long id;
+        private String createdBy;
         private Integer generation;
         private Long week;
         private LocalDate sessionDate;
@@ -32,6 +33,7 @@ public class CurriculumResDTO {
     @AllArgsConstructor
     public static class UpdateSessionRes {
         private Long id;
+        private String createdBy;
         private Integer generation;
         private Long week;
         private LocalDate sessionDate;

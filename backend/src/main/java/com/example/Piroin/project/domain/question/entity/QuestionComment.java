@@ -26,6 +26,16 @@ public class QuestionComment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    /*
+    대댓글을 위한 부모 댓글 참조
+    null이면 → 일반 댓글(최상위)
+    값이 있으면 → 대댓글(parentComment가 부모)
+    같은 QuestionComment 테이블을 자기 자신이 참조하는 구조
+    */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private QuestionComment parentComment;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 

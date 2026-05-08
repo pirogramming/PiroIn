@@ -1,5 +1,7 @@
 package com.example.Piroin.project.domain.curriculum.dto;
 
+import java.util.List;
+
 public class CurriculumResDTO {
     private Long id;
     private String title;
@@ -15,5 +17,20 @@ public class CurriculumResDTO {
 
     public String getTitle() {
         return title;
+    }
+
+    public record ActiveSessionsResponse(
+            List<ActiveSessionResponse> sessions
+    ) {
+    }
+
+    public record ActiveSessionResponse(
+            Long sessionId,
+            Integer week,
+            String dayOfWeek,
+            String dayPart,
+            String sessionDate,
+            String title
+    ) {
     }
 }

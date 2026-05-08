@@ -59,6 +59,10 @@ public class StudySession {
     @Column(columnDefinition = "TEXT")
     private String recordingUrl;
 
+    @Column(length = 60)
+    private String recordingPassword;
+
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

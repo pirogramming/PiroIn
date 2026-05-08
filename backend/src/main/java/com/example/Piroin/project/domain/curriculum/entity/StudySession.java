@@ -59,8 +59,18 @@ public class StudySession {
     @Column(columnDefinition = "TEXT")
     private String recordingUrl;
 
+
+    // 녹화본 비밀번호 여기에 추가했습니당. sql 파일에도 물론 반영했고요.
     @Column(length = 60)
     private String recordingPassword;
+
+
+    // 세션 자료 이름, 과제 자료 이름 추가.
+    @Column(length = 255)
+    private String sessionMaterialName;
+
+    @Column(length = 255)
+    private String assignmentName;
 
 
     private LocalDateTime createdAt;

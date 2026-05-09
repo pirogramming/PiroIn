@@ -1,21 +1,40 @@
 package com.example.Piroin.project.domain.curriculum.controller;
 
+import com.example.Piroin.project.domain.curriculum.dto.CurriculumReqDTO;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumResDTO;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.Piroin.project.domain.curriculum.service.CurriculumService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/curriculums")
+@RequiredArgsConstructor
 public class CurriculumController {
 
-    @GetMapping
-    public List<CurriculumResDTO> getCurriculums() {
-        return List.of(
-                new CurriculumResDTO(1L, "1주차 - OT"),
-                new CurriculumResDTO(2L, "2주차 - Java 기초")
-        );
+    private final CurriculumService curriculumService;
+
+    @PostMapping
+    public ResponseEntity<CurriculumResDTO.CreateSessionRes> createSession(
+            @RequestBody CurriculumReqDTO.CreateSessionReq req) {
+        CurriculumResDTO.CreateSessionRes response = curriculumService.createSession(req);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("/{sessionId}")
+    public ResponseEntity<CurriculumResDTO.UpdateSessionRes> updateSession(
+            @PathVariable Long sessionId,
+            @RequestBody CurriculumReqDTO.UpdateSessionReq req) {
+        CurriculumResDTO.UpdateSessionRes response = curriculumService.updateSession(sessionId, req);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{sessionId}")
+    public ResponseEntity<Map<String, String>> deleteSession(@PathVariable Long sessionId) {
+        curriculumService.deleteSession(sessionId);
+        return ResponseEntity.ok(Map.of("message", "세션이 정상적으로 삭제되었습니다."));
     }
 }

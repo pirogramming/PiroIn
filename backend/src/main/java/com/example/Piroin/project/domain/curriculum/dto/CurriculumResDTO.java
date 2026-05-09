@@ -26,6 +26,9 @@ public class CurriculumResDTO {
         private String sessionMaterialUrl;
         private String assignmentUrl;
         private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
         private LocalDateTime createdAt;
     }
 
@@ -45,6 +48,9 @@ public class CurriculumResDTO {
         private String sessionMaterialUrl;
         private String assignmentUrl;
         private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
         private LocalDateTime updatedAt;
     }
 }

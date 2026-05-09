@@ -24,6 +24,9 @@ public class CurriculumConverter {
                 .sessionMaterialUrl(req.getSessionMaterialUrl())
                 .assignmentUrl(req.getAssignmentUrl())
                 .recordingUrl(req.getRecordingUrl())
+                .recordingPassword(req.getRecordingPassword())
+                .sessionMaterialName(req.getSessionMaterialName())
+                .assignmentName(req.getAssignmentName())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -44,6 +47,9 @@ public class CurriculumConverter {
                 session.getSessionMaterialUrl(),
                 session.getAssignmentUrl(),
                 session.getRecordingUrl(),
+                session.getRecordingPassword(),
+                session.getSessionMaterialName(),
+                session.getAssignmentName(),
                 session.getCreatedAt()
         );
     }
@@ -63,6 +69,9 @@ public class CurriculumConverter {
                 session.getSessionMaterialUrl(),
                 session.getAssignmentUrl(),
                 session.getRecordingUrl(),
+                session.getRecordingPassword(),
+                session.getSessionMaterialName(),
+                session.getAssignmentName(),
                 session.getUpdatedAt()
         );
     }

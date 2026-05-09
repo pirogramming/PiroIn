@@ -23,6 +23,9 @@ public class CurriculumReqDTO {
         private String sessionMaterialUrl;
         private String assignmentUrl;
         private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
     }
 
     @Getter
@@ -39,5 +42,8 @@ public class CurriculumReqDTO {
         private String sessionMaterialUrl;
         private String assignmentUrl;
         private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
     }
 }

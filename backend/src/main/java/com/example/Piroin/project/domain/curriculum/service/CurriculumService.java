@@ -44,7 +44,8 @@ public class CurriculumService {
 
         session.update(req.getGeneration(), req.getWeek(), req.getSessionDate(), req.getDayPart(),
                 req.getTitle(), req.getHostName(), req.getStatus(), req.getDescription(),
-                req.getSessionMaterialUrl(), req.getAssignmentUrl(), req.getRecordingUrl());
+                req.getSessionMaterialUrl(), req.getAssignmentUrl(), req.getRecordingUrl(),
+                req.getRecordingPassword(), req.getSessionMaterialName(), req.getAssignmentName());
 
         return CurriculumConverter.toUpdateSessionRes(session);
     }

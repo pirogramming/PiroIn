@@ -78,7 +78,8 @@ public class StudySession {
 
     public void update(Integer generation, Long week, LocalDate sessionDate, SessionDayPart dayPart,
                        String title, String hostName, SessionStatus status, String description,
-                       String sessionMaterialUrl, String assignmentUrl, String recordingUrl) {
+                       String sessionMaterialUrl, String assignmentUrl, String recordingUrl,
+                       String recordingPassword, String sessionMaterialName, String assignmentName) {
         if (generation != null) this.generation = generation;
         if (week != null) this.week = week;
         if (sessionDate != null) this.sessionDate = sessionDate;
@@ -90,6 +91,9 @@ public class StudySession {
         if (sessionMaterialUrl != null) this.sessionMaterialUrl = sessionMaterialUrl;
         if (assignmentUrl != null) this.assignmentUrl = assignmentUrl;
         if (recordingUrl != null) this.recordingUrl = recordingUrl;
+        if (recordingPassword != null) this.recordingPassword = recordingPassword;
+        if (sessionMaterialName != null) this.sessionMaterialName = sessionMaterialName;
+        if (assignmentName != null) this.assignmentName = assignmentName;
         this.updatedAt = LocalDateTime.now();
     }
 }

@@ -34,6 +34,25 @@ public class CurriculumResDTO {
 
     @Getter
     @AllArgsConstructor
+    public static class GetSessionRes {
+        private Long id;
+        private Long week;
+        private LocalDate sessionDate;
+        private SessionDayPart dayPart;
+        private String title;
+        private String hostName;
+        private SessionStatus status;
+        private String description;
+        private String sessionMaterialUrl;
+        private String assignmentUrl;
+        private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
+    }
+
+    @Getter
+    @AllArgsConstructor
     public static class UpdateSessionRes {
         private Long id;
         private String createdBy;

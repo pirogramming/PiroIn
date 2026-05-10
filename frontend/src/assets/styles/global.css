@@ -6,7 +6,7 @@
 
 /* 메인 폰트 */
 @font-face {
-  font-family: 'PretendardVariable';
+  font-family: 'Pretendard';
   src: url('../fonts/PretendardVariable.woff2') format('woff2');
 }
 
@@ -23,5 +23,5 @@
   --gray600: #555555;
   --black: #111111;
   --font-title: 'GemunuLibre', sans-serif;
-  --font-main: 'PretendardVariable', sans-serif;
+  --font-main: 'Pretendard', sans-serif;
 }

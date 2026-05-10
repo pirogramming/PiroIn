@@ -1,7 +1,28 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from './OnboardingPage.module.css';
+
 function OnboardingPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      navigate('/login');
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div>
-      <h1>온보딩</h1>
+    <div className={styles.container}>
+      <h1 className={styles.title}>PIROIN</h1>
+      <div className={styles.logoWrap}>
+        <div className={styles.circle} />
+        <div className={styles.circle} />
+        <div className={styles.circle} />
+        <div className={styles.circle} />
+      </div>
+      <p className={styles.sub}>"피로그래밍의 모든 것, 피로인에서"</p>
+      <p className={styles.sub}>피로인들을 위한, 세션 통합 관리 플랫폼</p>
     </div>
   );
 }

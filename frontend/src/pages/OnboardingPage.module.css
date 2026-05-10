@@ -1,0 +1,44 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #fff;
+}
+
+.title {
+  color: #09C624;
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  margin: 0 0 48px 0;
+}
+
+.logoWrap {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin-bottom: 48px;
+}
+
+.circle {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background-color: #09C624;
+  opacity: 0.5;
+}
+
+.circle:nth-child(1) { top: 0; left: 0; }
+.circle:nth-child(2) { top: 0; right: 0; }
+.circle:nth-child(3) { bottom: 0; left: 0; }
+.circle:nth-child(4) { bottom: 0; right: 0; }
+
+.sub {
+  color: #09C624;
+  font-size: 16px;
+  margin: 4px 0;
+  font-weight: 500;
+}

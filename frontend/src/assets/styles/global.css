@@ -1,0 +1,26 @@
+/* 포인트 폰트 */
+@font-face {
+  font-family: 'GemunuLibre';
+  src: url('../fonts/GemunuLibre-VariableFont_wght.ttf') format('ttf');
+}
+
+/* 메인 폰트 */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../fonts/PretendardVariable.woff2') format('woff');
+}
+
+/* 색상 팔레트 */
+:root {
+  --main: #0BEC12;
+  --dark: #09C410;
+  --light: #D6FCE0;
+  --pale: #F0FFF1;
+  --white: #ffffff;
+  --gray20: #F9F9F9;
+  --gray50: #F5F5F5;
+  --gray200: #E0E0E0;
+  --gray600: #555555;
+  --black: #111111;
+  --font-main: 'Pretendard', sans-serif;
+}

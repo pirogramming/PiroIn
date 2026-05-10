@@ -25,3 +25,8 @@
   --font-title: 'GemunuLibre', sans-serif;
   --font-main: 'Pretendard', sans-serif;
 }
+
+/* body 기본 설정 */
+body {
+  background-color: var(--gray20);
+}

@@ -1,16 +1,16 @@
 /* 포인트 폰트 */
 @font-face {
   font-family: 'GemunuLibre';
-  src: url('../fonts/GemunuLibre-VariableFont_wght.ttf') format('ttf');
+  src: url('../fonts/GemunuLibre-VariableFont_wght.ttf') format('truetype');
 }
 
 /* 메인 폰트 */
 @font-face {
-  font-family: 'Pretendard';
-  src: url('../fonts/PretendardVariable.woff2') format('woff');
+  font-family: 'PretendardVariable';
+  src: url('../fonts/PretendardVariable.woff2') format('woff2');
 }
 
-/* 색상 팔레트 */
+/* 색상 및 폰트 세팅 */
 :root {
   --main: #0BEC12;
   --dark: #09C410;
@@ -22,5 +22,6 @@
   --gray200: #E0E0E0;
   --gray600: #555555;
   --black: #111111;
-  --font-main: 'Pretendard', sans-serif;
+  --font-title: 'GemunuLibre', sans-serif;
+  --font-main: 'PretendardVariable', sans-serif;
 }

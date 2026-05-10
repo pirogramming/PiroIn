@@ -8,18 +8,23 @@
 }
 
 .title {
-  color: #09C624;
-  font-size: 64px;
+  color: var(--dark);
+  font-size: 100px;
   font-weight: 900;
-  letter-spacing: 4px;
+  font-family: var(--font-title);
   margin: 0 0 48px 0;
 }
 
 .logoWrap {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 300px;
+  height: 300px;
   margin-bottom: 48px;
+}
+
+.logoWrap img {
+  width: 300px;
+  height: 300px;
 }
 
 .circle {
@@ -37,8 +42,9 @@
 .circle:nth-child(4) { bottom: 0; right: 0; }
 
 .sub {
-  color: #09C624;
-  font-size: 16px;
+  color: var(--dark);
+  font-family: var(--font-main);
+  font-size: 18px;
   margin: 4px 0;
-  font-weight: 500;
+  font-weight: 550;
 }

@@ -1,7 +1,7 @@
 package com.example.Piroin.project.domain.attendance.repository;
 
-import backend.pirocheck.User.entity.User;
-import backend.pirocheck.Attendance.entity.Attendance;
+import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.domain.attendance.entity.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

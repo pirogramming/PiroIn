@@ -1,6 +1,6 @@
 package com.example.Piroin.project.domain.attendance.dto;
 
-import backend.pirocheck.Attendance.entity.AttendanceCode;
+import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

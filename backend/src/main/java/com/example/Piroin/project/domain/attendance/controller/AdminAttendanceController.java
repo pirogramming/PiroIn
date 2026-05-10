@@ -1,11 +1,11 @@
 package com.example.Piroin.project.domain.attendance.controller;
 
-import backend.pirocheck.Attendance.dto.request.UpdateAttendanceStatusReq;
-import backend.pirocheck.Attendance.dto.response.ApiResponse;
-import backend.pirocheck.Attendance.dto.response.AttendanceCodeResponse;
-import backend.pirocheck.Attendance.dto.response.UserAttendanceStatusRes;
-import backend.pirocheck.Attendance.entity.AttendanceCode;
-import backend.pirocheck.Attendance.service.AttendanceService;
+import com.example.Piroin.project.domain.attendance.dto.UpdateAttendanceStatusReq;
+import com.example.Piroin.project.domain.attendance.dto.ApiResponse;
+import com.example.Piroin.project.domain.attendance.dto.AttendanceCodeResponse;
+import com.example.Piroin.project.domain.attendance.dto.UserAttendanceStatusRes;
+import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
+import com.example.Piroin.project.domain.attendance.service.AttendanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

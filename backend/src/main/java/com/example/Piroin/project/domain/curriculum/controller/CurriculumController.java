@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,6 +17,11 @@ import java.util.Map;
 public class CurriculumController {
 
     private final CurriculumService curriculumService;
+
+    @GetMapping
+    public ResponseEntity<List<CurriculumResDTO.GetSessionRes>> getAllSessions() {
+        return ResponseEntity.ok(curriculumService.getAllSessions());
+    }
 
     @PostMapping
     public ResponseEntity<CurriculumResDTO.CreateSessionRes> createSession(

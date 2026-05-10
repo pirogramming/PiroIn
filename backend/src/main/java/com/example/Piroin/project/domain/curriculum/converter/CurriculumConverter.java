@@ -54,6 +54,25 @@ public class CurriculumConverter {
         );
     }
 
+    public static CurriculumResDTO.GetSessionRes toGetSessionRes(StudySession session) {
+        return new CurriculumResDTO.GetSessionRes(
+                session.getId(),
+                session.getWeek(),
+                session.getSessionDate(),
+                session.getDayPart(),
+                session.getTitle(),
+                session.getHostName(),
+                session.getStatus(),
+                session.getDescription(),
+                session.getSessionMaterialUrl(),
+                session.getAssignmentUrl(),
+                session.getRecordingUrl(),
+                session.getRecordingPassword(),
+                session.getSessionMaterialName(),
+                session.getAssignmentName(),
+        );
+    }
+
     public static CurriculumResDTO.UpdateSessionRes toUpdateSessionRes(StudySession session) {
         return new CurriculumResDTO.UpdateSessionRes(
                 session.getId(),

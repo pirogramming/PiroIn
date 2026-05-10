@@ -3,6 +3,8 @@ package com.example.Piroin.project.domain.curriculum.service;
 import com.example.Piroin.project.domain.curriculum.converter.CurriculumConverter;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumReqDTO;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumResDTO;
+import java.util.List;
+import java.util.stream.Collectors;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
@@ -19,6 +21,13 @@ public class CurriculumService {
 
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public List<CurriculumResDTO.GetSessionRes> getAllSessions() {
+        return curriculumRepository.findAll().stream()
+                .map(CurriculumConverter::toGetSessionRes)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public CurriculumResDTO.CreateSessionRes createSession(CurriculumReqDTO.CreateSessionReq req) {

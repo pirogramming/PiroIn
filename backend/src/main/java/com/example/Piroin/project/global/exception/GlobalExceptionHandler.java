@@ -1,5 +1,6 @@
 package com.example.Piroin.project.global.exception;
 
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
 import com.example.Piroin.project.domain.question.exception.QuestionException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,6 +22,13 @@ public class GlobalExceptionHandler {
     */
     @ExceptionHandler(QuestionException.class)
     public ResponseEntity<Map<String, String>> handleQuestionException(QuestionException e) {
+        return ResponseEntity
+                .status(e.getStatus())
+                .body(Map.of("message", e.getMessage()));
+    }
+
+    @ExceptionHandler(CurriculumException.class)
+    public ResponseEntity<Map<String, String>> handleCurriculumException(CurriculumException e) {
         return ResponseEntity
                 .status(e.getStatus())
                 .body(Map.of("message", e.getMessage()));

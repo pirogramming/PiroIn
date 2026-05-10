@@ -30,8 +30,6 @@ public class AttendanceCodeResponse {
     public static AttendanceCodeResponse from(AttendanceCode attendanceCode) {
         return AttendanceCodeResponse.builder()
                 .code(attendanceCode.getCode())
-                .date(attendanceCode.getDate())
-                .order(attendanceCode.getOrder())
                 .isExpired(attendanceCode.isExpired())
                 .build();
     }

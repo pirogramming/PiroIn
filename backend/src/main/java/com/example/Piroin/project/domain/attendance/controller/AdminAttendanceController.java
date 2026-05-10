@@ -35,18 +35,14 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 코드 생성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    @PostMapping("/admin/attendance/start")
-    public AttendanceCodeResponse startAttendance() {
-        try {
-            AttendanceCode code = attendanceService.generateCodeAndCreateAttendances();
-            return AttendanceCodeResponse.from(code);
-        } catch (IllegalStateException e) {
-            // 하루 최대 출석 체크 횟수를 초과한 경우
-            throw new IllegalStateException(e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException("출석 코드 생성 중 오류가 발생했습니다: " + e.getMessage());
-        }
+
+    // 기존 : @PostMapping("/admin/attendance/start")
+    @PostMapping("/admin/study-sessions/{studySessionId}/attendance/start")
+    public AttendanceCodeResponse startAttendance(@PathVariable Long studySessionId) {
+        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(studySessionId);
+        return AttendanceCodeResponse.from(code);
     }
+
 
     // 현재 활성화된 출석코드 조회
     @Operation(summary = "현재 활성화된 출석 코드 조회", description = "현재 활성화된 출석 코드 정보를 조회합니다.")
@@ -65,6 +61,16 @@ public class AdminAttendanceController {
         return AttendanceCodeResponse.from(codeOpt.get());
     }
 
+    // 출석체크 종료 새 url.
+    @Operation(summary = "현재 활성화된 출석 코드 만료", description = "현재 활성화된 최신 출석 코드를 만료 처리합니다.")
+    @PutMapping("/admin/attendance/active-code/expire")
+    public String expireActiveAttendance() {
+        return attendanceService.expireActiveAttendanceCode();
+    }
+
+
+    /*
+
     // 출석체크 종료 (코드 직접 전달)
     @Operation(summary = "특정 출석 코드 만료", description = "특정 출석 코드를 만료 처리합니다.")
     @ApiResponses(value = {
@@ -72,12 +78,14 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 코드를 찾을 수 없음")
     })
-    @PutMapping("/admin/attendance/expire")
+    // 기존: @PutMapping("/admin/attendance/expire")
+    @PutMapping("/admin/study-sessions/{studySessionId}/attendance/expire")
     public String expireAttendance(
             @Parameter(description = "만료할 출석 코드", example = "1234")
             @RequestParam String code) {
         return attendanceService.expireAttendanceCode(code);
     }
+    */
 
     // 출석체크 종료 (가장 최근 활성화된 코드 자동 만료)
     @Operation(summary = "최근 활성화된 출석 코드 만료", description = "가장 최근 활성화된 출석 코드를 자동으로 만료 처리합니다.")
@@ -97,6 +105,7 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
     })
+
     @PutMapping("/admin/users/{userId}/attendance/{attendanceId}/status")
     public boolean updateAttendanceStatus(
             @Parameter(description = "사용자 ID", example = "1")

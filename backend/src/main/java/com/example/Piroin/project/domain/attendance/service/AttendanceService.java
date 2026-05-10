@@ -1,5 +1,7 @@
 package com.example.Piroin.project.domain.attendance.service;
 
+import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.deposit.entity.Deposit;
 import com.example.Piroin.project.domain.deposit.repository.DepositRepository;
 import com.example.Piroin.project.domain.deposit.service.DepositService;
@@ -35,7 +37,127 @@ public class AttendanceService {
     private final UserRepository userRepository;
     private final DepositService depositService;
 
+    private final StudySession studySession;
+    private final CurriculumRepository curriculumRepository;
+
+
+    // 1. 출석 시작 코드
+    // 출석 시작은 이제 date/order가 아니라 studySessionId를 받아야 함.
+    @Transactional
+    public AttendanceCode generateCodeAndCreateAttendances(Long studySessionId) {
+        StudySession studySession = curriculumRepository.findById(studySessionId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 세션입니다."));
+
+        LocalDate sessionDate = studySession.getDate();
+
+        int codeCountOfDay = attendanceCodeRepository.countByStudySessionDate(sessionDate);
+
+        if (codeCountOfDay >= 3) {
+            throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
+        }
+
+        List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
+
+        for (AttendanceCode activeCode : activeCodes) {
+            activeCode.expire();
+        }
+
+        String code = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000));
+
+        AttendanceCode attendanceCode = AttendanceCode.builder()
+                .studySession(studySession)
+                .code(code)
+                .isExpired(false)
+                .build();
+
+        attendanceCodeRepository.save(attendanceCode);
+
+        List<User> users = userRepository.findByRole(Role.MEMBER);
+
+        for (User user : users) {
+            if (!attendanceRepository.existsByUserIdAndStudySessionId(user.getId(), studySessionId)) {
+                Attendance attendance = Attendance.builder()
+                        .user(user)
+                        .studySession(studySession)
+                        .status(false)
+                        .build();
+
+                attendanceRepository.save(attendance);
+            }
+        }
+
+        return attendanceCode;
+    }
+
+
+
+
+
+    // 2. 출석 체크
+    @Transactional
+    public AttendanceMarkResponse markAttendance(Long userId, Long studySessionId, String inputCode) {
+        AttendanceCode code = attendanceCodeRepository
+                .findByCodeAndStudySessionId(inputCode, studySessionId)
+                .orElse(null);
+
+        if (code == null) {
+            return AttendanceMarkResponse.invalidCode();
+        }
+
+        if (Boolean.TRUE.equals(code.getIsExpired())) {
+            return AttendanceMarkResponse.codeExpired();
+        }
+
+        Attendance attendance = attendanceRepository
+                .findByUserIdAndStudySessionId(userId, studySessionId)
+                .orElse(null);
+
+        if (attendance == null) {
+            return AttendanceMarkResponse.error("출석 정보를 찾을 수 없습니다.");
+        }
+
+        if (Boolean.TRUE.equals(attendance.getStatus())) {
+            return AttendanceMarkResponse.alreadyMarked();
+        }
+
+        attendance.updateStatus(true);
+
+        depositService.recalculateDeposit(userId);
+
+        return AttendanceMarkResponse.success();
+    }
+
+    // 3. 출석 코드 만료시키기.
+    @Transactional
+    public String expireActiveAttendanceCode() {
+        AttendanceCode activeCode = attendanceCodeRepository
+                .findFirstByIsExpiredFalseOrderByIdDesc()
+                .orElseThrow(() -> new IllegalStateException("현재 활성화된 출석 코드가 없습니다."));
+
+        activeCode.expire();
+
+        Long studySessionId = activeCode.getStudySession().getId();
+
+        List<Attendance> absents =
+                attendanceRepository.findByStudySessionIdAndStatusFalse(studySessionId);
+
+        for (Attendance attendance : absents) {
+            depositService.recalculateDeposit(attendance.getUser().getId());
+        }
+
+        return "출석 코드가 성공적으로 만료되었습니다.";
+    }
+
+
+
+
+
+
+
+
+    // 여기 아래부터는 기존 피로체크 코드
     // 출석코드 생성 함수
+    /*
     @Transactional
     public AttendanceCode generateCodeAndCreateAttendances() {
         LocalDate today = LocalDate.now();
@@ -77,7 +199,7 @@ public class AttendanceService {
             attendanceRepository.save(attendance);
         }
         return attendanceCode;
-    }
+    } */
 
     // 현재 활성화된 출석코드 조회 함수
     public Optional<AttendanceCode> getActiveAttendanceCode() {
@@ -107,6 +229,7 @@ public class AttendanceService {
         return "출석 코드가 성공적으로 만료되었습니다";
     }
 
+    /*
     // 출석코드 만료처리 함수
     @Transactional
     public String expireAttendanceCode(String code) {
@@ -134,6 +257,8 @@ public class AttendanceService {
         }
         return "출석 코드가 성공적으로 만료되었습니다";
     }
+
+*/
 
     // 출석처리 함수
     @Transactional

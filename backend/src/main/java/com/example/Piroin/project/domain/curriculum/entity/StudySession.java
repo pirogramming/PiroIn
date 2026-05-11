@@ -59,7 +59,42 @@ public class StudySession {
     @Column(columnDefinition = "TEXT")
     private String recordingUrl;
 
+
+    // 녹화본 비밀번호 여기에 추가했습니당. sql 파일에도 물론 반영했고요.
+    @Column(length = 60)
+    private String recordingPassword;
+
+
+    // 세션 자료 이름, 과제 자료 이름 추가.
+    @Column(length = 255)
+    private String sessionMaterialName;
+
+    @Column(length = 255)
+    private String assignmentName;
+
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void update(Integer generation, Long week, LocalDate sessionDate, SessionDayPart dayPart,
+                       String title, String hostName, SessionStatus status, String description,
+                       String sessionMaterialUrl, String assignmentUrl, String recordingUrl,
+                       String recordingPassword, String sessionMaterialName, String assignmentName) {
+        if (generation != null) this.generation = generation;
+        if (week != null) this.week = week;
+        if (sessionDate != null) this.sessionDate = sessionDate;
+        if (dayPart != null) this.dayPart = dayPart;
+        if (title != null) this.title = title;
+        if (hostName != null) this.hostName = hostName;
+        if (status != null) this.status = status;
+        if (description != null) this.description = description;
+        if (sessionMaterialUrl != null) this.sessionMaterialUrl = sessionMaterialUrl;
+        if (assignmentUrl != null) this.assignmentUrl = assignmentUrl;
+        if (recordingUrl != null) this.recordingUrl = recordingUrl;
+        if (recordingPassword != null) this.recordingPassword = recordingPassword;
+        if (sessionMaterialName != null) this.sessionMaterialName = sessionMaterialName;
+        if (assignmentName != null) this.assignmentName = assignmentName;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 

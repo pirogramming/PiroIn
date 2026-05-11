@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum CurriculumSuccessCode implements BaseCode {
+    SESSION_CREATED(HttpStatus.CREATED, "SESSION201", "세션 생성에 성공했습니다."),
     QNA_SESSION_LIST_OK(HttpStatus.OK, "SESSION200_1", "Q&A 세션 목록 조회에 성공했습니다.");
 
     private final HttpStatus status;

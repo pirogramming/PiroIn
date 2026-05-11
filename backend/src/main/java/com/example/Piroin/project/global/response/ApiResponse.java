@@ -15,4 +15,8 @@ public record ApiResponse<T>(
     public static ApiResponse<Void> onFailure(BaseCode code) {
         return new ApiResponse<>(false, code.getCode(), code.getMessage(), null);
     }
+
+    public static ApiResponse<Void> onFailure(BaseCode code, String message) {
+        return new ApiResponse<>(false, code.getCode(), message, null);
+    }
 }

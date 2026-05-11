@@ -69,7 +69,7 @@ public class CurriculumConverter {
                 session.getRecordingUrl(),
                 session.getRecordingPassword(),
                 session.getSessionMaterialName(),
-                session.getAssignmentName(),
+                session.getAssignmentName()
         );
     }
 

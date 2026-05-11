@@ -1,6 +1,7 @@
 package com.example.Piroin.project.domain.user.exception;
 
-import com.example.Piroin.project.domain.attendance.dto.ApiResponse;
+import com.example.Piroin.project.domain.user.exception.code.UserErrorCode;
+import com.example.Piroin.project.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -14,7 +15,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleInvalidLoginException(InvalidLoginException e) {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED) // 401 상태 코드
-                .body(ApiResponse.error(e.getMessage())); // 에러 메시지 전달
+                .body(ApiResponse.onFailure(UserErrorCode.INVALID_LOGIN, e.getMessage())); // 에러 메시지 전달
     }
 
     // RuntimeException (유저관리 상세페이지)
@@ -22,7 +23,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST) // 404
-                .body(ApiResponse.error(ex.getMessage()));
+                .body(ApiResponse.onFailure(UserErrorCode.BAD_REQUEST, ex.getMessage()));
     }
 }
-

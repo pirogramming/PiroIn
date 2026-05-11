@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import LoginPage from './pages/login/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
-import QNAMainPage from './pages/qna/QnAMainPage';
+import QnAMainPage from './pages/qna/QnAMainPage';
+import QnAListPage from './pages/qna/QnAListPage';
 
 function App() {
   return (
@@ -16,7 +17,8 @@ function App() {
 
         {/* 헤더 있는 페이지 */}
         <Route element={<Layout />}>
-          <Route path="/questions" element={<QNAMainPage />} />
+          <Route path="/sessions" element={<QnAMainPage />} />
+          <Route path="/sessions/questions" element={<QnAListPage />} />
         </Route>
 
       </Routes>

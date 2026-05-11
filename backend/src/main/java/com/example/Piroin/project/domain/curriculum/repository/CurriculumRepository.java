@@ -13,4 +13,6 @@ JpaRepository<엔티티 타입, PK 타입> 을 상속하면 findById, save, dele
 */
 public interface CurriculumRepository extends JpaRepository<StudySession, Long> {
     List<StudySession> findByStatusOrderBySessionDateAscDayPartAsc(SessionStatus status);
+
+    List<StudySession> findByStatusOrderBySessionDateDescDayPartDesc(SessionStatus status);
 }

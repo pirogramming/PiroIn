@@ -16,14 +16,20 @@ public class CurriculumService {
     private final CurriculumRepository curriculumRepository;
 
     @Transactional(readOnly = true)
-    public CurriculumResDTO.ActiveSessionsResponse getActiveSessions() {
-        List<CurriculumResDTO.ActiveSessionResponse> sessions = curriculumRepository
+    public CurriculumResDTO.QnaSessionsResponse getQnaSessions() {
+        List<CurriculumResDTO.ActiveSessionResponse> activeSessions = curriculumRepository
                 .findByStatusOrderBySessionDateAscDayPartAsc(SessionStatus.IN_SESSION)
                 .stream()
                 .map(this::toActiveSessionResponse)
                 .toList();
 
-        return new CurriculumResDTO.ActiveSessionsResponse(sessions);
+        List<CurriculumResDTO.PastSessionResponse> pastSessions = curriculumRepository
+                .findByStatusOrderBySessionDateDescDayPartDesc(SessionStatus.AFTER_SESSION)
+                .stream()
+                .map(this::toPastSessionResponse)
+                .toList();
+
+        return new CurriculumResDTO.QnaSessionsResponse(activeSessions, pastSessions);
     }
 
     private CurriculumResDTO.ActiveSessionResponse toActiveSessionResponse(StudySession session) {
@@ -33,6 +39,16 @@ public class CurriculumService {
                 session.getSessionDate().getDayOfWeek().name(),
                 session.getDayPart().name(),
                 session.getSessionDate().toString(),
+                session.getTitle()
+        );
+    }
+
+    private CurriculumResDTO.PastSessionResponse toPastSessionResponse(StudySession session) {
+        return new CurriculumResDTO.PastSessionResponse(
+                session.getId(),
+                session.getWeek().intValue(),
+                session.getSessionDate().getDayOfWeek().name(),
+                session.getDayPart().name(),
                 session.getTitle()
         );
     }

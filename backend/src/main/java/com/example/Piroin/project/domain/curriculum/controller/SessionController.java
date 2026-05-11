@@ -16,11 +16,11 @@ public class SessionController {
     private final CurriculumService curriculumService;
 
     @GetMapping
-    public ApiResponse<CurriculumResDTO.ActiveSessionsResponse> getActiveSessions() {
-        CurriculumResDTO.ActiveSessionsResponse response = curriculumService.getActiveSessions();
+    public ApiResponse<CurriculumResDTO.QnaSessionsResponse> getQnaSessions() {
+        CurriculumResDTO.QnaSessionsResponse response = curriculumService.getQnaSessions();
 
         return ApiResponse.onSuccess(
-                CurriculumSuccessCode.ACTIVE_SESSION_LIST_OK,
+                CurriculumSuccessCode.QNA_SESSION_LIST_OK,
                 response
         );
     }

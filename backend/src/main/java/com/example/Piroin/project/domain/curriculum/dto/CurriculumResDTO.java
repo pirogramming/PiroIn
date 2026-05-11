@@ -19,8 +19,9 @@ public class CurriculumResDTO {
         return title;
     }
 
-    public record ActiveSessionsResponse(
-            List<ActiveSessionResponse> sessions
+    public record QnaSessionsResponse(
+            List<ActiveSessionResponse> activeSessions,
+            List<PastSessionResponse> pastSessions
     ) {
     }
 
@@ -30,6 +31,15 @@ public class CurriculumResDTO {
             String dayOfWeek,
             String dayPart,
             String sessionDate,
+            String title
+    ) {
+    }
+
+    public record PastSessionResponse(
+            Long sessionId,
+            Integer week,
+            String dayOfWeek,
+            String dayPart,
             String title
     ) {
     }

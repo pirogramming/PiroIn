@@ -1,9 +1,6 @@
 package com.example.Piroin.project.domain.attendance.controller;
 
-import com.example.Piroin.project.domain.attendance.dto.UpdateAttendanceStatusReq;
-import com.example.Piroin.project.domain.attendance.dto.ApiResponse;
-import com.example.Piroin.project.domain.attendance.dto.AttendanceCodeResponse;
-import com.example.Piroin.project.domain.attendance.dto.UserAttendanceStatusRes;
+import com.example.Piroin.project.domain.attendance.dto.*;
 import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
 import com.example.Piroin.project.domain.attendance.service.AttendanceService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,16 +32,14 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 코드 생성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-
-    // 기존 : @PostMapping("/admin/attendance/start")
-    @PostMapping("/admin/study-sessions/{studySessionId}/attendance/start")
+    @PostMapping("/admin/attendance/start")
     public AttendanceCodeResponse startAttendance(@PathVariable Long studySessionId) {
         AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(studySessionId);
         return AttendanceCodeResponse.from(code);
     }
 
 
-    // 현재 활성화된 출석코드 조회
+    // 현재 활성화된 출석코드 조회 API
     @Operation(summary = "현재 활성화된 출석 코드 조회", description = "현재 활성화된 출석 코드 정보를 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -52,13 +47,9 @@ public class AdminAttendanceController {
     })
     @GetMapping("/admin/attendance/active-code")
     public AttendanceCodeResponse getActiveCode() {
-        Optional<AttendanceCode> codeOpt = attendanceService.getActiveAttendanceCode();
-
-        if (codeOpt.isEmpty()) {
-            throw new RuntimeException("현재 활성화된 출석코드가 없습니다");
-        }
-
-        return AttendanceCodeResponse.from(codeOpt.get());
+        return attendanceService.getActiveAttendanceCode() // 1. 서비스 호출
+                .map(AttendanceCodeResponse::from)         // 2. 값이 있으면 DTO로 변환
+                .orElseThrow(() -> new RuntimeException("현재 활성화된 출석코드가 없습니다")); // 3. 없으면 예외 발생
     }
 
     // 출석체크 종료 새 url.
@@ -87,6 +78,7 @@ public class AdminAttendanceController {
     }
     */
 
+    /*
     // 출석체크 종료 (가장 최근 활성화된 코드 자동 만료)
     @Operation(summary = "최근 활성화된 출석 코드 만료", description = "가장 최근 활성화된 출석 코드를 자동으로 만료 처리합니다.")
     @ApiResponses(value = {
@@ -97,8 +89,10 @@ public class AdminAttendanceController {
     public String expireLatestAttendance() {
         return attendanceService.expireLatestAttendanceCode();
     }
+     */
 
     // 출석 상태 변경 (관리자 전용)
+    // 출석 & 과제 변경으로 나중에 바꿀 예정
     @Operation(summary = "출석 상태 변경", description = "관리자가 특정 사용자의 출석 상태를 변경합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 상태 변경 성공"),
@@ -106,18 +100,16 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
     })
 
-    @PutMapping("/admin/users/{userId}/attendance/{attendanceId}/status")
-    public boolean updateAttendanceStatus(
+    @PutMapping("/admin/users/{userId}/status")
+    public boolean updateUserStatus(
             @Parameter(description = "사용자 ID", example = "1")
             @PathVariable Long userId,
-            @Parameter(description = "출석 ID", example = "1")
-            @PathVariable Long attendanceId,
-            @RequestBody UpdateAttendanceStatusReq req) {
-
-        // userId 파라미터 검증은 여기서 할 수 있음 (필요 시)
-        return attendanceService.updateAttendanceStatus(attendanceId, req.isStatus());
+            @RequestBody UpdateUserStatusReq req) {
+        return attendanceService.updateUserStatus(userId, req);
     }
 
+
+    /*
     // 출석 기록 삭제 (관리자 전용)
     @Operation(summary = "출석 기록 삭제", description = "관리자가 특정 사용자의 출석 기록을 삭제합니다.")
     @ApiResponses(value = {
@@ -136,76 +128,80 @@ public class AdminAttendanceController {
         return attendanceService.deleteAttendance(attendanceId);
     }
 
-    // 특정 날짜와 차수에 대한 모든 학생의 출석 현황 조회
-    @Operation(summary = "특정 날짜와 차수의 출석 현황 조회", description = "특정 날짜와 차수에 대한 모든 학생의 출석 현황을 조회합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
-    })
-    @GetMapping("/admin/attendance/list")
-    public List<UserAttendanceStatusRes> getAllAttendanceByDateAndOrder(
-            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2023-08-01")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @Parameter(description = "조회할 차수", example = "1")
-            @RequestParam int order) {
-        return attendanceService.findAllByDateAndOrder(date, order);
-    }
 
-    // 특정 사용자의 특정 날짜와 차수 출석 기록 조회
-    @Operation(summary = "특정 사용자의 특정 날짜와 차수 출석 조회", description = "특정 사용자의 특정 날짜와 차수 출석 기록을 조회합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
-    })
-    @GetMapping("/admin/users/{userId}/attendance")
-    public UserAttendanceStatusRes getUserAttendanceByDateAndOrder(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId,
-            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2023-08-01")
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @Parameter(description = "조회할 차수", example = "1")
-            @RequestParam int order) {
-        return attendanceService.findByUserIdAndDateAndOrder(userId, date, order);
-    }
+     */
 
-    // 특정 출석 ID로 출석 기록 조회
-    @Operation(summary = "특정 출석 기록 조회", description = "특정 학생의 특정 출석 기록을 ID로 조회합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
-    })
-    @GetMapping("/admin/users/{userId}/attendance/{attendanceId}")
-    public UserAttendanceStatusRes getAttendanceById(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId,
-            @Parameter(description = "출석 ID", example = "1")
-            @PathVariable Long attendanceId) {
 
-        UserAttendanceStatusRes attendance = attendanceService.findById(attendanceId);
+//    // 특정 날짜와 차수에 대한 모든 학생의 출석 현황 조회
+//    @Operation(summary = "특정 날짜와 차수의 출석 현황 조회", description = "특정 날짜와 차수에 대한 모든 학생의 출석 현황을 조회합니다.")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
+//    })
+//    @GetMapping("/admin/attendance/list")
+//    public List<UserAttendanceStatusRes> getAllAttendanceByDateAndOrder(
+//            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2023-08-01")
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+//            @Parameter(description = "조회할 차수", example = "1")
+//            @RequestParam int order) {
+//        return attendanceService.findAllByDateAndOrder(date, order);
+//    }
 
-        if (attendance == null) {
-            throw new RuntimeException("출석 기록을 찾을 수 없습니다");
-        }
+//    // 특정 사용자의 특정 날짜와 차수 출석 기록 조회
+//    @Operation(summary = "특정 사용자의 특정 날짜와 차수 출석 조회", description = "특정 사용자의 특정 날짜와 차수 출석 기록을 조회합니다.")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
+//    })
+//    @GetMapping("/admin/users/{userId}/attendance")
+//    public UserAttendanceStatusRes getUserAttendanceByDateAndOrder(
+//            @Parameter(description = "사용자 ID", example = "1")
+//            @PathVariable Long userId,
+//            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", example = "2023-08-01")
+//            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+//            @Parameter(description = "조회할 차수", example = "1")
+//            @RequestParam int order) {
+//        return attendanceService.findByUserIdAndDateAndOrder(userId, date, order);
+//    }
 
-        // 요청된 userId와 조회된 출석 기록의 userId가 일치하는지 확인
-        if (!attendance.getUserId().equals(userId)) {
-            throw new RuntimeException("요청된 사용자 ID와 출석 기록의 사용자 ID가 일치하지 않습니다");
-        }
+//    // 특정 출석 ID로 출석 기록 조회
+//    @Operation(summary = "특정 출석 기록 조회", description = "특정 학생의 특정 출석 기록을 ID로 조회합니다.")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
+//    })
+//    @GetMapping("/admin/users/{userId}/attendance/{attendanceId}")
+//    public UserAttendanceStatusRes getAttendanceById(
+//            @Parameter(description = "사용자 ID", example = "1")
+//            @PathVariable Long userId,
+//            @Parameter(description = "출석 ID", example = "1")
+//            @PathVariable Long attendanceId) {
+//
+//        UserAttendanceStatusRes attendance = attendanceService.findById(attendanceId);
+//
+//        if (attendance == null) {
+//            throw new RuntimeException("출석 기록을 찾을 수 없습니다");
+//        }
+//
+//        // 요청된 userId와 조회된 출석 기록의 userId가 일치하는지 확인
+//        if (!attendance.getUserId().equals(userId)) {
+//            throw new RuntimeException("요청된 사용자 ID와 출석 기록의 사용자 ID가 일치하지 않습니다");
+//        }
+//
+//        return attendance;
+//    }
 
-        return attendance;
-    }
-
-    // 학생용 출석 현황 조회
-    @Operation(summary = "학생별 출석 현황 조회", description = "특정 학생의 출석 현황을 조회합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
-    })
-    @GetMapping("/attendance/{userId}")
-    public List<UserAttendanceStatusRes> getUserAttendances(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId) {
-        return attendanceService.findAllByUserId(userId);
-    }
+//    // 학생용 출석 현황 조회
+//    @Operation(summary = "학생별 출석 현황 조회", description = "특정 학생의 출석 현황을 조회합니다.")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
+//    })
+//    @GetMapping("/attendance/{userId}")
+//    public List<UserAttendanceStatusRes> getUserAttendances(
+//            @Parameter(description = "사용자 ID", example = "1")
+//            @PathVariable Long userId) {
+//        return attendanceService.findAllByUserId(userId);
+//    }
 }

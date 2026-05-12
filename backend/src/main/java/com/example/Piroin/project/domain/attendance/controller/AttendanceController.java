@@ -27,7 +27,45 @@ public class AttendanceController {
 
     private final AttendanceService attendanceService;
 
-    // 특정 유저의 출석 정보
+
+    // 1. 출석코드 비교
+    @Operation(summary = "출석 체크", description = "출석 코드를 입력하여 출석을 체크합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 성공 또는 이미 출석 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 출석 코드 또는 출석 체크 진행중이 아님")
+    })
+    @PostMapping("/mark")
+    public ApiResponse<AttendanceMarkResponse> markAttendance(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "출석 체크 요청",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
+            )
+            @RequestBody MarkAttendanceReq req) {
+
+        AttendanceMarkResponse response = attendanceService.markAttendance(
+                req.getUserId(),
+                req.getStudySessionId(),
+                req.getCode()
+        );
+
+        boolean isSuccess = "SUCCESS".equals(response.getStatusCode()) ||
+                "ALREADY_MARKED".equals(response.getStatusCode());
+
+        if (isSuccess) {
+            return ApiResponse.success(response);
+        }
+
+        return ApiResponse.<AttendanceMarkResponse>builder()
+                .success(false)
+                .message(response.getMessage())
+                .data(response)
+                .build();
+    }
+
+
+
+    // 2. 특정 유저의 출석 정보
     @Operation(summary = "사용자 출석 정보 조회", description = "특정 사용자의 전체 출석 정보를 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -41,7 +79,7 @@ public class AttendanceController {
         return ApiResponse.success(attendanceService.findByUserId(userId));
     }
 
-    // 특정 유저의 특정 일자 출석 정보
+    // 3. 특정 유저의 특정 일자 출석 정보
     @Operation(summary = "특정 날짜 출석 정보 조회", description = "특정 사용자의 특정 날짜 출석 정보를 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -58,32 +96,5 @@ public class AttendanceController {
         return ApiResponse.success(attendanceService.findByUserIdAndDate(userId, date));
     }
 
-    // 출석코드 비교
-    @Operation(summary = "출석 체크", description = "출석 코드를 입력하여 출석을 체크합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 성공 또는 이미 출석 완료"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 출석 코드 또는 출석 체크 진행중이 아님")
-    })
-    @PostMapping("/mark")
-    public ApiResponse<AttendanceMarkResponse> markAttendance(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "출석 체크 요청", required = true,
-                    content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class)))
-            @RequestBody MarkAttendanceReq req) {
-        AttendanceMarkResponse response = attendanceService.markAttendance(req.getUserId(), req.getCode());
 
-        // statusCode가 SUCCESS 또는 ALREADY_MARKED인 경우 성공으로 처리
-        boolean isSuccess = "SUCCESS".equals(response.getStatusCode()) ||
-                "ALREADY_MARKED".equals(response.getStatusCode());
-
-        if (isSuccess) {
-            return ApiResponse.success(response);
-        } else {
-            // 그 외의 경우 (NO_ACTIVE_SESSION, CODE_EXPIRED, ERROR)는 오류로 처리
-            return ApiResponse.<AttendanceMarkResponse>builder()
-                    .success(false)
-                    .message(response.getMessage())
-                    .data(response)
-                    .build();
-        }
-    }
 }

@@ -1,8 +1,37 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';  // 추가
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
+  const navigate = useNavigate();  
   const [focused, setFocused] = useState('');
+  const [form, setForm] = useState({ name: '', password: '' }); 
+
+ 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        navigate('/home');
+      } else {
+        alert('이름 또는 비밀번호가 올바르지 않습니다.');
+      }
+    } catch (error) {
+      alert('서버 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -10,19 +39,25 @@ function LoginPage() {
       <div className={styles.form}>
         <input
           type="text"
+          name="name"         
           placeholder="이름"
+          value={form.name}  
+          onChange={handleChange}  
           className={`${styles.input} ${focused === 'name' ? styles.inputFocused : ''}`}
           onFocus={() => setFocused('name')}
           onBlur={() => setFocused('')}
         />
         <input
           type="password"
+          name="password"        
           placeholder="비밀번호"
+          value={form.password}   
+          onChange={handleChange}  
           className={`${styles.input} ${focused === 'pw' ? styles.inputFocused : ''}`}
           onFocus={() => setFocused('pw')}
           onBlur={() => setFocused('')}
         />
-        <button className={styles.button}>로그인</button>
+        <button className={styles.button} onClick={handleLogin}>로그인</button> 
       </div>
     </div>
   );

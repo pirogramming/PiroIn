@@ -96,5 +96,9 @@ public class StudySession {
         if (assignmentName != null) this.assignmentName = assignmentName;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public LocalDate getDate() {
+        return null;
+    }
 }
 

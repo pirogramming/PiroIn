@@ -39,5 +39,18 @@ public class Deposit {
 
     @Column(name = "ascent_defence", nullable = false)
     private Integer ascentDefence;
+
+    public void updateAttendanceAmount(Integer descentAttendance) {
+        this.descentAttendance = descentAttendance;
+
+        int baseAmount = 100_000;
+
+        this.amount = baseAmount
+                - this.descentAssignment
+                - this.descentAttendance
+                + this.ascentDefence;
+    }
+
+
 }
 

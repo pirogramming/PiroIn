@@ -35,5 +35,10 @@ public class Attendance {
 
     @Column(nullable = false)
     private Boolean status;
+
+    public void updateStatus(Boolean status) {
+        this.status = status;
+    }
+
 }
 

@@ -7,6 +7,7 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class CurriculumResDTO {
 
@@ -34,6 +35,25 @@ public class CurriculumResDTO {
 
     @Getter
     @AllArgsConstructor
+    public static class GetSessionRes {
+        private Long id;
+        private Long week;
+        private LocalDate sessionDate;
+        private SessionDayPart dayPart;
+        private String title;
+        private String hostName;
+        private SessionStatus status;
+        private String description;
+        private String sessionMaterialUrl;
+        private String assignmentUrl;
+        private String recordingUrl;
+        private String recordingPassword;
+        private String sessionMaterialName;
+        private String assignmentName;
+    }
+
+    @Getter
+    @AllArgsConstructor
     public static class UpdateSessionRes {
         private Long id;
         private String createdBy;
@@ -52,5 +72,30 @@ public class CurriculumResDTO {
         private String sessionMaterialName;
         private String assignmentName;
         private LocalDateTime updatedAt;
+    }
+
+    public record QnaSessionsResponse(
+            List<ActiveSessionResponse> activeSessions,
+            List<PastSessionResponse> pastSessions
+    ) {
+    }
+
+    public record ActiveSessionResponse(
+            Long sessionId,
+            Integer week,
+            String dayOfWeek,
+            String dayPart,
+            String sessionDate,
+            String title
+    ) {
+    }
+
+    public record PastSessionResponse(
+            Long sessionId,
+            Integer week,
+            String dayOfWeek,
+            String dayPart,
+            String title
+    ) {
     }
 }

@@ -1,8 +1,11 @@
 package com.example.Piroin.project.global.exception;
 
-import com.example.Piroin.project.domain.attendance.dto.ApiResponse;
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
 import com.example.Piroin.project.domain.question.exception.QuestionException;
 import com.example.Piroin.project.domain.user.exception.InvalidLoginException;
+import com.example.Piroin.project.domain.user.exception.code.UserErrorCode;
+import com.example.Piroin.project.global.response.ApiResponse;
+import com.example.Piroin.project.global.response.ResponseUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,43 +19,33 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // QuestionException 처리
     @ExceptionHandler(QuestionException.class)
-    public ResponseEntity<ApiResponse<?>> handleQuestionException(QuestionException e) {
-        return ResponseEntity
-                .status(e.getStatus())
-                .body(ApiResponse.error(e.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleQuestionException(QuestionException e) {
+        return ResponseUtil.failure(e.getStatus(), "QUESTION_ERROR", e.getMessage());
     }
 
-    // 로그인 실패
+    @ExceptionHandler(CurriculumException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCurriculumException(CurriculumException e) {
+        return ResponseUtil.failure(e.getStatus(), "CURRICULUM_ERROR", e.getMessage());
+    }
+
     @ExceptionHandler(InvalidLoginException.class)
-    public ResponseEntity<ApiResponse<?>> handleInvalidLoginException(InvalidLoginException e) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error(e.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleInvalidLoginException(InvalidLoginException e) {
+        return ResponseUtil.failure(UserErrorCode.INVALID_LOGIN, e.getMessage());
     }
 
-    // 잘못된 요청 값
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiResponse<?>> handleIllegalArgumentException(IllegalArgumentException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseUtil.failure(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.getMessage());
     }
 
-    // 잘못된 상태
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiResponse<?>> handleIllegalStateException(IllegalStateException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleIllegalStateException(IllegalStateException e) {
+        return ResponseUtil.failure(HttpStatus.BAD_REQUEST, "BAD_REQUEST", e.getMessage());
     }
 
-    // 그 외 런타임 예외
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<?>> handleRuntimeException(RuntimeException e) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(e.getMessage()));
+    public ResponseEntity<ApiResponse<Void>> handleRuntimeException(RuntimeException e) {
+        return ResponseUtil.failure(HttpStatus.BAD_REQUEST, "RUNTIME_ERROR", e.getMessage());
     }
 }

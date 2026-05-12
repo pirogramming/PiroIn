@@ -30,7 +30,7 @@ public class AttendanceCodeResponse {
     public static AttendanceCodeResponse from(AttendanceCode attendanceCode) {
         return AttendanceCodeResponse.builder()
                 .code(attendanceCode.getCode())
-                .isExpired(attendanceCode.isExpired())
+                .isExpired(attendanceCode.getIsExpired())
                 .build();
     }
 }

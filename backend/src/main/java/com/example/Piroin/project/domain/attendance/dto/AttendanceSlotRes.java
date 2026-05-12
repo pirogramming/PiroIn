@@ -7,12 +7,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @Schema(description = "출석 차시별 상태")
 public class AttendanceSlotRes {
-    @Schema(description = "출석 차시 (1, 2, 3)", example = "1")
-    private int order;
+    private Long studySessionId;
+    private Boolean status;
 
-    @Schema(description = "출석 여부", example = "true")
-    private boolean status;
+    public AttendanceSlotRes(Long studySessionId, Boolean status) {
+        this.studySessionId = studySessionId;
+        this.status = status;
+    }
+    
 }
+

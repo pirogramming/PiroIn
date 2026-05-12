@@ -20,6 +20,10 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByStudySessionId(Long studySessionId);
 
     List<Attendance> findByStudySessionIdAndStatusFalse(Long studySessionId);
+
+    List<Attendance> findByUserIdAndStudySessionSessionDate(Long userId, LocalDate date);
+
+    int countByUserAndStatusFalse(User user);
 }
 
 

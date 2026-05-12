@@ -36,4 +36,9 @@ public class AssignmentItem {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AssignmentStatus submitted;
+
+    public void updateSubmitted(AssignmentStatus submitted) {
+        this.submitted = submitted;
+    }
+
 }

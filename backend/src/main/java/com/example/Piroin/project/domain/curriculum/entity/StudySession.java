@@ -98,6 +98,7 @@ public class StudySession {
     }
 
     public LocalDate getDate() {
+        return null;
     }
 }
 

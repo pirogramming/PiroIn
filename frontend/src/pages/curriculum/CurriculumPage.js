@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from './CurriculumPage.module.css';
+import weekinfo from '../../assets/images/week.png';
 
 const DAY_LABEL = { 1: '화요일', 2: '목요일', 3: '토요일' };
 
@@ -73,10 +74,7 @@ function WeekSection({ week, sessions }) {
     <div className={styles.weekSection}>
       <div className={styles.weekHeader}>
         <div className={styles.weekLogo}>
-          <div className={styles.weekLogoCircle} />
-          <div className={styles.weekLogoCircle} />
-          <div className={styles.weekLogoCircle} />
-          <div className={styles.weekLogoCircle} />
+            <img src={weekinfo} alt="로고" />
         </div>
         <h2 className={styles.weekTitle}>WEEK {week}</h2>
       </div>

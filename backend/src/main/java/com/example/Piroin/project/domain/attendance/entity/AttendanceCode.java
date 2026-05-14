@@ -25,5 +25,9 @@ public class AttendanceCode {
 
     @Column(name = "is_expired", nullable = false)
     private Boolean isExpired;
+
+    public void expire() {
+        this.isExpired = true;
+    }
 }
 

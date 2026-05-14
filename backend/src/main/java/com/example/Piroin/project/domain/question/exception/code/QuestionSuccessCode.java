@@ -1,4 +1,16 @@
 package com.example.Piroin.project.domain.question.exception.code;
 
-public enum QuestionSuccessCode {
+import com.example.Piroin.project.global.response.code.BaseCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum QuestionSuccessCode implements BaseCode {
+    QUESTION_ROOM_OK(HttpStatus.OK, "QUESTION200_1", "질문 방 조회에 성공했습니다.");
+
+    private final HttpStatus status;
+    private final String code;
+    private final String message;
 }

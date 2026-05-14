@@ -16,9 +16,13 @@ public class LoginResponse {
     @Schema(description = "유저 권한", example = "MEMBER")
     private String role;
 
-    public LoginResponse(User user) {
+    @Schema(description = "JWT 액세스 토큰")
+    private String token;
+
+    public LoginResponse(User user, String token) {
         this.id = user.getId();
         this.name = user.getName();
-        this.role = user.getRole().name();  // MEMBER or ADMIN
+        this.role = user.getRole().name();
+        this.token = token;
     }
 }

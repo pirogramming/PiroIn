@@ -1,3 +1,7 @@
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
+
 spring:
   datasource:
     url: ${DB_URL}

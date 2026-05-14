@@ -1,6 +1,9 @@
 package com.example.Piroin.project.global.jwt;
 
+import com.example.Piroin.project.global.response.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -35,8 +37,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = header.substring(7);
 
-        if (!jwtUtil.isTokenValid(token)) {
-            sendErrorResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "유효하지 않은 토큰입니다.");
+        try {
+            jwtUtil.validateToken(token);
+        } catch (ExpiredJwtException e) {
+            sendErrorResponse(response, JwtErrorCode.TOKEN_EXPIRED);
+            return;
+        } catch (JwtException e) {
+            sendErrorResponse(response, JwtErrorCode.TOKEN_INVALID);
             return;
         }
 
@@ -51,11 +58,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
-        response.setStatus(status);
+    private void sendErrorResponse(HttpServletResponse response, JwtErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(
-                Map.of("isSuccess", false, "code", "AUTH401", "message", message, "result", null)
-        ));
+        response.getWriter().write(objectMapper.writeValueAsString(ApiResponse.onFailure(errorCode)));
     }
 }

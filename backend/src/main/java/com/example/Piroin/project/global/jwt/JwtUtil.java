@@ -1,6 +1,8 @@
 package com.example.Piroin.project.global.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,12 +42,13 @@ public class JwtUtil {
         return getClaims(token).get("role", String.class);
     }
 
-    public boolean isTokenValid(String token) {
+    public void validateToken(String token) {
         try {
             getClaims(token);
-            return true;
+        } catch (ExpiredJwtException e) {
+            throw new ExpiredJwtException(null, null, "만료된 토큰입니다.");
         } catch (Exception e) {
-            return false;
+            throw new JwtException("유효하지 않은 토큰입니다.");
         }
     }
 

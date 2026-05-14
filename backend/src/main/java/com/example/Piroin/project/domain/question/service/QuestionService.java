@@ -99,6 +99,7 @@ public class QuestionService {
     }
 
     private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(StudySession session, int understandingIndex) {
+        // 이해도 체크는 최신순으로 정렬하고, 화면에서는 한 번에 하나씩 넘겨본다.
         Page<UnderstandingCheck> understandingPage = understandingCheckRepository
                 .findBySessionOrderByCreatedAtDesc(session, PageRequest.of(understandingIndex, UNDERSTANDING_PAGE_SIZE));
 
@@ -140,6 +141,7 @@ public class QuestionService {
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session) {
         List<Question> questions = questionRepository.findBySessionAndDeletedAtIsNull(session);
 
+        // 좋아요 5개 이상인 미해결 질문은 질문방 상단 고정 영역에 먼저 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> popularQuestions = questions.stream()
                 .filter(question -> !question.getIsResolved())
                 .filter(question -> question.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
@@ -149,6 +151,7 @@ public class QuestionService {
                 .map(this::toQuestionSummaryResponse)
                 .toList();
 
+        // 일반 미해결 질문은 인기 질문 아래에 최신순으로 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> unresolvedQuestions = questions.stream()
                 .filter(question -> !question.getIsResolved())
                 .filter(question -> question.getLikeCount() < POPULAR_LIKE_THRESHOLD)
@@ -156,6 +159,7 @@ public class QuestionService {
                 .map(this::toQuestionSummaryResponse)
                 .toList();
 
+        // 해결된 질문은 미해결 질문과 섞지 않고 별도 영역에서 최신순으로 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> resolvedQuestions = questions.stream()
                 .filter(Question::getIsResolved)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
@@ -166,6 +170,8 @@ public class QuestionService {
     }
 
     private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse(Question question) {
+        // 질문방 목록은 댓글 본문을 포함하지 않고 개수만 내려준다.
+        // 댓글 목록은 특정 질문 상세 조회 API에서 조회한다.
         return new QuestionResDTO.QuestionSummaryResponse(
                 question.getId(),
                 question.getContent(),

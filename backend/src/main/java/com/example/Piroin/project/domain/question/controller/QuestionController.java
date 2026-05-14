@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService questionService;
-
+ 
+    // 질문 목록 + 이해도 조회
+    // GET /api/sessions/{sessionId}/questions?understandingIndex=0
     @GetMapping("/{sessionId}/questions")
     public ResponseEntity<ApiResponse<QuestionResDTO.QuestionRoomResponse>> getQuestionRoom(
             @PathVariable Long sessionId,
@@ -26,29 +28,23 @@ public class QuestionController {
     ) {
         QuestionResDTO.QuestionRoomResponse response =
                 questionService.getQuestionRoom(sessionId, understandingIndex);
-
+ 
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
     }
-
-    /*
-    질문 등록
-    POST /api/sessions/{sessionId}/questions
-    
-    @param sessionId   URL 경로의 세션 ID
-    @param request     요청 바디 { "content": "..." }
-    @param httpSession 현재 HTTP 세션 (로그인 유저 확인용)
-    */
+ 
+    // 질문 등록
+    // POST /api/sessions/{sessionId}/questions
     @PostMapping("/{sessionId}/questions")
-    public ResponseEntity<QuestionResDTO.CreateRes> createQuestion(
+    public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
             HttpSession httpSession
     ) {
         User loginUser = (User) httpSession.getAttribute("loginUser");
-
+ 
         QuestionResDTO.CreateRes response =
                 questionService.createQuestion(sessionId, request, loginUser);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+ 
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED, response);
     }
 }

@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum QuestionSuccessCode implements BaseCode {
-    QUESTION_ROOM_OK(HttpStatus.OK, "QUESTION200_1", "질문 방 조회에 성공했습니다.");
+
+    QUESTION_ROOM_OK(HttpStatus.OK, "QUESTION200_1", "질문 방 조회에 성공했습니다."),
+    QUESTION_CREATED(HttpStatus.CREATED, "QUESTION201_1", "질문이 등록되었습니다.");
 
     private final HttpStatus status;
     private final String code;

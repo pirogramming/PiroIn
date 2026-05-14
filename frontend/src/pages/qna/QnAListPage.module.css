@@ -1,441 +1,524 @@
-/* ── Page ───────────────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   QnAListPage.module.css
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   QnAMainPage와 같은 CSS 변수(--font-main, --black 등)를 사용하니까
+   전역 CSS에 변수가 정의돼 있어야 해
+*/
+
+
+/* ── 전체 페이지 컨테이너 ── */
 .page {
+    min-height: 100vh;
     max-width: 880px;
     margin: 0 auto;
-    min-height: 100vh;
-    padding-bottom: 6rem;
+    /* 하단 고정 입력창 높이만큼 아래 패딩 줘야 내용이 가려지지 않아 */
+    padding: 2rem 1rem 5rem;
+    position: relative;
 }
 
 
-.sessionHeader {
-    text-align: center;
-    padding: 10px;
-}
-
-.sessionTitle {
+/* ── 세션 제목 ── */
+.title {
     font-family: var(--font-main);
-    font-size: 2rem;
+    font-size: 1.6rem;
     font-weight: 700;
     color: var(--black);
-    margin-bottom: 30px;
-    margin-top: 50px;
+    text-align: center;
+    margin-bottom: 1.5rem;
 }
 
-.sessionControls {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.75rem;
-}
 
-.like {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-    font-family: var(--font-main);
-    font-size: 0.875rem;
-    color: var(--gray600);
-    cursor: pointer;
-}
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   필터 / 정렬 행
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.like input[type='checkbox'] {
-    accent-color: var(--light);
-    width: 15px;
-    height: 15px;
-}
-
-.sortSelect {
-    border: 1px solid var(--gray200);
-    border-radius: 20px;
-    padding: 0.25rem 0.75rem;
-    font-family: var(--font-main);
-    font-size: 0.875rem;
-    color: var(--gray600);
-    background: var(--white);
-    cursor: pointer;
-    outline: none;
-}
-
-/* ── 이해도 체크 네비게이터 ──────────────────────────────────────── */
-.understandingRow {
+.filterRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--white);
-    border-radius: 0.625rem;
-    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.25);
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
-    gap: 0.5rem;
+    /* 왼쪽 체크박스 / 오른쪽 정렬버튼 */
+    margin-bottom: 0.75rem;
 }
 
-.navArrow {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: var(--gray600);
-    cursor: pointer;
-    padding: 0 0.25rem;
-    line-height: 1;
-    transition: color 0.15s;
-    flex-shrink: 0;
-}
-
-.navArrow:hover:not(:disabled) {
+/* 저도 궁금해요 체크박스 + 텍스트 묶음 */
+.curiousLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
     color: var(--black);
+    cursor: pointer;
+    user-select: none;
+    /* 레이블 드래그 선택 방지 */
 }
 
-.navArrow:disabled {
-    opacity: 0.25;
-    cursor: default;
+.curiousCheckbox {
+    width: 0.95rem;
+    height: 0.95rem;
+    cursor: pointer;
+    accent-color: var(--dark, #3cb371);
+    /* 체크박스 색상 */
 }
 
-.understandingLabel {
+/* 정렬 드롭다운 wrapper - position:relative로 자식의 absolute 기준점이 됨 */
+.sortWrapper {
+    position: relative;
+}
+
+.sortBtn {
+    background: none;
+    border: 1px solid var(--gray200, #e0e0e0);
+    border-radius: 6px;
+    padding: 0.3rem 0.7rem;
+    font-family: var(--font-main);
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--black);
+    transition: background 0.15s;
+}
+
+.sortBtn:hover {
+    background: var(--gray200, #f5f5f5);
+}
+
+/* 드롭다운 메뉴 - sortBtn 아래에 떠있어 */
+.sortMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    /* 버튼 바로 아래 */
+    background: var(--white);
+    border: 1px solid var(--gray200, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.12);
+    list-style: none;
+    padding: 0.3rem 0;
+    margin: 0;
+    z-index: 100;
+    /* 다른 요소 위로 올라오게 */
+    min-width: 90px;
+}
+
+.sortOption {
+    padding: 0.5rem 1rem;
+    font-family: var(--font-main);
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--black);
+    transition: background 0.1s;
+}
+
+.sortOption:hover {
+    background: var(--gray200, #f5f5f5);
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   이해도 체크 바 (이해했다 < >)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.understandBar {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex: 1;
+    background: var(--white);
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.12);
+    margin-bottom: 1.25rem;
 }
 
-.understandingText {
-    font-family: var(--font-main);
-    font-size: 1.1rem;
-    font-weight: 600;
+/* < > 화살표 버튼 */
+.arrowBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
     color: var(--black);
-}
-
-.understandingCount {
-    font-family: var(--font-main);
-    font-size: 1rem;
-    font-weight: 400;
-    color: var(--gray600);
-}
-
-.checkButtons {
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    padding: 0.2rem;
+    border-radius: 4px;
+    transition: background 0.15s;
     flex-shrink: 0;
 }
 
-.checkBtn {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 50%;
-    background: var(--white);
+.arrowBtn:hover {
+    background: var(--gray200, #f0f0f0);
+}
+
+/* 이해도 체크 이름 */
+.understandName {
+    flex: 1;
+    /* 남은 공간 차지 */
     font-family: var(--font-main);
-    font-size: 0.9375rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--black);
+    text-align: center;
+}
+
+/* 이해도 카운트 (13/29) */
+.understandCount {
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: var(--gray600, #757575);
+}
+
+/* O / X 공통 스타일 */
+.oxBtn {
+    background: none;
+    border: 1.5px solid var(--gray200, #e0e0e0);
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
     font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
-    border: 1.5px solid var(--gray200);
+    transition: all 0.15s;
+    flex-shrink: 0;
 }
 
-.checkO {
-    border-color: #4caf50;
-    color: #4caf50;
+/* O 버튼 (초록) */
+.oxO {
+    color: #3cb371;
 }
 
-.checkO:hover {
-    background: #f0faf0;
+.oxO:hover {
+    border-color: #3cb371;
+    background: rgba(60, 179, 113, 0.08);
 }
 
-.checkActive {
-    background: #4caf50;
-    color: var(--white);
+/* X 버튼 (회색/빨강) */
+.oxX {
+    color: var(--gray600, #9e9e9e);
 }
 
-.checkX {
-    border-color: #e53935;
-    color: #e53935;
+.oxX:hover {
+    border-color: #e57373;
+    color: #e57373;
+    background: rgba(229, 115, 115, 0.08);
 }
 
-.checkX:hover {
-    background: #fff5f5;
+/* 눌린 상태 */
+.oxActive {
+    border-color: currentColor;
+    background: rgba(0, 0, 0, 0.06);
 }
 
-.checkActiveX {
-    background: #e53935;
-    color: var(--white);
-}
 
-/* ── Question List ──────────────────────────────────────────────── */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   질문 목록
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
 .questionList {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-/* ── Question Card ──────────────────────────────────────────────── */
-.card {
+/* 질문 카드 하나 */
+.questionCard {
     background: var(--white);
-    border-radius: 0.625rem;
-    padding: 1rem;
-    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    /* 내부 요소가 border-radius 밖으로 안 튀어나오게 */
+    cursor: pointer;
     transition: box-shadow 0.2s;
 }
 
-.card:hover {
-    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.2);
+.questionCard:hover {
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.18);
 }
 
+/* 질문 헤더 (항상 보이는 부분) */
 .questionHeader {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.85rem 1rem;
 }
 
-.questionLeft {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    flex: 1;
-}
-
+/* Q. 아이콘 */
 .qIcon {
     font-family: var(--font-main);
-    font-size: 1rem;
-    font-weight: 800;
-    color: #ff9800;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #5cba5c;
     flex-shrink: 0;
-    line-height: 1.5;
 }
 
+/* 질문 텍스트 */
 .questionText {
+    flex: 1;
+    /* 남은 공간 차지 */
     font-family: var(--font-main);
     font-size: 1rem;
-    font-weight: 500;
     color: var(--black);
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
+/* 오른쪽 버튼 묶음 */
 .questionActions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     flex-shrink: 0;
+    /* 텍스트가 길어도 버튼은 줄어들지 않음 */
 }
 
-.solvedBadge {
-    background: #e8f5e9;
-    color: #388e3c;
-    font-family: var(--font-main);
-    font-size: 0.75rem;
+/* 좋아요 버튼 */
+.likeBtn {
+    background: none;
+    border: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--gray600, #757575);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    transition: color 0.15s;
+    padding: 0;
+}
+
+/* 좋아요 누른 상태 */
+.likeBtn.liked {
+    color: #2e7d32;
     font-weight: 600;
-    padding: 2px 0.5rem;
-    border-radius: 10px;
-    border: 1px solid #c8e6c9;
 }
 
-.likeBtn,
+/* 댓글달기 버튼 */
 .commentBtn {
     background: none;
     border: none;
-    font-family: var(--font-main);
-    font-size: 0.8125rem;
-    color: var(--gray600);
+    font-size: 0.8rem;
     cursor: pointer;
-    padding: 0.25rem 0.375rem;
-    border-radius: 6px;
-    transition: all 0.15s ease;
+    color: var(--gray600, #757575);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
     white-space: nowrap;
+    /* 줄바꿈 방지 */
+    transition: color 0.15s;
+    padding: 0;
 }
 
-.likeBtn:hover,
-.commentBtn:hover {
-    background: #f5f5f5;
+.commentBtn:hover,
+.likeBtn:hover {
     color: var(--black);
 }
 
-.liked {
-    color: #ff9800;
-}
 
-.questionMeta {
-    display: block;
-    font-family: var(--font-main);
-    font-size: 0.75rem;
-    color: var(--gray600);
-    margin-top: 0.375rem;
-    padding-left: 1.5rem;
-}
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   댓글 미리보기 (카드에서 항상 노출, 최대 3개)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-/* ── Comments ───────────────────────────────────────────────────── */
-.commentSection {
-    margin-top: 0.875rem;
-    border-top: 1px solid var(--gray200);
-    padding-top: 0.75rem;
+.commentPreview {
+    border-top: 1px solid var(--gray200, #eeeeee);
+    padding: 0.6rem 1rem 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
+    gap: 0.5rem;
 }
 
+/* 댓글 하나 */
 .commentItem {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
 }
 
+/* 작성자 이름 */
 .commentAuthor {
     font-family: var(--font-main);
-    font-size: 0.8125rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: var(--gray600);
+    color: var(--black);
     display: flex;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.25rem;
 }
 
+/* 운영진 이름은 파란색 */
+.staffAuthor {
+    color: #1565c0;
+}
+
+/* 운영진 배지 */
 .staffBadge {
-    background: #1976d2;
-    color: var(--white);
-    font-size: 0.625rem;
-    padding: 1px 0.375rem;
-    border-radius: 10px;
-    font-weight: 600;
+    font-size: 0.7rem;
 }
 
-.commentBody {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
+/* 댓글 내용 */
+.commentContent {
+    font-family: var(--font-main);
+    font-size: 0.875rem;
+    color: var(--gray600, #616161);
+    background: var(--gray200, #f5f5f5);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    line-height: 1.5;
+}
+
+/* 3개 초과 시 "외 N개 댓글" 안내 텍스트 */
+/* 상세 페이지에서 전체 댓글을 볼 수 있으므로 버튼이 아닌 텍스트로만 표시 */
+.commentMore {
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    color: var(--gray600, #9e9e9e);
     padding-left: 0.25rem;
 }
 
-.commentArrow {
-    color: var(--gray600);
-    font-size: 0.875rem;
-}
 
-.commentText {
-    font-family: var(--font-main);
-    font-size: 0.875rem;
-    color: var(--black);
-}
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   댓글 입력창 (댓글달기 버튼 눌렀을 때만 노출)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-.attachmentBtn {
-    background: #f0f4ff;
-    border: 1px solid #c5d0f0;
-    border-radius: 6px;
-    padding: 2px 0.5rem;
-    font-family: var(--font-main);
-    font-size: 0.75rem;
-    color: #1976d2;
-    cursor: pointer;
-}
-
-/* ── Comment Input ──────────────────────────────────────────────── */
 .commentInputRow {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.75rem;
-    border-top: 1px solid var(--gray200);
-    padding-top: 0.625rem;
+    border-top: 1px solid var(--gray200, #eeeeee);
+    padding: 0.6rem 1rem;
+    background: var(--white);
+    /* commentPreview 없이 바로 열릴 수도 있으니 border-top으로 구분 */
 }
 
+/* 입력창 내부 텍스트 필드 */
 .commentInput {
     flex: 1;
-    border: 1px solid var(--gray200);
+    border: 1.5px solid var(--gray200, #e0e0e0);
     border-radius: 20px;
-    padding: 0.5rem 0.875rem;
+    outline: none;
     font-family: var(--font-main);
     font-size: 0.875rem;
-    outline: none;
     color: var(--black);
-    background: #fafafa;
+    background: transparent;
+    padding: 0.35rem 0.85rem;
+    transition: border-color 0.15s;
 }
 
 .commentInput:focus {
-    border-color: var(--dark);
-    background: var(--white);
+    border-color: #5cba5c;
 }
 
-.commentSubmit {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: var(--dark);
-    color: var(--white);
+.commentInput::placeholder {
+    color: var(--gray600, #9e9e9e);
+}
+
+/* 댓글 제출 버튼 */
+.submitBtn {
+    background: #5cba5c;
+    color: white;
     border: none;
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
     font-size: 1rem;
-    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: opacity 0.15s;
+    transition: background 0.15s;
 }
 
-.commentSubmit:hover {
-    opacity: 0.8;
+.submitBtn:hover {
+    background: #4cae4c;
 }
 
-/* ── Floating Bar ───────────────────────────────────────────────── */
-.floatingBar {
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   하단 고정: 새 질문 입력창
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+.newQuestionBar {
+    /* 화면 하단에 고정 */
     position: fixed;
-    bottom: 1rem;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - 3rem);
-    max-width: 850px;
+    /* 가로 중앙 정렬 */
+    width: 100%;
+    max-width: 880px;
+
     background: var(--white);
-    border-radius: 28px;
-    box-shadow: 4px 4px 12px 0 rgba(0, 0, 0, 0.15);
+    border-top: 1px solid var(--gray200, #eeeeee);
+    padding: 0.6rem 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    /* 에러메시지(위) + 입력행(아래) 세로 배치 */
+    gap: 0.35rem;
+    box-sizing: border-box;
+}
+
+/* 에러 메시지 (API 실패 시) */
+.errorMsg {
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    color: #e53935;
+    margin: 0;
+    text-align: center;
+}
+
+/* + 아이콘 + input + 버튼 가로 배치 wrapper */
+.newQuestionInputRow {
     display: flex;
     align-items: center;
-    padding: 0.5rem 0.5rem 0.5rem 0.875rem;
     gap: 0.5rem;
 }
 
-.floatingPlus {
-    font-size: 1.125rem;
-    color: var(--gray600);
-    flex-shrink: 0;
-    cursor: pointer;
-    font-weight: 300;
+/* 비활성화 상태 (요청 중) */
+.newQuestionInput:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-.floatingInput {
+.newQuestionSubmit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.newQuestionPlus {
+    font-size: 1.2rem;
+    color: var(--gray600, #9e9e9e);
+    flex-shrink: 0;
+}
+
+.newQuestionInput {
     flex: 1;
     border: none;
     outline: none;
     font-family: var(--font-main);
-    font-size: 0.9375rem;
+    font-size: 0.95rem;
     color: var(--black);
     background: transparent;
 }
 
-.floatingInput::placeholder {
-    color: var(--gray600);
+.newQuestionInput::placeholder {
+    color: var(--gray600, #bdbdbd);
 }
 
-.floatingSubmit {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 50%;
-    background: var(--dark);
-    color: var(--white);
+.newQuestionSubmit {
+    background: #5cba5c;
+    color: white;
     border: none;
-    font-size: 1rem;
-    font-weight: 700;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: opacity 0.15s;
+    transition: background 0.15s;
 }
 
-.floatingSubmit:hover:not(:disabled) {
-    opacity: 0.8;
-}
-
-.floatingSubmit:disabled {
-    opacity: 0.4;
-    cursor: default;
+.newQuestionSubmit:hover {
+    background: #4cae4c;
 }

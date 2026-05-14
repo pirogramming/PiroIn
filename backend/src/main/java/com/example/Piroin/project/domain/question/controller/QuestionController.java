@@ -2,8 +2,11 @@ package com.example.Piroin.project.domain.question.controller;
 
 import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
 import com.example.Piroin.project.domain.question.dto.QuestionResDTO;
+import com.example.Piroin.project.domain.question.exception.code.QuestionSuccessCode;
 import com.example.Piroin.project.domain.question.service.QuestionService;
 import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.global.response.ApiResponse;
+import com.example.Piroin.project.global.response.ResponseUtil;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +18,17 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService questionService;
+
+    @GetMapping("/{sessionId}/questions")
+    public ResponseEntity<ApiResponse<QuestionResDTO.QuestionRoomResponse>> getQuestionRoom(
+            @PathVariable Long sessionId,
+            @RequestParam(defaultValue = "0") int understandingIndex
+    ) {
+        QuestionResDTO.QuestionRoomResponse response =
+                questionService.getQuestionRoom(sessionId, understandingIndex);
+
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
+    }
 
     /*
     질문 등록

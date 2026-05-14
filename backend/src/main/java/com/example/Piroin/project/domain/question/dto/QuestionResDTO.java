@@ -4,7 +4,9 @@ import com.example.Piroin.project.domain.question.entity.Question;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class QuestionResDTO {
     /*
@@ -30,5 +32,60 @@ public class QuestionResDTO {
                     .createdAt(question.getCreatedAt())
                     .build();
         }
+    }
+
+    public record QuestionRoomResponse(
+            SessionResponse session,
+            UnderstandingSliceResponse understanding,
+            QuestionGroupsResponse questions
+    ) {
+    }
+
+    public record SessionResponse(
+            Long sessionId,
+            Integer week,
+            String dayOfWeek,
+            String dayPart,
+            LocalDate sessionDate,
+            String title
+    ) {
+    }
+
+    public record UnderstandingSliceResponse(
+            UnderstandingCheckResponse current,
+            Integer currentIndex,
+            Integer totalCount,
+            Boolean hasOlder,
+            Boolean hasNewer
+    ) {
+    }
+
+    public record UnderstandingCheckResponse(
+            Long checkId,
+            String title,
+            String description,
+            Integer understoodCount,
+            Integer notUnderstoodCount,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    public record QuestionGroupsResponse(
+            List<QuestionSummaryResponse> popularQuestions,
+            List<QuestionSummaryResponse> unresolvedQuestions,
+            List<QuestionSummaryResponse> resolvedQuestions
+    ) {
+    }
+
+    public record QuestionSummaryResponse(
+            Long questionId,
+            String content,
+            String imageUrl,
+            Boolean isResolved,
+            Boolean isPopular,
+            Integer likeCount,
+            Integer commentCount,
+            LocalDateTime createdAt
+    ) {
     }
 }

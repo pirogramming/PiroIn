@@ -16,8 +16,6 @@
 }
 
 .weekLogo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
   width: 36px;
   height: 36px;
 }
@@ -39,13 +37,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
-  align-items: start; /* 이거 추가! */
+  align-items: start;
 }
 
 .card {
   background-color: var(--white);
   border-radius: 16px;
-  padding: 20px;
+  padding: 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
@@ -58,14 +56,14 @@
 
 .cardTitleWrap {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .cardTitle {
   font-family: var(--font-main);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 550;
   color: var(--black);
 }
 
@@ -75,71 +73,111 @@
 }
 
 .toggle {
-  color: var(--main);
-  font-size: 14px;
+  color: var(--dark);
+  font-size: 20px;
 }
 
 .cardBody {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .sectionRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
   color: var(--black);
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .host {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--gray600);
+  font-weight: 500;
 }
 
-.link {
-  font-size: 13px;
-  color: var(--main);
+.file_row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
   text-decoration: none;
-  font-weight: 600;
 }
 
-.label {
-  font-size: 13px;
+.file_row:hover .file,
+.file_row:hover .file_name {
+  color: var(--main);
+}
+
+.video_row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-decoration: none;
+}
+
+.video_row:hover .video,
+.video_row:hover .video_pw {
+  color: var(--main);
+  transition: all 0.1s ease-in-out;
+}
+
+.file {
+  font-size: 16px;
+  color: var(--black);
+  font-weight: 500;
+  margin-left: 27px;
+}
+
+.file_name {
+  font-size: 14px;
   color: var(--gray600);
 }
 
-.value {
-  font-size: 13px;
+.video {
+  font-size: 16px;
+  color: var(--black);
+  margin-left: 27px;
+  font-weight: 500;
+}
+
+.video_pw {
+  font-size: 14px;
   color: var(--gray600);
 }
 
 .divider {
-  height: 1px;
+  height: 1.2px;
   background-color: var(--gray200);
-  margin: 12px 0;
+  margin: 20px 0;
 }
 
 .assignmentLabel {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--main);
-  margin-bottom: 4px;
+  color: var(--dark);
+  margin-left: 25px;
 }
 
 .assignmentText {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--gray600);
   margin: 0;
+  margin-left: 25px;
 }
 
 .placeholder {
@@ -147,4 +185,17 @@
   color: var(--gray200);
   text-align: center;
   padding: 12px 0;
+}
+
+.amIcon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.pmIcon {
+  width: 15px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 5px;
 }

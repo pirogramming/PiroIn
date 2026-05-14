@@ -4,6 +4,7 @@ import com.example.Piroin.project.domain.question.entity.Question;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class QuestionResDTO {
             Integer week,
             String dayOfWeek,
             String dayPart,
-            String sessionDate,
+            LocalDate sessionDate,
             String title
     ) {
     }

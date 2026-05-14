@@ -93,7 +93,7 @@ public class QuestionService {
                 session.getWeek().intValue(),
                 session.getSessionDate().getDayOfWeek().name(),
                 session.getDayPart().name(),
-                session.getSessionDate().toString(),
+                session.getSessionDate(),
                 session.getTitle()
         );
     }

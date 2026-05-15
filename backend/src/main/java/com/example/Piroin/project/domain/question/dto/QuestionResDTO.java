@@ -1,6 +1,7 @@
 package com.example.Piroin.project.domain.question.dto;
 
 import com.example.Piroin.project.domain.question.entity.Question;
+import com.example.Piroin.project.domain.question.enums.UnderstandResChoice;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -86,6 +87,14 @@ public class QuestionResDTO {
             Integer likeCount,
             Integer commentCount,
             LocalDateTime createdAt
+    ) {
+    }
+
+    public record UnderstandingResponseResult(
+            Long checkId,
+            UnderstandResChoice selectedChoice,
+            Integer understoodCount,
+            Integer notUnderstoodCount
     ) {
     }
 }

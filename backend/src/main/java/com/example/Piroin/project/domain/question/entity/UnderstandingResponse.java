@@ -44,5 +44,13 @@ public class UnderstandingResponse {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-}
 
+    public boolean hasChoice(UnderstandResChoice choice) {
+        return this.choice == choice;
+    }
+
+    public void changeChoice(UnderstandResChoice choice) {
+        this.choice = choice;
+        this.updatedAt = LocalDateTime.now();
+    }
+}

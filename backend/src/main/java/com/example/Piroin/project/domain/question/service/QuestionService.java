@@ -6,6 +6,7 @@ import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
 import com.example.Piroin.project.domain.question.dto.QuestionResDTO;
 import com.example.Piroin.project.domain.question.entity.Question;
 import com.example.Piroin.project.domain.question.entity.UnderstandingCheck;
+import com.example.Piroin.project.domain.question.entity.UnderstandingResponse;
 import com.example.Piroin.project.domain.question.enums.UnderstandResChoice;
 import com.example.Piroin.project.domain.question.exception.QuestionException;
 import com.example.Piroin.project.domain.question.repository.QuestionCommentRepository;
@@ -13,6 +14,7 @@ import com.example.Piroin.project.domain.question.repository.QuestionRepository;
 import com.example.Piroin.project.domain.question.repository.UnderstandingCheckRepository;
 import com.example.Piroin.project.domain.question.repository.UnderstandingResponseRepository;
 import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,6 +37,7 @@ public class QuestionService {
     private final UnderstandingCheckRepository understandingCheckRepository;
     private final UnderstandingResponseRepository understandingResponseRepository;
     private final CurriculumRepository curriculumRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public QuestionResDTO.QuestionRoomResponse getQuestionRoom(Long sessionId, int understandingIndex) {
@@ -51,19 +54,41 @@ public class QuestionService {
         );
     }
 
+    @Transactional
+    public QuestionResDTO.UnderstandingResponseResult respondUnderstandingCheck(
+            Long sessionId,
+            Long checkId,
+            QuestionReqDTO.UnderstandingResponseReq request,
+            Long userId
+    ) {
+        if (request == null || request.getChoice() == null) {
+            throw new IllegalArgumentException("이해도 응답 선택지는 필수입니다.");
+        }
+
+        User loginUser = findLoginUser(userId);
+        StudySession session = findSession(sessionId);
+        UnderstandingCheck check = findUnderstandingCheck(checkId);
+        validateCheckBelongsToSession(check, session);
+
+        UnderstandResChoice selectedChoice = applyUnderstandingResponse(check, loginUser, request.getChoice());
+        return toUnderstandingResponseResult(check, selectedChoice);
+    }
+
     /*
     질문 등록
     
     @param sessionId  질문이 달릴 세션 ID
     @param request    질문 내용 (content)
-    @param loginUser  현재 로그인된 유저
+    @param userId     JWT 인증에서 추출한 현재 로그인 유저 ID
     */
     @Transactional
     public QuestionResDTO.CreateRes createQuestion(
             Long sessionId,
             QuestionReqDTO.CreateReq request,
-            User loginUser
+            Long userId
     ) {
+        User loginUser = findLoginUser(userId);
+
         // 1. 세션 존재 여부 확인
         StudySession session = findSession(sessionId);
 
@@ -80,6 +105,69 @@ public class QuestionService {
 
         // 3. DB 저장 후 DTO 변환하여 반환
         return QuestionResDTO.CreateRes.from(questionRepository.save(question));
+    }
+
+    private User findLoginUser(Long userId) {
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.UNAUTHORIZED, "로그인 사용자를 찾을 수 없습니다."));
+    }
+
+    private UnderstandingCheck findUnderstandingCheck(Long checkId) {
+        return understandingCheckRepository.findById(checkId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "이해도 체크를 찾을 수 없습니다."));
+    }
+
+    private void validateCheckBelongsToSession(UnderstandingCheck check, StudySession session) {
+        if (!check.getSession().getId().equals(session.getId())) {
+            throw new IllegalArgumentException("해당 세션의 이해도 체크가 아닙니다.");
+        }
+    }
+
+    private UnderstandResChoice applyUnderstandingResponse(
+            UnderstandingCheck check,
+            User loginUser,
+            UnderstandResChoice requestedChoice
+    ) {
+        UnderstandingResponse response = understandingResponseRepository
+                .findByCheckAndUser(check, loginUser)
+                .orElse(null);
+
+        if (response == null) {
+            LocalDateTime now = LocalDateTime.now();
+            understandingResponseRepository.save(UnderstandingResponse.builder()
+                    .check(check)
+                    .user(loginUser)
+                    .choice(requestedChoice)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build());
+            return requestedChoice;
+        }
+
+        // 같은 버튼을 다시 누르면 인스타그램 좋아요처럼 기존 응답을 취소한다.
+        if (response.hasChoice(requestedChoice)) {
+            understandingResponseRepository.delete(response);
+            return null;
+        }
+
+        response.changeChoice(requestedChoice);
+        return requestedChoice;
+    }
+
+    private QuestionResDTO.UnderstandingResponseResult toUnderstandingResponseResult(
+            UnderstandingCheck check,
+            UnderstandResChoice selectedChoice
+    ) {
+        return new QuestionResDTO.UnderstandingResponseResult(
+                check.getId(),
+                selectedChoice,
+                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
+                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD)
+        );
     }
 
     private StudySession findSession(Long sessionId) {

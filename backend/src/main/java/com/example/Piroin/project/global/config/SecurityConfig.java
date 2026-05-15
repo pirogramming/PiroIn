@@ -39,6 +39,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{id}").hasRole("ADMIN")
 
+                        // Swagger
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
                         // 다른 도메인 권한 설정 필요 시 위 패턴 참고해서 추가
                         // 단, 추가하지 않아도 무방함
                         // 이유 1. anyRequest().authenticated()로 비로그인 접근 차단

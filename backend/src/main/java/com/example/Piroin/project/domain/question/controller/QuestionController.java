@@ -31,6 +31,23 @@ public class QuestionController {
  
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
     }
+
+    // 이해도 체크 응답
+    // POST /api/sessions/{sessionId}/understanding-checks/{checkId}/responses
+    @PostMapping("/{sessionId}/understanding-checks/{checkId}/responses")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UnderstandingResponseResult>> respondUnderstandingCheck(
+            @PathVariable Long sessionId,
+            @PathVariable Long checkId,
+            @RequestBody QuestionReqDTO.UnderstandingResponseReq request,
+            HttpSession httpSession
+    ) {
+        User loginUser = (User) httpSession.getAttribute("loginUser");
+
+        QuestionResDTO.UnderstandingResponseResult response =
+                questionService.respondUnderstandingCheck(sessionId, checkId, request, loginUser);
+
+        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK, response);
+    }
  
     // 질문 등록
     // POST /api/sessions/{sessionId}/questions

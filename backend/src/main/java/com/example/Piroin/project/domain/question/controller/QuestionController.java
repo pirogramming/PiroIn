@@ -4,13 +4,11 @@ import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
 import com.example.Piroin.project.domain.question.dto.QuestionResDTO;
 import com.example.Piroin.project.domain.question.exception.code.QuestionSuccessCode;
 import com.example.Piroin.project.domain.question.service.QuestionService;
-import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.global.response.ApiResponse;
 import com.example.Piroin.project.global.response.ResponseUtil;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -39,12 +37,10 @@ public class QuestionController {
             @PathVariable Long sessionId,
             @PathVariable Long checkId,
             @RequestBody QuestionReqDTO.UnderstandingResponseReq request,
-            HttpSession httpSession
+            @AuthenticationPrincipal Long userId
     ) {
-        User loginUser = (User) httpSession.getAttribute("loginUser");
-
         QuestionResDTO.UnderstandingResponseResult response =
-                questionService.respondUnderstandingCheck(sessionId, checkId, request, loginUser);
+                questionService.respondUnderstandingCheck(sessionId, checkId, request, userId);
 
         return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK, response);
     }
@@ -55,12 +51,10 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
-            HttpSession httpSession
+            @AuthenticationPrincipal Long userId
     ) {
-        User loginUser = (User) httpSession.getAttribute("loginUser");
- 
         QuestionResDTO.CreateRes response =
-                questionService.createQuestion(sessionId, request, loginUser);
+                questionService.createQuestion(sessionId, request, userId);
  
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED, response);
     }

@@ -14,6 +14,7 @@ import com.example.Piroin.project.domain.question.repository.QuestionRepository;
 import com.example.Piroin.project.domain.question.repository.UnderstandingCheckRepository;
 import com.example.Piroin.project.domain.question.repository.UnderstandingResponseRepository;
 import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +37,7 @@ public class QuestionService {
     private final UnderstandingCheckRepository understandingCheckRepository;
     private final UnderstandingResponseRepository understandingResponseRepository;
     private final CurriculumRepository curriculumRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public QuestionResDTO.QuestionRoomResponse getQuestionRoom(Long sessionId, int understandingIndex) {
@@ -57,15 +59,13 @@ public class QuestionService {
             Long sessionId,
             Long checkId,
             QuestionReqDTO.UnderstandingResponseReq request,
-            User loginUser
+            Long userId
     ) {
-        if (loginUser == null) {
-            throw new IllegalStateException("로그인이 필요합니다.");
-        }
         if (request == null || request.getChoice() == null) {
             throw new IllegalArgumentException("이해도 응답 선택지는 필수입니다.");
         }
 
+        User loginUser = findLoginUser(userId);
         StudySession session = findSession(sessionId);
         UnderstandingCheck check = findUnderstandingCheck(checkId);
         validateCheckBelongsToSession(check, session);
@@ -79,14 +79,16 @@ public class QuestionService {
     
     @param sessionId  질문이 달릴 세션 ID
     @param request    질문 내용 (content)
-    @param loginUser  현재 로그인된 유저
+    @param userId     JWT 인증에서 추출한 현재 로그인 유저 ID
     */
     @Transactional
     public QuestionResDTO.CreateRes createQuestion(
             Long sessionId,
             QuestionReqDTO.CreateReq request,
-            User loginUser
+            Long userId
     ) {
+        User loginUser = findLoginUser(userId);
+
         // 1. 세션 존재 여부 확인
         StudySession session = findSession(sessionId);
 
@@ -103,6 +105,15 @@ public class QuestionService {
 
         // 3. DB 저장 후 DTO 변환하여 반환
         return QuestionResDTO.CreateRes.from(questionRepository.save(question));
+    }
+
+    private User findLoginUser(Long userId) {
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.UNAUTHORIZED, "로그인 사용자를 찾을 수 없습니다."));
     }
 
     private UnderstandingCheck findUnderstandingCheck(Long checkId) {

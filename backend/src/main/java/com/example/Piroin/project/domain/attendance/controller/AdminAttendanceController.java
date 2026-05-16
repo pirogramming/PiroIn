@@ -27,7 +27,7 @@ public class AdminAttendanceController {
     private final AttendanceService attendanceService;
 
     // 1. 출석체크 시작
-    @Operation(summary = "출석 체크 시작", description = "새로운 출석 코드를 생성하고 출석 체크를 시작합니다.")
+    @Operation(summary = "출석 체크 시작(출석코드 생성)", description = "새로운 출석 코드를 생성하고 출석 체크를 시작합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 코드 생성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")

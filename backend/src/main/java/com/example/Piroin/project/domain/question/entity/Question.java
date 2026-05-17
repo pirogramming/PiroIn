@@ -47,4 +47,10 @@ public class Question {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 댓글이 새로 달리면 미해결로 되돌리도록
+    public void markUnresolved() {
+        this.isResolved = false;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

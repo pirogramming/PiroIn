@@ -14,13 +14,12 @@ public class UserService {
 
     public User login(String name, String password) {
         User user = userRepository.findByName(name)
-                .orElseThrow(() -> new InvalidLoginException("해당 사용자가 존재하지 않습니다.")); //401
+                .orElseThrow(() -> new InvalidLoginException("해당 사용자가 존재하지 않습니다."));
 
         if (!user.getPassword().equals(password)) {
-            throw new InvalidLoginException("비밀번호가 일치하지 않습니다."); //401
+            throw new InvalidLoginException("비밀번호가 일치하지 않습니다.");
         }
 
         return user;
     }
 }
-

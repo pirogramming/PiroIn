@@ -47,7 +47,7 @@ public class AttendanceService {
 
 
 
-    // 1. 출석 시작 코드
+    // 1. 출석 시작 코드 (출석코드 생성 함수)
     // 출석 시작은 이제 date/order가 아니라 studySessionId를 받아야 함.
     @Transactional
     public AttendanceCode generateCodeAndCreateAttendances(Long studySessionId) {
@@ -95,7 +95,14 @@ public class AttendanceService {
         return attendanceCode;
     }
 
-    // 2. 출석 체크
+    // 2. 현재 활성화된 출석코드 조회 함수
+    public Optional<AttendanceCode> getActiveAttendanceCode() {
+        // 기존: List로 받아서 0번째 꺼내기 (비어있을 시 위험)
+        // 수정: 레파지토리의 findFirst 기능을 사용하여 가장 최신 활성 코드 하나만 안전하게 조회
+        return attendanceCodeRepository.findFirstByIsExpiredFalseOrderByIdDesc();
+    }
+
+    // 3. 출석 체크
     @Transactional
     public AttendanceMarkResponse markAttendance(Long userId, Long studySessionId, String inputCode) {
         // 사용자가 입력한 코드가 이 세션의 코드가 맞는지 확인
@@ -136,7 +143,7 @@ public class AttendanceService {
     }
 
 
-    // 3. 출석 코드 만료시키기.
+    // 4. 출석 코드 만료시키기.
     @Transactional
     public String expireActiveAttendanceCode() {
         AttendanceCode activeCode = attendanceCodeRepository
@@ -157,50 +164,6 @@ public class AttendanceService {
         return "출석 코드가 성공적으로 만료되었습니다.";
     }
 
-
-    // 4. 현재 활성화된 출석코드 조회 함수
-    public Optional<AttendanceCode> getActiveAttendanceCode() {
-        // 기존: List로 받아서 0번째 꺼내기 (비어있을 시 위험)
-        // 수정: 레파지토리의 findFirst 기능을 사용하여 가장 최신 활성 코드 하나만 안전하게 조회
-        return attendanceCodeRepository.findFirstByIsExpiredFalseOrderByIdDesc();
-    }
-
-
-//    // 유저의 전체 출석 현황을 조회하는 함수
-//    public List<AttendanceStatusRes> findByUserId(Long userId) {
-//        List<Attendance> attendances = attendanceRepository.findByUserId(userId);
-//
-//        // 날짜별로 그룹화
-//        Map<LocalDate, List<Attendance>> grouped = attendances.stream()
-//                .collect(Collectors.groupingBy(Attendance::getDate));
-//
-//        // 날짜별로 DTO 변환
-//        return grouped.entrySet().stream()
-//                .map(entry -> {
-//                    LocalDate date = entry.getKey();
-//                    List<AttendanceSlotRes> slots = entry.getValue().stream()
-//                            .map(a -> new AttendanceSlotRes(a.getOrder(), a.isStatus()))
-//                            .sorted(Comparator.comparingInt(AttendanceSlotRes::getOrder))
-//                            .toList();
-//
-//                    AttendanceStatusRes dto = new AttendanceStatusRes();
-//                    dto.setDate(date);
-//                    dto.setSlots(slots);
-//                    return dto;
-//                })
-//                .sorted(Comparator.comparing(AttendanceStatusRes::getDate).reversed())
-//                .toList();
-//    }
-
-//    // 유저의 특정 날짜의 출석 현황을 조회하는 함수
-//    public List<AttendanceSlotRes> findByUserIdAndDate(Long userId, LocalDate date) {
-//        List<Attendance> attendances = attendanceRepository.findByUserIdAndDate(userId, date);
-//
-//        return attendances.stream()
-//                .map(a -> new AttendanceSlotRes(a.getOrder(), a.isStatus()))
-//                .sorted(Comparator.comparingInt(AttendanceSlotRes::getOrder))
-//                .toList();
-//    }
 
     // 5. 유저의 특정 날짜의 출석 현황을 조회하는 함수
     public List<AttendanceSlotRes> findByUserIdAndDate(Long userId, LocalDate date) {
@@ -247,10 +210,13 @@ public class AttendanceService {
                 .toList();
     }
 
+    // 6. 유저 상태 변경 (관리자)
+    // 컨트롤러 부분은 출석만 받는데 여기는 출석&과제 둘 다 받아서 추후에 수정 예정
     @Transactional
     public boolean updateUserStatus(Long userId, UpdateUserStatusReq req) {
         boolean updated = false;
 
+        // 출석 상태 변경 코드
         if (req.getAttendanceId() != null && req.getAttendanceStatus() != null) {
             Attendance attendance = attendanceRepository.findById(req.getAttendanceId())
                     .orElseThrow(() -> new IllegalArgumentException("출석 기록을 찾을 수 없습니다."));
@@ -263,6 +229,7 @@ public class AttendanceService {
             updated = true;
         }
 
+        // 과제 상태 변경 코드
         if (req.getAssignmentItemId() != null && req.getAssignmentStatus() != null) {
             AssignmentItem assignmentItem = assignmentItemRepository.findById(req.getAssignmentItemId())
                     .orElseThrow(() -> new IllegalArgumentException("과제 기록을 찾을 수 없습니다."));
@@ -275,6 +242,7 @@ public class AttendanceService {
             updated = true;
         }
 
+        // 출석 변경 → 보증금 재계산 (과제 변경도 포함이 되어 있나..?)
         if (updated) {
             depositService.recalculateDeposit(userId);
         }
@@ -308,113 +276,3 @@ public class AttendanceService {
 
  */
 
-
-
-//
-//    // 특정 날짜와 차수의 모든 학생 출석 현황 조회
-//    public List<UserAttendanceStatusRes> findAllByDateAndOrder(LocalDate date, int order) {
-//        // 해당 날짜와 차수에 대한 모든 출석 기록 조회
-//        List<Attendance> attendances = attendanceRepository.findByDateAndOrder(date, order);
-//
-//        // 사용자별로 DTO 변환
-//        return attendances.stream()
-//                .map(attendance -> {
-//                    User user = attendance.getUser();
-//                    return UserAttendanceStatusRes.builder()
-//                            .userId(user.getId())
-//                            .username(user.getName())
-//                            .date(attendance.getDate())
-//                            .order(attendance.getOrder())
-//                            .status(attendance.isStatus())
-//                            .attendanceId(attendance.getId())  // 출석 기록 ID 추가
-//                            .build();
-//                })
-//                .sorted(Comparator.comparing(UserAttendanceStatusRes::getUsername))
-//                .toList();
-//    }
-
-
-//    // 특정 학생의 모든 출석 현황 조회
-//    public List<UserAttendanceStatusRes> findAllByUserId(Long userId) {
-//        // 해당 사용자의 모든 출석 기록 조회
-//        List<Attendance> attendances = attendanceRepository.findByUserId(userId);
-//
-//        // DTO 변환
-//        return attendances.stream()
-//                .map(attendance -> {
-//                    User user = attendance.getUser();
-//                    return UserAttendanceStatusRes.builder()
-//                            .userId(user.getId())
-//                            .username(user.getName())
-//                            .date(attendance.getDate())
-//                            .order(attendance.getOrder())
-//                            .status(attendance.isStatus())
-//                            .attendanceId(attendance.getId())
-//                            .build();
-//                })
-//                .sorted(Comparator.comparing(UserAttendanceStatusRes::getDate).reversed()
-//                        .thenComparing(UserAttendanceStatusRes::getOrder))
-//                .toList();
-//    }
-//
-//    // 특정 사용자의 특정 출석 기록 삭제
-//    @Transactional
-//    public boolean deleteAttendance(Long attendanceId) {
-//        Optional<Attendance> attendanceOpt = attendanceRepository.findById(attendanceId);
-//
-//        if (attendanceOpt.isEmpty()) {
-//            return false;
-//        }
-//
-//        Attendance attendance = attendanceOpt.get(); // 변수로 저장
-//        Long userId = attendance.getUser().getId();
-//
-//        attendanceRepository.delete(attendance);
-//
-//        // 출석 삭제 후 보증금 재계산
-//        depositService.recalculateDeposit(userId);
-//        return true;
-//    }
-
-//    // 특정 사용자의 특정 날짜와 차수 출석 기록 조회
-//    public UserAttendanceStatusRes findByUserIdAndDateAndOrder(Long userId, LocalDate date, int order) {
-//        Optional<Attendance> attendanceOpt = attendanceRepository.findByUserIdAndDateAndOrder(userId, date, order);
-//
-//        if (attendanceOpt.isEmpty()) {
-//            return null;
-//        }
-//
-//        Attendance attendance = attendanceOpt.get();
-//        User user = attendance.getUser();
-//
-//        return UserAttendanceStatusRes.builder()
-//                .userId(user.getId())
-//                .username(user.getName())
-//                .date(attendance.getDate())
-//                .order(attendance.getOrder())
-//                .status(attendance.isStatus())
-//                .attendanceId(attendance.getId())
-//                .build();
-//    }
-
-//    // 특정 출석 ID로 출석 기록 조회
-//    public UserAttendanceStatusRes findById(Long attendanceId) {
-//        Optional<Attendance> attendanceOpt = attendanceRepository.findById(attendanceId);
-//
-//        if (attendanceOpt.isEmpty()) {
-//            return null;
-//        }
-//
-//        Attendance attendance = attendanceOpt.get();
-//        User user = attendance.getUser();
-//
-//        return UserAttendanceStatusRes.builder()
-//                .userId(user.getId())
-//                .username(user.getName())
-//                .date(attendance.getDate())
-//                .order(attendance.getOrder())
-//                .status(attendance.isStatus())
-//                .attendanceId(attendance.getId())
-//                .build();
-//    }
-//}

@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "출석 체크 요청")
 public class MarkAttendanceReq {
-    @Schema(description = "사용자 ID", example = "1")
-    private Long userId;
-
     @Schema(description = "스터디 세션 ID", example = "1")
     private Long studySessionId;
 

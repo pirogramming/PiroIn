@@ -12,6 +12,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+//import com.example.Piroin.project.global.util.SecurityUtil;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -41,10 +43,11 @@ public class AttendanceController {
                     required = true,
                     content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
             )
-            @RequestBody MarkAttendanceReq req) {
-
+            @RequestBody MarkAttendanceReq req,
+            @AuthenticationPrincipal Long userId
+    ) {
         AttendanceMarkResponse response = attendanceService.markAttendance(
-                req.getUserId(),
+                userId,
                 req.getStudySessionId(),
                 req.getCode()
         );
@@ -73,9 +76,7 @@ public class AttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음")
     })
     @GetMapping("/user")
-    public ApiResponse<List<AttendanceStatusRes>> getAttendanceByUserId(
-            @Parameter(description = "사용자 ID", required = true)
-            @RequestParam Long userId) {
+    public ApiResponse<List<AttendanceStatusRes>> getAttendanceByUserId(@AuthenticationPrincipal Long userId) {
         return ApiResponse.success(attendanceService.findByUserId(userId));
     }
 
@@ -88,10 +89,9 @@ public class AttendanceController {
     })
     @GetMapping("/user/date")
     public ApiResponse<List<AttendanceSlotRes>> getAttendanceByUserIdAndDate(
-            @Parameter(description = "사용자 ID", required = true)
-            @RequestParam Long userId,
             @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", required = true)
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal Long userId
     ) {
         return ApiResponse.success(attendanceService.findByUserIdAndDate(userId, date));
     }

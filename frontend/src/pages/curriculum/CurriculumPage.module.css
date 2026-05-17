@@ -1,0 +1,201 @@
+.page {
+  padding: 40px 60px;
+  background-color: var(--gray50);
+  min-height: 100vh;
+}
+
+.weekSection {
+  margin-bottom: 48px;
+}
+
+.weekHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.weekLogo {
+  width: 36px;
+  height: 36px;
+}
+
+.weekLogo img {
+  width: 36px;
+  height: 36px;
+}
+
+.weekTitle {
+  font-family: var(--font-main);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--black);
+  margin: 0;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.card {
+  background-color: var(--white);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.cardTitleWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-family: var(--font-main);
+  font-size: 20px;
+  font-weight: 550;
+  color: var(--black);
+}
+
+.cardDate {
+  font-size: 12px;
+  color: var(--gray200);
+}
+
+.toggle {
+  color: var(--dark);
+  font-size: 20px;
+}
+
+.cardBody {
+  margin-top: 8px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.sectionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--black);
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.host {
+  font-size: 14px;
+  color: var(--gray600);
+  font-weight: 500;
+}
+
+.file_row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-decoration: none;
+}
+
+.file_row:hover .file,
+.file_row:hover .file_name {
+  color: var(--main);
+}
+
+.video_row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  text-decoration: none;
+}
+
+.video_row:hover .video,
+.video_row:hover .video_pw {
+  color: var(--main);
+  transition: all 0.1s ease-in-out;
+}
+
+.file {
+  font-size: 16px;
+  color: var(--black);
+  font-weight: 500;
+  margin-left: 27px;
+}
+
+.file_name {
+  font-size: 14px;
+  color: var(--gray600);
+}
+
+.video {
+  font-size: 16px;
+  color: var(--black);
+  margin-left: 27px;
+  font-weight: 500;
+}
+
+.video_pw {
+  font-size: 14px;
+  color: var(--gray600);
+}
+
+.divider {
+  height: 1.2px;
+  background-color: var(--gray200);
+  margin: 20px 0;
+}
+
+.assignmentLabel {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark);
+  margin-left: 25px;
+}
+
+.assignmentText {
+  font-size: 14px;
+  color: var(--gray600);
+  margin: 0;
+  margin-left: 25px;
+}
+
+.placeholder {
+  font-size: 13px;
+  color: var(--gray200);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.amIcon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+.pmIcon {
+  width: 15px;
+  height: 20px;
+  vertical-align: middle;
+  margin-right: 5px;
+}

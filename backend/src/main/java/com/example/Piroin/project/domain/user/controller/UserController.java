@@ -3,12 +3,10 @@ package com.example.Piroin.project.domain.user.controller;
 import com.example.Piroin.project.domain.user.dto.LoginRequest;
 import com.example.Piroin.project.domain.user.dto.LoginResponse;
 import com.example.Piroin.project.domain.user.entity.User;
-import com.example.Piroin.project.domain.user.repository.UserRepository;
 import com.example.Piroin.project.domain.user.service.UserService;
+import com.example.Piroin.project.global.jwt.JwtUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,26 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final JwtUtil jwtUtil;
 
-    // 로그인
-    @Operation(summary = "로그인", description = "사용자 이름과 비밀번호로 로그인하고 세션을 생성합니다.")
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request, HttpSession session) {
+    @Operation(summary = "로그인", description = "이름과 비밀번호로 로그인하고 JWT 토큰을 발급합니다.")
+    @PostMapping("/auth/login")
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
         User user = userService.login(request.getName(), request.getPassword());
-
-        //세션에 로그인 정보 저장
-        session.setAttribute("loginUser", user);
-
-        // 사용자 정보 응답
-        return ResponseEntity.ok(new LoginResponse(user));
-    }
-
-    // 로그아웃
-    @Operation(summary = "로그아웃", description = "세션을 종료하여 로그아웃합니다.")
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpSession session) {
-        session.invalidate(); // 세션 종료 (메모리에서 삭제)
-        return ResponseEntity.ok().build();  // 본문은 없음 (void)
+        String token = jwtUtil.generateToken(user.getId(), user.getRole().name());
+        return ResponseEntity.ok(new LoginResponse(user, token));
     }
 
 

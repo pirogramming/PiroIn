@@ -77,7 +77,7 @@ public class AttendanceController {
     })
     @GetMapping("/user")
     public ApiResponse<List<AttendanceStatusRes>> getAttendanceByUserId(@AuthenticationPrincipal Long userId) {
-        return ApiResponse.success(attendanceService.findByUserId(userId));
+        return ApiResponse.success(attendanceService.findByUserId(Math.toIntExact(userId)));
     }
 
     // 3. 특정 유저의 특정 일자 출석 정보
@@ -93,7 +93,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.success(attendanceService.findByUserIdAndDate(userId, date));
+        return ApiResponse.success(attendanceService.findByUserIdAndDate(Math.toIntExact(userId), date));
     }
 
 

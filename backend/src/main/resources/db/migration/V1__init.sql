@@ -45,7 +45,7 @@ CREATE TABLE assignment (
 );
 
 CREATE TABLE assignment_item (
-                                 id SERIAL NOT NULL,
+                                 id BIGSERIAL NOT NULL,
                                  user_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  assignment_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  submitted VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',

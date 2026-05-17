@@ -34,7 +34,7 @@ public class AdminAttendanceController {
     })
     @PostMapping("/admin/attendance/start")
     public AttendanceCodeResponse startAttendance(@PathVariable Long studySessionId) {
-        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(studySessionId);
+        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(Math.toIntExact(studySessionId));
         return AttendanceCodeResponse.from(code);
     }
 

@@ -21,3 +21,9 @@ spring:
       hibernate:
         format_sql: true
         packagesToScan: com.example.Piroin.project.domain
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

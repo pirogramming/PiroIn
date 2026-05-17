@@ -24,7 +24,7 @@ public class JwtUtil {
         this.expiration = expiration;
     }
 
-    public String generateToken(Integer userId, String role) {
+    public String generateToken(Long userId, String role) {
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("role", role)

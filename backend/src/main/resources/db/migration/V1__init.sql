@@ -1,7 +1,7 @@
 -- 1. 테이블 생성 (기본키 포함)
 
 CREATE TABLE users (
-                       id SERIAL NOT NULL,
+                       id BIGSERIAL NOT NULL,
                        password VARCHAR(100) NOT NULL,
                        name VARCHAR(100) NOT NULL,
                        email VARCHAR(255) NULL,
@@ -14,7 +14,7 @@ CREATE TABLE users (
 
 CREATE TABLE study_session (
                                id BIGSERIAL NOT NULL,
-                               created_by INT NOT NULL,
+                               created_by BIGINT NOT NULL,
                                generation INT NULL,
                                week BIGINT NOT NULL,
                                session_date DATE NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE assignment (
 
 CREATE TABLE assignment_item (
                                  id SERIAL NOT NULL,
-                                 user_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
+                                 user_id BIGINT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  assignment_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  submitted VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
                                  CONSTRAINT PK_ASSIGNMENT_ITEM PRIMARY KEY (id),
@@ -66,7 +66,7 @@ CREATE TABLE attendance_code (
 CREATE TABLE attendance (
                             id SERIAL NOT NULL,
                             attendance_code_id INT NOT NULL,
-                            user_id INT NOT NULL,
+                            user_id BIGINT NOT NULL,
                             status BOOLEAN NOT NULL, -- TINYINT(1)에서 BOOLEAN으로 수정
                             CONSTRAINT PK_ATTENDANCE PRIMARY KEY (id)
 );
@@ -74,7 +74,7 @@ CREATE TABLE attendance (
 CREATE TABLE question (
                           id BIGSERIAL NOT NULL,
                           session_id BIGINT NOT NULL,
-                          user_id INT NOT NULL,
+                          user_id BIGINT NOT NULL,
                           content VARCHAR(1000) NOT NULL,
                           image_url VARCHAR(1000) NULL,
                           is_resolved BOOLEAN NOT NULL, -- TINYINT(1)에서 BOOLEAN으로 수정
@@ -88,7 +88,7 @@ CREATE TABLE question (
 CREATE TABLE question_comment (
                                   id BIGSERIAL NOT NULL,
                                   question_id BIGINT NOT NULL,
-                                  user_id INT NOT NULL,
+                                  user_id BIGINT NOT NULL,
                                   parent_comment_id BIGINT NULL,
                                   content VARCHAR(1000) NOT NULL,
                                   image_url VARCHAR(1000) NULL,
@@ -100,7 +100,7 @@ CREATE TABLE question_comment (
 
 CREATE TABLE question_anonymous_identity (
                                              id BIGSERIAL NOT NULL,
-                                             user_id INT NOT NULL,
+                                             user_id BIGINT NOT NULL,
                                              question_id BIGINT NOT NULL,
                                              anonymous_no INT NOT NULL DEFAULT 1,
                                              created_at TIMESTAMP NOT NULL,
@@ -139,7 +139,7 @@ CREATE TABLE understanding_response (
 
 CREATE TABLE deposit (
                          id SERIAL NOT NULL,
-                         user_id INT NOT NULL,
+                         user_id BIGINT NOT NULL,
                          amount INT NOT NULL,
                          descent_assignment INT NOT NULL,
                          descent_attendance INT NOT NULL,

@@ -48,7 +48,7 @@ public class AttendanceController {
     ) {
         // [수정] 서비스 메서드 스펙 변경에 맞춰 req.getStudySessionId()를 제거했습니다.
         AttendanceMarkResponse response = attendanceService.markAttendance(
-                userId,
+                Long.valueOf(userId),
                 req.getCode()
         );
 

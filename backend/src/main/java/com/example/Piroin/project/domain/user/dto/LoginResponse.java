@@ -8,7 +8,7 @@ import lombok.Getter;
 public class LoginResponse {
 
     @Schema(description = "유저 고유 ID", example = "1")
-    private Integer id;
+    private Long id;
 
     @Schema(description = "유저 이름", example = "김피로")
     private String name;

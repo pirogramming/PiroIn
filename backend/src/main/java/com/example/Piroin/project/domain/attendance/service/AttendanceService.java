@@ -106,7 +106,7 @@ public class AttendanceService {
 
     // 3. 출석 체크
     @Transactional
-    public AttendanceMarkResponse markAttendance(Integer userId, String inputCode) {
+    public AttendanceMarkResponse markAttendance(Long userId, String inputCode) {
         // 1. [수정] 오직 사용자가 입력한 코드를 기반으로 출석 코드 정보를 조회합니다.
         AttendanceCode code = attendanceCodeRepository
                 .findByCode(inputCode)
@@ -194,7 +194,7 @@ public class AttendanceService {
 
     // 6. 유저의 전체 출석 현황을 날짜별로 묶어서 조회하는 함수
     public List<AttendanceStatusRes> findByUserId(Integer userId) { // Long -> Integer
-        List<Attendance> attendances = attendanceRepository.findByUserId(userId);
+        List<Attendance> attendances = attendanceRepository.findByUserId(Long.valueOf(userId));
 
         // 변경된 구조: AttendanceCode에 저장된 String 날짜를 기준으로 그룹화(groupingBy)
         Map<String, List<Attendance>> grouped = attendances.stream()
@@ -259,7 +259,7 @@ public class AttendanceService {
 
         // 출석 변경 → 보증금 재계산 (과제 변경도 포함이 되어 있나..?)
         if (updated) {
-            depositService.recalculateDeposit(userId);
+            depositService.recalculateDeposit(Long.valueOf(userId));
         }
 
         return updated;

@@ -112,7 +112,7 @@ public class QuestionService {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
 
-        return userRepository.findById(userId)
+        return userRepository.findById(Long.valueOf(userId))
                 .orElseThrow(() -> new QuestionException(HttpStatus.UNAUTHORIZED, "로그인 사용자를 찾을 수 없습니다."));
     }
 

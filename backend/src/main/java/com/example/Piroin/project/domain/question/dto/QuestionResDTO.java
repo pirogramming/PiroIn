@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuestionResDTO {
-
     // 질문 등록 응답
     @Getter
     @Builder
@@ -32,31 +31,39 @@ public class QuestionResDTO {
         }
     }
 
+    // 댓글 등록 응답
+    public record CommentCreateRes(
+            Long commentId,
+            Long questionId,
+            String displayName,   // "작성자" / "익명N" / "운영진N"
+            String content,
+            LocalDateTime createdAt
+    ) {
+    }
+
     // 질문 상세 응답
-    // GET /api/questions/{questionId}
     public record QuestionDetailResponse(
             Long questionId,
-            String displayName,   // "작성자" 고정 (질문자는 항상 작성자로 표시)
+            String displayName,
             String content,
             String imageUrl,
             Boolean isResolved,
             Boolean isPopular,
             Integer likeCount,
-            Boolean isLiked,      // 현재 로그인 유저의 좋아요 여부
+            Boolean isLiked,
             LocalDateTime createdAt,
             List<CommentResponse> comments
     ) {
     }
 
-    // 댓글 및 대댓글 응답
-    // replies가 비어 있으면 일반 댓글, 값이 있으면 해당 댓글의 대댓글 목록
+    // 댓글 조회 응답 (상세 페이지용)
     public record CommentResponse(
             Long commentId,
-            String displayName,   // "작성자" / "익명N" / "운영진N"
+            String displayName,
             String content,
             String imageUrl,
             LocalDateTime createdAt,
-            List<CommentResponse> replies  // 대댓글 목록 (최상위 댓글에만 값 있음)
+            List<CommentResponse> replies
     ) {
     }
 

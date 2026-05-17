@@ -5,6 +5,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
+import CurriculumCreate from './pages/curriculum/CurriculumCreate';
 
 function App() {
   return (
@@ -20,7 +21,9 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/sessions" element={<QnAMainPage />} />
           <Route path="/sessions/questions" element={<QnAListPage />} />
-          <Route path="/curriculum" element={<CurriculumPage />} />
+          <Route path="/curriculums" element={<CurriculumPage />} />
+          {/* 임시 API (role 연결 전이라 create 페이지 일단 따로 만듦) */}
+          <Route path="/curriculums/create" element={<CurriculumCreate />} />
         </Route>
 
       </Routes>

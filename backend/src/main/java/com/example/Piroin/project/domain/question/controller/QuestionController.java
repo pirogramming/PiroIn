@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService questionService;
- 
+
     // 질문 목록 + 이해도 조회
     // GET /api/sessions/{sessionId}/questions?understandingIndex=0
     @GetMapping("/{sessionId}/questions")
@@ -26,7 +26,7 @@ public class QuestionController {
     ) {
         QuestionResDTO.QuestionRoomResponse response =
                 questionService.getQuestionRoom(sessionId, understandingIndex);
- 
+
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
     }
 
@@ -44,7 +44,7 @@ public class QuestionController {
 
         return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK, response);
     }
- 
+
     // 질문 등록
     // POST /api/sessions/{sessionId}/questions
     @PostMapping("/{sessionId}/questions")
@@ -54,8 +54,8 @@ public class QuestionController {
             @AuthenticationPrincipal Integer userId
     ) {
         QuestionResDTO.CreateRes response =
-                questionService.createQuestion(sessionId, request, userId);
- 
+                questionService.createQuestion(userId.longValue(), request, userId);
+
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED, response);
     }
 }

@@ -171,7 +171,7 @@ public class QuestionService {
     }
 
     private StudySession findSession(Long sessionId) {
-        return curriculumRepository.findById(Math.toIntExact(sessionId))
+        return curriculumRepository.findById(Math.toIntExact(sessionId.intValue()))
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
     }
 

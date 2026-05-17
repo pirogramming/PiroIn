@@ -6,7 +6,11 @@ import com.example.Piroin.project.domain.question.enums.UnderstandResChoice;
 import com.example.Piroin.project.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface UnderstandingResponseRepository extends JpaRepository<UnderstandingResponse, Long> {
+    Optional<UnderstandingResponse> findByCheckAndUser(UnderstandingCheck check, User user);
+
     /*
     유저가 특정 이해도 체크에 이미 응답했는지 여부
     용도: 중복 응답 방지

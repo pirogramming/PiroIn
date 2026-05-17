@@ -13,10 +13,10 @@ CREATE TABLE users (
 );
 
 CREATE TABLE study_session (
-                               id SERIAL NOT NULL,
+                               id BIGSERIAL NOT NULL,
                                created_by INT NOT NULL,
                                generation INT NULL,
-                               week INT NOT NULL,
+                               week BIGINT NOT NULL,
                                session_date DATE NOT NULL,
                                day_part VARCHAR(10) NOT NULL,
                                title VARCHAR(255) NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE assignment (
 );
 
 CREATE TABLE assignment_item (
-                                 id BIGSERIAL NOT NULL,
+                                 id SERIAL NOT NULL,
                                  user_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  assignment_id INT NOT NULL, -- FK 대상이므로 SERIAL에서 INT로 수정
                                  submitted VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
@@ -72,8 +72,8 @@ CREATE TABLE attendance (
 );
 
 CREATE TABLE question (
-                          id SERIAL NOT NULL,
-                          session_id INT NOT NULL,
+                          id BIGSERIAL NOT NULL,
+                          session_id BIGINT NOT NULL,
                           user_id INT NOT NULL,
                           content VARCHAR(1000) NOT NULL,
                           image_url VARCHAR(1000) NULL,
@@ -86,10 +86,10 @@ CREATE TABLE question (
 );
 
 CREATE TABLE question_comment (
-                                  id SERIAL NOT NULL,
-                                  question_id INT NOT NULL,
+                                  id BIGSERIAL NOT NULL,
+                                  question_id BIGINT NOT NULL,
                                   user_id INT NOT NULL,
-                                  parent_comment_id INT NULL,
+                                  parent_comment_id BIGINT NULL,
                                   content VARCHAR(1000) NOT NULL,
                                   image_url VARCHAR(1000) NULL,
                                   created_at TIMESTAMP NOT NULL,
@@ -99,9 +99,9 @@ CREATE TABLE question_comment (
 );
 
 CREATE TABLE question_anonymous_identity (
-                                             id SERIAL NOT NULL,
+                                             id BIGSERIAL NOT NULL,
                                              user_id INT NOT NULL,
-                                             question_id INT NOT NULL,
+                                             question_id BIGINT NOT NULL,
                                              anonymous_no INT NOT NULL DEFAULT 1,
                                              created_at TIMESTAMP NOT NULL,
                                              CONSTRAINT PK_QUESTION_ANONYMOUS_IDENTITY PRIMARY KEY (id)
@@ -132,6 +132,7 @@ CREATE TABLE understanding_response (
                                         user_id BIGINT NOT NULL,
                                         choice VARCHAR(20) NOT NULL,
                                         created_at TIMESTAMP NOT NULL,
+                                        updated_at TIMESTAMP NOT NULL,
                                         CONSTRAINT PK_UNDERSTANDING_RESPONSE PRIMARY KEY (id),
                                         CONSTRAINT CHK_UNDERSTANDING_RESPONSE_CHOICE CHECK (choice IN ('UNDERSTOOD', 'NOT_UNDERSTOOD'))
 );

@@ -44,11 +44,11 @@ public class AttendanceController {
                     content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
             )
             @RequestBody MarkAttendanceReq req,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Integer userId
     ) {
+        // [수정] 서비스 메서드 스펙 변경에 맞춰 req.getStudySessionId()를 제거했습니다.
         AttendanceMarkResponse response = attendanceService.markAttendance(
                 userId,
-                req.getStudySessionId(),
                 req.getCode()
         );
 

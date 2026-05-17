@@ -20,7 +20,7 @@ public class DepositService {
     private final AttendanceRepository attendanceRepository;
 
     @Transactional
-    public void recalculateDeposit(Long userId) {
+    public void recalculateDeposit(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 

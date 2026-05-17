@@ -49,34 +49,30 @@ public class AttendanceService {
 
     // 1. 출석 시작 코드 (출석코드 생성 함수)
     @Transactional
-    public AttendanceCode generateCodeAndCreateAttendances(Integer studySessionId) { // ID 타입 Long -> Integer 변경
-        // 1. 세션 조회 (날짜 정보를 가져오기 위함)
-        StudySession studySession = curriculumRepository.findById(studySessionId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 세션입니다."));
+    public AttendanceCode generateCodeAndCreateAttendances(String dateStr) { // [수정] 세션 ID 대신 날짜를 직접 받음
 
-        // 2. 세션의 날짜를 String으로 변환 (DB의 VARCHAR 타입과 매칭, 보통 "yyyy-MM-dd" 형태)
-        String sessionDateStr = studySession.getSessionDate().toString();
+        // 1. [삭제] 더 이상 세션을 조회해서 날짜를 파싱할 필요가 없습니다. (curriculumRepository 조회 제거)
 
-        // 3. 해당 날짜에 생성된 출석 코드 개수 조회 (Repository에 메서드 추가 필요)
-        long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(sessionDateStr);
+        // 2. 해당 날짜에 생성된 출석 코드 개수 조회
+        long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(dateStr);
 
         if (codeCountOfDay >= 3) {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
         }
 
-        // 4. 기존 활성화된 코드들 만료 처리
+        // 3. 기존 활성화된 코드들 만료 처리
         List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
         for (AttendanceCode activeCode : activeCodes) {
             activeCode.expire();
         }
 
-        // 5. 4자리 랜덤 코드 생성 및 차수(Order) 계산
+        // 4. 4자리 랜덤 코드 생성 및 차수(Order) 계산
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000));
         String attendanceOrder = String.valueOf(codeCountOfDay + 1); // 1회차, 2회차, 3회차
 
-        // 6. 새로운 AttendanceCode 생성 및 저장
+        // 5. 새로운 AttendanceCode 생성 및 저장
         AttendanceCode attendanceCode = AttendanceCode.builder()
-                .attendanceDate(sessionDateStr)
+                .attendanceDate(dateStr) // [수정] 파라미터로 받은 날짜 주입
                 .attendanceOrder(attendanceOrder)
                 .code(code)
                 .isExpired(false)
@@ -84,14 +80,14 @@ public class AttendanceService {
 
         attendanceCodeRepository.save(attendanceCode);
 
-        // 7. 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
+        // 6. 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
         List<User> users = userRepository.findByRole(Role.MEMBER);
 
         for (User user : users) {
-            // 방금 새로운 출석 코드가 발급되었으므로, 해당 코드에 대한 출석 데이터는 항상 존재하지 않음 (중복 체크 생략 가능)
+            // [확인] 이미 완벽하게 studySession 대신 attendanceCode를 주입하도록 잘 짜두셨습니다!
             Attendance attendance = Attendance.builder()
                     .user(user)
-                    .attendanceCode(attendanceCode) // studySession 대신 새로 만든 코드를 주입
+                    .attendanceCode(attendanceCode)
                     .status(false)
                     .build();
 
@@ -110,13 +106,13 @@ public class AttendanceService {
 
     // 3. 출석 체크
     @Transactional
-    public AttendanceMarkResponse markAttendance(Long userId, Long studySessionId, String inputCode) {
-        // 사용자가 입력한 코드가 이 세션의 코드가 맞는지 확인
+    public AttendanceMarkResponse markAttendance(Integer userId, String inputCode) {
+        // 1. [수정] 오직 사용자가 입력한 코드를 기반으로 출석 코드 정보를 조회합니다.
         AttendanceCode code = attendanceCodeRepository
-                .findByCodeAndStudySessionId(inputCode, studySessionId)
+                .findByCode(inputCode)
                 .orElse(null);
 
-        // 입력한 출석 코드가 해당 세션의 출석 코드와 일치하지 않는 경우
+        // 입력한 출석 코드가 DB에 존재하지 않는 경우
         if (code == null) {
             return AttendanceMarkResponse.invalidCode();
         }
@@ -126,11 +122,14 @@ public class AttendanceService {
             return AttendanceMarkResponse.codeExpired();
         }
 
+        // 2. [수정] 이제 Attendance도 studySessionId 대신 AttendanceCode와의 연관관계(예: attendanceCodeId)
+        // 혹은 조회된 code의 날짜/차수 정보를 기반으로 기존 출석 기록을 찾아야 합니다.
+        // (여기서는 이전 답변 시나리오 1인 'attendanceCodeId'로 매핑했다고 가정했을 때의 예시입니다.)
         Attendance attendance = attendanceRepository
-                .findByUserIdAndStudySessionId(userId, studySessionId)
+                .findByUserIdAndAttendanceCodeId(userId, Long.valueOf(code.getId()))
                 .orElse(null);
 
-        // 해당 사용자와 세션에 대한 출석 기록이 존재하지 않는 경우
+        // 해당 사용자와 출석 코드에 대한 출석 기록이 존재하지 않는 경우
         if (attendance == null) {
             return AttendanceMarkResponse.error("출석 정보를 찾을 수 없습니다.");
         }
@@ -139,11 +138,12 @@ public class AttendanceService {
         if (Boolean.TRUE.equals(attendance.getStatus())) {
             return AttendanceMarkResponse.alreadyMarked();
         }
+
         // 출석 상태를 출석 완료(true)로 변경
         attendance.updateStatus(true);
 
         // 출석 상태 변경 후 보증금 재계산
-        depositService.recalculateDeposit(userId); // 아직 recalculateDeposit 부분 생성 안 해서 오류 나는 게 정상.
+        depositService.recalculateDeposit(userId); // 아직 생성 안 하신 부분 오류 패스!
 
         return AttendanceMarkResponse.success();
     }
@@ -181,7 +181,7 @@ public class AttendanceService {
 
         // 변경된 구조: User ID와 AttendanceCode의 날짜 조건으로 조회
         List<Attendance> attendances =
-                attendanceRepository.findByUserIdAndAttendanceCodeAttendanceDate(userId, dateStr);
+                attendanceRepository.findByUserIdAndDate(userId, dateStr);
 
         return attendances.stream()
                 .map(attendance -> new AttendanceSlotRes(
@@ -228,7 +228,7 @@ public class AttendanceService {
     // 6. 유저 상태 변경 (관리자)
     // 컨트롤러 부분은 출석만 받는데 여기는 출석&과제 둘 다 받아서 추후에 수정 예정
     @Transactional
-    public boolean updateUserStatus(Long userId, UpdateUserStatusReq req) {
+    public boolean updateUserStatus(Integer userId, UpdateUserStatusReq req) {
         boolean updated = false;
 
         // 출석 상태 변경 코드

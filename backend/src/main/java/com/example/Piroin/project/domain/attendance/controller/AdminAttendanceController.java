@@ -15,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,8 +34,17 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     @PostMapping("/admin/attendance/start")
-    public AttendanceCodeResponse startAttendance(@PathVariable Long studySessionId) {
-        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(Math.toIntExact(studySessionId));
+    public AttendanceCodeResponse startAttendance() {
+
+        // 1. 오늘 날짜 구하기 (LocalDate 활용)
+        LocalDate today = LocalDate.now();
+
+        // 2. 서비스가 원하는 "yyyy-MM-dd" 형식의 문자열로 포맷팅
+        String todayStr = today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+        // 3. 포맷팅된 오늘 날짜 문자열을 서비스에 넘겨줍니다.
+        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(todayStr);
+
         return AttendanceCodeResponse.from(code);
     }
 
@@ -71,7 +81,7 @@ public class AdminAttendanceController {
     @PutMapping("/admin/users/{userId}/status")
     public boolean updateUserStatus(
             @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId,
+            @PathVariable Integer userId,
             @RequestBody UpdateUserStatusReq req) {
         return attendanceService.updateUserStatus(userId, req);
     }

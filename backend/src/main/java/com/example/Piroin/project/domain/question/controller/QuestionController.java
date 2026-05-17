@@ -37,7 +37,7 @@ public class QuestionController {
             @PathVariable Long sessionId,
             @PathVariable Long checkId,
             @RequestBody QuestionReqDTO.UnderstandingResponseReq request,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Integer userId
     ) {
         QuestionResDTO.UnderstandingResponseResult response =
                 questionService.respondUnderstandingCheck(sessionId, checkId, request, userId);
@@ -51,7 +51,7 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Integer userId
     ) {
         QuestionResDTO.CreateRes response =
                 questionService.createQuestion(sessionId, request, userId);

@@ -59,7 +59,7 @@ public class QuestionService {
             Long sessionId,
             Long checkId,
             QuestionReqDTO.UnderstandingResponseReq request,
-            Long userId
+            Integer userId
     ) {
         if (request == null || request.getChoice() == null) {
             throw new IllegalArgumentException("이해도 응답 선택지는 필수입니다.");
@@ -85,7 +85,7 @@ public class QuestionService {
     public QuestionResDTO.CreateRes createQuestion(
             Long sessionId,
             QuestionReqDTO.CreateReq request,
-            Long userId
+            Integer userId
     ) {
         User loginUser = findLoginUser(userId);
 
@@ -107,7 +107,7 @@ public class QuestionService {
         return QuestionResDTO.CreateRes.from(questionRepository.save(question));
     }
 
-    private User findLoginUser(Long userId) {
+    private User findLoginUser(Integer userId) {
         if (userId == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }

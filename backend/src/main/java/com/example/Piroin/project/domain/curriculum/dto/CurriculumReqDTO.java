@@ -12,7 +12,7 @@ public class CurriculumReqDTO {
     @Getter
     @NoArgsConstructor
     public static class CreateSessionReq {
-        private Long userId;
+        private Integer userId;
         private Integer generation;
         private Long week;
         private LocalDate sessionDate;

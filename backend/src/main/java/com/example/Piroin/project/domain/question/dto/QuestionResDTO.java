@@ -10,10 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuestionResDTO {
-    /*
-    질문 등록 응답
-    anonymous_no는 댓글 작성 시 부여되므로 여기서는 포함 X
-    */
+    // 질문 등록 응답
     @Getter
     @Builder
     public static class CreateRes {
@@ -23,7 +20,6 @@ public class QuestionResDTO {
         private Integer likeCount;
         private LocalDateTime createdAt;
 
-        // 엔티티 → DTO 변환 메서드
         public static CreateRes from(Question question) {
             return CreateRes.builder()
                     .id(question.getId())
@@ -35,6 +31,52 @@ public class QuestionResDTO {
         }
     }
 
+    // 댓글 등록 응답
+    public record CommentCreateRes(
+            Long commentId,
+            Long questionId,
+            String displayName,
+            String content,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 좋아요 토글 응답
+    // isLiked: true면 좋아요 추가된 상태, false면 취소된 상태
+    public record LikeRes(
+            Long id,
+            Integer likeCount,
+            Boolean isLiked
+    ) {
+    }
+
+    // 질문 상세 응답
+    public record QuestionDetailResponse(
+            Long questionId,
+            String displayName,
+            String content,
+            String imageUrl,
+            Boolean isResolved,
+            Boolean isPopular,
+            Integer likeCount,
+            Boolean isLiked,
+            LocalDateTime createdAt,
+            List<CommentResponse> comments
+    ) {
+    }
+
+    // 댓글 조회 응답 (상세 페이지용)
+    public record CommentResponse(
+            Long commentId,
+            String displayName,
+            String content,
+            String imageUrl,
+            LocalDateTime createdAt,
+            List<CommentResponse> replies
+    ) {
+    }
+
+    // 질문 방 전체 응답
     public record QuestionRoomResponse(
             SessionResponse session,
             UnderstandingSliceResponse understanding,

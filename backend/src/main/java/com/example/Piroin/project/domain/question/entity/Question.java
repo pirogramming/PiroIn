@@ -47,4 +47,24 @@ public class Question {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 댓글이 새로 달리면 미해결로 되돌리도록
+    public void markUnresolved() {
+        this.isResolved = false;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 좋아요 추가 시 호출
+    public void increaseLikeCount() {
+        this.likeCount++;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 좋아요 취소 시 호출 (0 아래로 내려가지 않도록 방어)
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
 }

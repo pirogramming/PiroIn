@@ -5,20 +5,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 public class QuestionReqDTO {
-    /*
-    질문 등록 요청 바디
-    프론트에서 { "content": "질문 내용" } 형태로 전달
-    */
+
+    // 질문 등록 요청
     @Getter
     @NoArgsConstructor
     public static class CreateReq {
         private String content;
     }
 
-    /*
-    이해도 체크 응답 요청 바디
-    프론트에서 { "choice": "UNDERSTOOD" } 또는 { "choice": "NOT_UNDERSTOOD" } 형태로 전달
-    */
+    // 댓글/대댓글 등록 요청
+    // parentCommentId가 null이면 일반 댓글, 값이 있으면 대댓글
+    @Getter
+    @NoArgsConstructor
+    public static class CommentReq {
+        private String content;
+        private Long parentCommentId;  // 대댓글일 때만 값이 있음, 일반 댓글이면 null
+    }
+
+    // 이해도 체크 응답 요청
     @Getter
     @NoArgsConstructor
     public static class UnderstandingResponseReq {

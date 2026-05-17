@@ -4,16 +4,12 @@ import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
 import com.example.Piroin.project.domain.question.dto.QuestionResDTO;
-import com.example.Piroin.project.domain.question.entity.Question;
-import com.example.Piroin.project.domain.question.entity.UnderstandingCheck;
-import com.example.Piroin.project.domain.question.entity.UnderstandingResponse;
+import com.example.Piroin.project.domain.question.entity.*;
 import com.example.Piroin.project.domain.question.enums.UnderstandResChoice;
 import com.example.Piroin.project.domain.question.exception.QuestionException;
-import com.example.Piroin.project.domain.question.repository.QuestionCommentRepository;
-import com.example.Piroin.project.domain.question.repository.QuestionRepository;
-import com.example.Piroin.project.domain.question.repository.UnderstandingCheckRepository;
-import com.example.Piroin.project.domain.question.repository.UnderstandingResponseRepository;
+import com.example.Piroin.project.domain.question.repository.*;
 import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.domain.user.enums.Role;
 import com.example.Piroin.project.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,26 +23,27 @@ import java.util.Comparator;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor // final 필드를 생성자 주입으로 자동 처리
+@RequiredArgsConstructor
 public class QuestionService {
     private static final int UNDERSTANDING_PAGE_SIZE = 1;
     private static final int POPULAR_LIKE_THRESHOLD = 5;
 
     private final QuestionRepository questionRepository;
     private final QuestionCommentRepository questionCommentRepository;
+    private final QuestionLikeRepository questionLikeRepository;
+    private final QuestionAnonymousIdentityRepository anonymousIdentityRepository;
     private final UnderstandingCheckRepository understandingCheckRepository;
     private final UnderstandingResponseRepository understandingResponseRepository;
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
 
+    // 질문 방 조회
     @Transactional(readOnly = true)
     public QuestionResDTO.QuestionRoomResponse getQuestionRoom(Long sessionId, int understandingIndex) {
         if (understandingIndex < 0) {
             throw new IllegalArgumentException("이해도 조회 인덱스는 0 이상이어야 합니다.");
         }
-
         StudySession session = findSession(sessionId);
-
         return new QuestionResDTO.QuestionRoomResponse(
                 toSessionResponse(session),
                 getUnderstandingSlice(session, understandingIndex),
@@ -54,17 +51,200 @@ public class QuestionService {
         );
     }
 
+    // 질문 상세 조회
+    @Transactional(readOnly = true)
+    public QuestionResDTO.QuestionDetailResponse getQuestionDetail(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+        return toDetailResponse(question, loginUser);
+    }
+
+    private QuestionResDTO.QuestionDetailResponse toDetailResponse(Question question, User loginUser) {
+        boolean isLiked = questionLikeRepository.existsByQuestionAndUser(question, loginUser);
+        boolean isPopular = !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD;
+
+        List<QuestionComment> topComments =
+                questionCommentRepository.findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(question);
+
+        List<QuestionResDTO.CommentResponse> commentResponses = topComments.stream()
+                .map(comment -> toCommentResponse(question, comment))
+                .toList();
+
+        return new QuestionResDTO.QuestionDetailResponse(
+                question.getId(), "작성자", question.getContent(), question.getImageUrl(),
+                question.getIsResolved(), isPopular, question.getLikeCount(), isLiked,
+                question.getCreatedAt(), commentResponses
+        );
+    }
+
+    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment) {
+        List<QuestionComment> replies =
+                questionCommentRepository.findByParentCommentAndDeletedAtIsNullOrderByCreatedAtAsc(comment);
+
+        List<QuestionResDTO.CommentResponse> replyResponses = replies.stream()
+                .map(reply -> new QuestionResDTO.CommentResponse(
+                        reply.getId(), getDisplayName(question, reply.getUser()),
+                        reply.getContent(), reply.getImageUrl(), reply.getCreatedAt(), List.of()
+                ))
+                .toList();
+
+        return new QuestionResDTO.CommentResponse(
+                comment.getId(), getDisplayName(question, comment.getUser()),
+                comment.getContent(), comment.getImageUrl(), comment.getCreatedAt(), replyResponses
+        );
+    }
+
+    // 댓글 등록
+    // POST /api/questions/{questionId}/comments
+    @Transactional
+    public QuestionResDTO.CommentCreateRes createComment(
+            Long questionId,
+            QuestionReqDTO.CommentReq request,
+            Long userId
+    ) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+
+        // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
+        QuestionComment parentComment = resolveParentComment(request.getParentCommentId());
+
+        // 2. 댓글 엔티티 생성 및 저장
+        LocalDateTime now = LocalDateTime.now();
+        QuestionComment comment = QuestionComment.builder()
+                .question(question)
+                .user(loginUser)
+                .parentComment(parentComment)  // 일반 댓글이면 null, 대댓글이면 부모 댓글
+                .content(request.getContent())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        questionCommentRepository.save(comment);
+
+        // 3. 해결된 질문에 댓글이 달리면 미해결로 자동 전환
+        if (question.getIsResolved()) {
+            question.markUnresolved();
+        }
+
+        // 4. 표시명 결정 (질문 작성자가 아닌 경우 익명 번호 부여)
+        String displayName = assignAnonymousIdentity(question, loginUser);
+
+        return new QuestionResDTO.CommentCreateRes(
+                comment.getId(), question.getId(), displayName, comment.getContent(), comment.getCreatedAt()
+        );
+    }
+
+    // parentCommentId가 있으면 해당 댓글 조회, 없으면 null 반환
+    private QuestionComment resolveParentComment(Long parentCommentId) {
+        if (parentCommentId == null) {
+            return null;
+        }
+        return questionCommentRepository.findById(parentCommentId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "부모 댓글을 찾을 수 없습니다."));
+    }
+
+    /*
+    익명 번호 조회 또는 신규 부여
+    
+    - 질문 작성자 본인 → "작성자" 반환, 번호 부여 안 함
+    - 이미 번호가 있는 유저 → 기존 번호 재사용
+    - 처음 댓글 다는 유저 → 역할별 카운트 + 1로 새 번호 부여 후 DB 저장
+    */
+    private String assignAnonymousIdentity(Question question, User commenter) {
+        // 질문 작성자 본인이면 번호 부여 없이 "작성자" 반환
+        if (commenter.getId().equals(question.getUser().getId())) {
+            return "작성자";
+        }
+
+        // 이미 이 질문에서 익명 번호가 있는지 확인
+        return anonymousIdentityRepository
+                .findByQuestionAndUser(question, commenter)
+                .map(identity -> buildDisplayName(commenter.getRole(), identity.getAnonymousNo()))
+                .orElseGet(() -> {
+                    // 처음 댓글 다는 유저 → 역할별 카운트 기반으로 새 번호 부여
+                    int nextNo = anonymousIdentityRepository
+                            .countByQuestionAndUser_Role(question, commenter.getRole()) + 1;
+
+                    anonymousIdentityRepository.save(QuestionAnonymousIdentity.builder()
+                            .question(question)
+                            .user(commenter)
+                            .anonymousNo(nextNo)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+
+                    return buildDisplayName(commenter.getRole(), nextNo);
+                });
+    }
+
+    // 역할 + 번호 → 표시명 변환
+    private String buildDisplayName(Role role, int anonymousNo) {
+        return role == Role.ADMIN ? "운영진" + anonymousNo : "익명" + anonymousNo;
+    }
+
+    // getDisplayName: 상세 조회 시 기존 익명 번호 읽기 (번호 부여 없음)
+    private String getDisplayName(Question question, User commenter) {
+        if (commenter.getId().equals(question.getUser().getId())) {
+            return "작성자";
+        }
+        return anonymousIdentityRepository
+                .findByQuestionAndUser(question, commenter)
+                .map(identity -> buildDisplayName(commenter.getRole(), identity.getAnonymousNo()))
+                .orElse(commenter.getRole() == Role.ADMIN ? "운영진" : "익명");
+    }
+
+    // 질문 등록
+    @Transactional
+    public QuestionResDTO.CreateRes createQuestion(Long sessionId, QuestionReqDTO.CreateReq request, Long userId) {
+        User loginUser = findLoginUser(userId);
+        StudySession session = findSession(sessionId);
+
+        Question question = Question.builder()
+                .session(session)
+                .user(loginUser)
+                .content(request.getContent())
+                .isResolved(false)
+                .likeCount(0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        return QuestionResDTO.CreateRes.from(questionRepository.save(question));
+    }
+
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @Transactional
+    public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+
+        // 이미 좋아요를 눌렀는지 확인
+        return questionLikeRepository.findByQuestionAndUser(question, loginUser)
+                .map(existingLike -> {
+                    // 이미 눌렀으면 → 취소 (삭제 + likeCount -1)
+                    questionLikeRepository.delete(existingLike);
+                    question.decreaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), false);
+                })
+                .orElseGet(() -> {
+                    // 처음 누르면 → 추가 (저장 + likeCount +1)
+                    questionLikeRepository.save(QuestionLike.builder()
+                            .question(question)
+                            .user(loginUser)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+                    question.increaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), true);
+                });
+    }
+
+    // 이해도 체크 응답
     @Transactional
     public QuestionResDTO.UnderstandingResponseResult respondUnderstandingCheck(
-            Long sessionId,
-            Long checkId,
-            QuestionReqDTO.UnderstandingResponseReq request,
-            Integer userId
+            Long sessionId, Long checkId, QuestionReqDTO.UnderstandingResponseReq request, Long userId
     ) {
         if (request == null || request.getChoice() == null) {
             throw new IllegalArgumentException("이해도 응답 선택지는 필수입니다.");
         }
-
         User loginUser = findLoginUser(userId);
         StudySession session = findSession(sessionId);
         UnderstandingCheck check = findUnderstandingCheck(checkId);
@@ -74,46 +254,23 @@ public class QuestionService {
         return toUnderstandingResponseResult(check, selectedChoice);
     }
 
-    /*
-    질문 등록
-    
-    @param sessionId  질문이 달릴 세션 ID
-    @param request    질문 내용 (content)
-    @param userId     JWT 인증에서 추출한 현재 로그인 유저 ID
-    */
-    @Transactional
-    public QuestionResDTO.CreateRes createQuestion(
-            Long sessionId,
-            QuestionReqDTO.CreateReq request,
-            Integer userId
-    ) {
-        User loginUser = findLoginUser(userId);
-
-        // 1. 세션 존재 여부 확인
-        StudySession session = findSession(sessionId);
-
-        // 2. 질문 엔티티 생성
-        Question question = Question.builder()
-                .session(session)
-                .user(loginUser)
-                .content(request.getContent())
-                .isResolved(false)   // 등록 시 기본값: 미해결
-                .likeCount(0)        // 등록 시 기본값: 좋아요 0
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        // 3. DB 저장 후 DTO 변환하여 반환
-        return QuestionResDTO.CreateRes.from(questionRepository.save(question));
-    }
-
-    private User findLoginUser(Integer userId) {
+    // 공통 헬퍼 메서드
+    private User findLoginUser(Long userId) {
         if (userId == null) {
             throw new IllegalStateException("로그인이 필요합니다.");
         }
-
-        return userRepository.findById(Long.valueOf(userId))
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.UNAUTHORIZED, "로그인 사용자를 찾을 수 없습니다."));
+    }
+
+    private Question findQuestion(Long questionId) {
+        return questionRepository.findByIdAndDeletedAtIsNull(questionId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
+    }
+
+    private StudySession findSession(Long sessionId) {
+        return curriculumRepository.findById(Math.toIntExact(sessionId))
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
     }
 
     private UnderstandingCheck findUnderstandingCheck(Long checkId) {
@@ -128,27 +285,19 @@ public class QuestionService {
     }
 
     private UnderstandResChoice applyUnderstandingResponse(
-            UnderstandingCheck check,
-            User loginUser,
-            UnderstandResChoice requestedChoice
+            UnderstandingCheck check, User loginUser, UnderstandResChoice requestedChoice
     ) {
         UnderstandingResponse response = understandingResponseRepository
-                .findByCheckAndUser(check, loginUser)
-                .orElse(null);
+                .findByCheckAndUser(check, loginUser).orElse(null);
 
         if (response == null) {
             LocalDateTime now = LocalDateTime.now();
             understandingResponseRepository.save(UnderstandingResponse.builder()
-                    .check(check)
-                    .user(loginUser)
-                    .choice(requestedChoice)
-                    .createdAt(now)
-                    .updatedAt(now)
-                    .build());
+                    .check(check).user(loginUser).choice(requestedChoice)
+                    .createdAt(now).updatedAt(now).build());
             return requestedChoice;
         }
 
-        // 같은 버튼을 다시 누르면 인스타그램 좋아요처럼 기존 응답을 취소한다.
         if (response.hasChoice(requestedChoice)) {
             understandingResponseRepository.delete(response);
             return null;
@@ -159,35 +308,24 @@ public class QuestionService {
     }
 
     private QuestionResDTO.UnderstandingResponseResult toUnderstandingResponseResult(
-            UnderstandingCheck check,
-            UnderstandResChoice selectedChoice
+            UnderstandingCheck check, UnderstandResChoice selectedChoice
     ) {
         return new QuestionResDTO.UnderstandingResponseResult(
-                check.getId(),
-                selectedChoice,
+                check.getId(), selectedChoice,
                 understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
                 understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD)
         );
     }
 
-    private StudySession findSession(Long sessionId) {
-        return curriculumRepository.findById(Math.toIntExact(sessionId.intValue()))
-                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
-    }
-
     private QuestionResDTO.SessionResponse toSessionResponse(StudySession session) {
         return new QuestionResDTO.SessionResponse(
-                session.getId(),
-                session.getWeek().intValue(),
+                session.getId(), session.getWeek().intValue(),
                 session.getSessionDate().getDayOfWeek().name(),
-                session.getDayPart().name(),
-                session.getSessionDate(),
-                session.getTitle()
+                session.getDayPart().name(), session.getSessionDate(), session.getTitle()
         );
     }
 
     private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(StudySession session, int understandingIndex) {
-        // 이해도 체크는 최신순으로 정렬하고, 화면에서는 한 번에 하나씩 넘겨본다.
         Page<UnderstandingCheck> understandingPage = understandingCheckRepository
                 .findBySessionOrderByCreatedAtDesc(session, PageRequest.of(understandingIndex, UNDERSTANDING_PAGE_SIZE));
 
@@ -195,33 +333,22 @@ public class QuestionService {
         if (totalCount == 0) {
             return new QuestionResDTO.UnderstandingSliceResponse(null, 0, 0, false, false);
         }
-
         if (understandingPage.getContent().isEmpty()) {
             throw new IllegalArgumentException("존재하지 않는 이해도 조회 인덱스입니다.");
         }
 
         UnderstandingCheck current = understandingPage.getContent().get(0);
         return new QuestionResDTO.UnderstandingSliceResponse(
-                toUnderstandingCheckResponse(current),
-                understandingIndex,
-                totalCount,
-                understandingIndex < totalCount - 1,
-                understandingIndex > 0
+                toUnderstandingCheckResponse(current), understandingIndex, totalCount,
+                understandingIndex < totalCount - 1, understandingIndex > 0
         );
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
-        int understoodCount = understandingResponseRepository
-                .countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD);
-        int notUnderstoodCount = understandingResponseRepository
-                .countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD);
-
         return new QuestionResDTO.UnderstandingCheckResponse(
-                check.getId(),
-                check.getTitle(),
-                check.getDescription(),
-                understoodCount,
-                notUnderstoodCount,
+                check.getId(), check.getTitle(), check.getDescription(),
+                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
+                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD),
                 check.getCreatedAt()
         );
     }
@@ -229,41 +356,28 @@ public class QuestionService {
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session) {
         List<Question> questions = questionRepository.findBySessionAndDeletedAtIsNull(session);
 
-        // 좋아요 5개 이상인 미해결 질문은 질문방 상단 고정 영역에 먼저 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> popularQuestions = questions.stream()
-                .filter(question -> !question.getIsResolved())
-                .filter(question -> question.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
-                .sorted(Comparator
-                        .comparing(Question::getLikeCount, Comparator.reverseOrder())
+                .filter(q -> !q.getIsResolved() && q.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
+                .sorted(Comparator.comparing(Question::getLikeCount, Comparator.reverseOrder())
                         .thenComparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse)
-                .toList();
+                .map(this::toQuestionSummaryResponse).toList();
 
-        // 일반 미해결 질문은 인기 질문 아래에 최신순으로 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> unresolvedQuestions = questions.stream()
-                .filter(question -> !question.getIsResolved())
-                .filter(question -> question.getLikeCount() < POPULAR_LIKE_THRESHOLD)
+                .filter(q -> !q.getIsResolved() && q.getLikeCount() < POPULAR_LIKE_THRESHOLD)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse)
-                .toList();
+                .map(this::toQuestionSummaryResponse).toList();
 
-        // 해결된 질문은 미해결 질문과 섞지 않고 별도 영역에서 최신순으로 노출한다.
         List<QuestionResDTO.QuestionSummaryResponse> resolvedQuestions = questions.stream()
                 .filter(Question::getIsResolved)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse)
-                .toList();
+                .map(this::toQuestionSummaryResponse).toList();
 
         return new QuestionResDTO.QuestionGroupsResponse(popularQuestions, unresolvedQuestions, resolvedQuestions);
     }
 
     private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse(Question question) {
-        // 질문방 목록은 댓글 본문을 포함하지 않고 개수만 내려준다.
-        // 댓글 목록은 특정 질문 상세 조회 API에서 조회한다.
         return new QuestionResDTO.QuestionSummaryResponse(
-                question.getId(),
-                question.getContent(),
-                question.getImageUrl(),
+                question.getId(), question.getContent(), question.getImageUrl(),
                 question.getIsResolved(),
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 question.getLikeCount(),

@@ -44,11 +44,11 @@ public class AttendanceController {
                     content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
             )
             @RequestBody MarkAttendanceReq req,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Integer userId
     ) {
+        // [수정] 서비스 메서드 스펙 변경에 맞춰 req.getStudySessionId()를 제거했습니다.
         AttendanceMarkResponse response = attendanceService.markAttendance(
-                userId,
-                req.getStudySessionId(),
+                Long.valueOf(userId),
                 req.getCode()
         );
 
@@ -77,7 +77,7 @@ public class AttendanceController {
     })
     @GetMapping("/user")
     public ApiResponse<List<AttendanceStatusRes>> getAttendanceByUserId(@AuthenticationPrincipal Long userId) {
-        return ApiResponse.success(attendanceService.findByUserId(userId));
+        return ApiResponse.success(attendanceService.findByUserId(Math.toIntExact(userId)));
     }
 
     // 3. 특정 유저의 특정 일자 출석 정보
@@ -93,7 +93,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.success(attendanceService.findByUserIdAndDate(userId, date));
+        return ApiResponse.success(attendanceService.findByUserIdAndDate(Math.toIntExact(userId), date));
     }
 
 

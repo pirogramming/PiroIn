@@ -25,9 +25,10 @@ jobs:
         working-directory: backend
         run: ./gradlew bootJar -x test
         env:
-          DB_URL: ${{ secrets.DB_URL }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
+          RDS_DB_NAME: ${{ secrets.RDS_DB_NAME }}
+          RDS_USERNAME: ${{ secrets.RDS_USERNAME }}
+          RDS_PASSWORD: ${{ secrets.RDS_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
 
@@ -55,10 +56,16 @@ jobs:
             docker rm piroin-backend || true
             docker run -d \
               --name piroin-backend \
+              --restart unless-stopped \
               -p 8080:8080 \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USER=${{ secrets.DB_USER }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }} \
+              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
+              --health-interval=30s \
+              --health-timeout=10s \
+              --health-retries=3 \
+              -e RDS_ENDPOINT="${{ secrets.RDS_ENDPOINT }}" \
+              -e RDS_DB_NAME="${{ secrets.RDS_DB_NAME }}" \
+              -e RDS_USERNAME="${{ secrets.RDS_USERNAME }}" \
+              -e RDS_PASSWORD="${{ secrets.RDS_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRATION="${{ secrets.JWT_EXPIRATION }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/piroin-backend:latest

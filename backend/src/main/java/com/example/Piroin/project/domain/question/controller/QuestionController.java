@@ -12,27 +12,39 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/sessions")
 @RequiredArgsConstructor
 public class QuestionController {
     private final QuestionService questionService;
- 
+
     // 질문 목록 + 이해도 조회
     // GET /api/sessions/{sessionId}/questions?understandingIndex=0
-    @GetMapping("/{sessionId}/questions")
+    @GetMapping("/api/sessions/{sessionId}/questions")
     public ResponseEntity<ApiResponse<QuestionResDTO.QuestionRoomResponse>> getQuestionRoom(
             @PathVariable Long sessionId,
             @RequestParam(defaultValue = "0") int understandingIndex
     ) {
         QuestionResDTO.QuestionRoomResponse response =
                 questionService.getQuestionRoom(sessionId, understandingIndex);
- 
+
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
+    }
+
+    // 질문 상세 조회
+    // GET /api/questions/{questionId}
+    @GetMapping("/api/questions/{questionId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.QuestionDetailResponse>> getQuestionDetail(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        QuestionResDTO.QuestionDetailResponse response =
+                questionService.getQuestionDetail(questionId, userId);
+
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_DETAIL_OK, response);
     }
 
     // 이해도 체크 응답
     // POST /api/sessions/{sessionId}/understanding-checks/{checkId}/responses
-    @PostMapping("/{sessionId}/understanding-checks/{checkId}/responses")
+    @PostMapping("/api/sessions/{sessionId}/understanding-checks/{checkId}/responses")
     public ResponseEntity<ApiResponse<QuestionResDTO.UnderstandingResponseResult>> respondUnderstandingCheck(
             @PathVariable Long sessionId,
             @PathVariable Long checkId,
@@ -44,10 +56,10 @@ public class QuestionController {
 
         return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK, response);
     }
- 
+
     // 질문 등록
     // POST /api/sessions/{sessionId}/questions
-    @PostMapping("/{sessionId}/questions")
+    @PostMapping("/api/sessions/{sessionId}/questions")
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
@@ -55,7 +67,7 @@ public class QuestionController {
     ) {
         QuestionResDTO.CreateRes response =
                 questionService.createQuestion(sessionId, request, userId);
- 
+
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED, response);
     }
 }

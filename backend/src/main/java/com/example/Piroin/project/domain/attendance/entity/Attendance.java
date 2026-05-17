@@ -33,6 +33,5 @@ public class Attendance {
         this.status = status;
     }
 
-    public Manifest getStudySession() {
-    }
+
 }

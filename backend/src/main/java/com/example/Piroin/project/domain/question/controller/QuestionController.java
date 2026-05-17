@@ -62,6 +62,17 @@ public class QuestionController {
                 questionService.createComment(questionId, request, userId));
     }
 
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @PostMapping("/api/questions/{questionId}/like")
+    public ResponseEntity<ApiResponse<QuestionResDTO.LikeRes>> toggleLike(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.LIKE_TOGGLED,
+                questionService.toggleLike(questionId, userId));
+    }
+
     // 이해도 체크 응답
     // POST /api/sessions/{sessionId}/understanding-checks/{checkId}/responses
     @PostMapping("/api/sessions/{sessionId}/understanding-checks/{checkId}/responses")

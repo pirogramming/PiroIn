@@ -210,6 +210,33 @@ public class QuestionService {
         return QuestionResDTO.CreateRes.from(questionRepository.save(question));
     }
 
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @Transactional
+    public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+
+        // 이미 좋아요를 눌렀는지 확인
+        return questionLikeRepository.findByQuestionAndUser(question, loginUser)
+                .map(existingLike -> {
+                    // 이미 눌렀으면 → 취소 (삭제 + likeCount -1)
+                    questionLikeRepository.delete(existingLike);
+                    question.decreaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), false);
+                })
+                .orElseGet(() -> {
+                    // 처음 누르면 → 추가 (저장 + likeCount +1)
+                    questionLikeRepository.save(QuestionLike.builder()
+                            .question(question)
+                            .user(loginUser)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+                    question.increaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), true);
+                });
+    }
+
     // 이해도 체크 응답
     @Transactional
     public QuestionResDTO.UnderstandingResponseResult respondUnderstandingCheck(

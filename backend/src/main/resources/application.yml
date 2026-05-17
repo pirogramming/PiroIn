@@ -10,6 +10,7 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   flyway:
+#    repair-on-migrate: true
     enabled: true
 
   jpa:

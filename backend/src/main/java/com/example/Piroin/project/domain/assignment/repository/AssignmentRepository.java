@@ -1,4 +1,7 @@
 package com.example.Piroin.project.domain.assignment.repository;
 
-public interface AssignmentRepository {
+import com.example.Piroin.project.domain.assignment.entity.Assignment;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AssignmentRepository extends JpaRepository<Assignment, Integer> {
 }

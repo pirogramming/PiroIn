@@ -246,7 +246,7 @@ public class AttendanceService {
 
         // 과제 상태 변경 코드
         if (req.getAssignmentItemId() != null && req.getAssignmentStatus() != null) {
-            AssignmentItem assignmentItem = assignmentItemRepository.findById(req.getAssignmentItemId())
+            AssignmentItem assignmentItem = assignmentItemRepository.findById(Math.toIntExact(req.getAssignmentItemId()))
                     .orElseThrow(() -> new IllegalArgumentException("과제 기록을 찾을 수 없습니다."));
 
             if (!assignmentItem.getUser().getId().equals(userId)) {

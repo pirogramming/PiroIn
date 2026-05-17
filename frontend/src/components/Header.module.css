@@ -1,7 +1,21 @@
+/* 라이트 헤더 */
+.light {
+    --header-bg: var(--white);
+    --header-color: var(--gray600);
+    --logo-color: var(--dark);
+}
+
+/* 다크 헤더 */
+.dark {
+    --header-bg: var(--black);
+    --header-color: var(--white);
+    --logo-color: var(--main);
+}
+
 .header {
     width: 100%;
     height: 100px;
-    background: #fff;
+    background: var(--header-bg);
     display: flex;
     align-items: center;
     padding: 0 80px;
@@ -14,7 +28,7 @@
 }
 
 .logo {
-    color: var(--dark);
+    color: var(--logo-color);
     font-family: var(--font-title);
     font-size: 3rem;
     font-weight: 800;
@@ -31,7 +45,7 @@
 }
 
 .nav a {
-    color: var(--gray600);
+    color: var(--header-color);
     text-align: center;
     font-family: var(--font-main);
     font-size: 1.5rem;
@@ -40,10 +54,10 @@
 }
 
 .nav a:hover {
-    color: var(--dark);
+    color: var(--logo-color);
 }
 
 .active {
-    color: var(--dark) !important;
+    color: var(--logo-color) !important;
     font-weight: 700;
 }

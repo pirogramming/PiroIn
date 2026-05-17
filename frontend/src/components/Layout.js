@@ -1,10 +1,10 @@
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
 
-function Layout() {
+function Layout({ headerType }) {
     return (
         <>
-            <Header />
+            <Header type={headerType} />
             <Outlet />
         </>
     );

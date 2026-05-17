@@ -5,6 +5,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
+import PiroCheckMain from './pages/pirocheck/PIroCheckMain';
 
 function App() {
   return (
@@ -16,11 +17,16 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
 
-        {/* 헤더 있는 페이지 */}
-        <Route element={<Layout />}>
+        {/* 라이트 헤더 페이지 */}
+        <Route element={<Layout headerType="light" />}>
           <Route path="/sessions" element={<QnAMainPage />} />
           <Route path="/sessions/questions" element={<QnAListPage />} />
           <Route path="/curriculum" element={<CurriculumPage />} />
+        </Route>
+        
+        {/* 다크 헤더 페이지 */}
+        <Route element={<Layout headerType="dark" />}>
+          <Route path="/pirocheck" element={<PiroCheckMain />}/>
         </Route>
 
       </Routes>

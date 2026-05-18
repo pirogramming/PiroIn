@@ -15,4 +15,6 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
     List<StudySession> findByStatusOrderBySessionDateAscDayPartAsc(SessionStatus status);
 
     List<StudySession> findByStatusOrderBySessionDateDescDayPartDesc(SessionStatus status);
+
+    List<StudySession> findByWeek(Long week);
 }

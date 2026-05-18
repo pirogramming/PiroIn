@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 //import com.example.Piroin.project.global.util.SecurityUtil;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,29 +32,22 @@ public class AttendanceController {
 
 
     // 1. 출석코드 비교
-    @Operation(summary = "출석 체크", description = "출석 코드를 입력하여 출석을 체크합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 성공 또는 이미 출석 완료"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 출석 코드 또는 출석 체크 진행중이 아님")
-    })
     @PostMapping("/mark")
     public ApiResponse<AttendanceMarkResponse> markAttendance(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "출석 체크 요청",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
-            )
             @RequestBody MarkAttendanceReq req,
-            @AuthenticationPrincipal Integer userId
+            Authentication authentication
     ) {
-        // [수정] 서비스 메서드 스펙 변경에 맞춰 req.getStudySessionId()를 제거했습니다.
+
+        Long userId = Long.valueOf(authentication.getName());
+
         AttendanceMarkResponse response = attendanceService.markAttendance(
-                Long.valueOf(userId),
+                userId,
                 req.getCode()
         );
 
-        boolean isSuccess = "SUCCESS".equals(response.getStatusCode()) ||
-                "ALREADY_MARKED".equals(response.getStatusCode());
+        boolean isSuccess =
+                "SUCCESS".equals(response.getStatusCode()) ||
+                        "ALREADY_MARKED".equals(response.getStatusCode());
 
         if (isSuccess) {
             return ApiResponse.success(response);

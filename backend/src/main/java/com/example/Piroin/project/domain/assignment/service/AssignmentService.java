@@ -2,9 +2,14 @@ package com.example.Piroin.project.domain.assignment.service;
 
 import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentRequest;
 import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentResponse;
+import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentRequest;
+import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.entity.Assignment;
 import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
+import com.example.Piroin.project.domain.assignment.entity.DeleteAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.enums.AssignmentStatus;
+import com.example.Piroin.project.domain.assignment.exception.AssignmentException;
+import com.example.Piroin.project.domain.assignment.exception.code.AssignmentErrorCode;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentItemRepository;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentRepository;
 import com.example.Piroin.project.domain.user.entity.User;
@@ -24,6 +29,7 @@ public class AssignmentService {
     private final AssignmentItemRepository assignmentItemRepository;
     private final UserRepository userRepository;
 
+    // 1. 과제 생성
     public CreateAssignmentResponse createAssignment(CreateAssignmentRequest request) {
 
         Assignment assignment = Assignment.builder()
@@ -48,4 +54,44 @@ public class AssignmentService {
 
         return new CreateAssignmentResponse(assignment.getId());
     }
+
+    // 2. 과제 수정
+    public ModifyAssignmentResponse modifyAssignment(Integer assignmentId,
+                                                     ModifyAssignmentRequest request) {
+
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new AssignmentException(
+                        AssignmentErrorCode.ASSIGNMENT_NOT_FOUND
+                ));
+
+        assignment.update(
+                request.getTitle(),
+                request.getWeek(),
+                request.getSessionDate()
+        );
+
+        assignmentRepository.save(assignment);
+
+        return new ModifyAssignmentResponse(assignment.getId());
+    }
+
+    // 3. 과제 삭제
+    public DeleteAssignmentResponse deleteAssignment(Integer assignmentId) {
+
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() ->
+                        new AssignmentException(
+                                AssignmentErrorCode.ASSIGNMENT_NOT_FOUND
+                        )
+                );
+
+        // assignment_item 먼저 삭제
+        assignmentItemRepository.deleteAllByAssignmentId(assignmentId);
+
+        // assignment 삭제
+        assignmentRepository.delete(assignment);
+
+        return new DeleteAssignmentResponse(assignmentId);
+    }
+
 }

@@ -6,6 +6,7 @@ import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentRequest;
 import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.entity.Assignment;
 import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
+import com.example.Piroin.project.domain.assignment.entity.DeleteAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.enums.AssignmentStatus;
 import com.example.Piroin.project.domain.assignment.exception.AssignmentException;
 import com.example.Piroin.project.domain.assignment.exception.code.AssignmentErrorCode;
@@ -72,6 +73,25 @@ public class AssignmentService {
         assignmentRepository.save(assignment);
 
         return new ModifyAssignmentResponse(assignment.getId());
+    }
+
+    // 3. 과제 삭제
+    public DeleteAssignmentResponse deleteAssignment(Integer assignmentId) {
+
+        Assignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() ->
+                        new AssignmentException(
+                                AssignmentErrorCode.ASSIGNMENT_NOT_FOUND
+                        )
+                );
+
+        // assignment_item 먼저 삭제
+        assignmentItemRepository.deleteAllByAssignmentId(assignmentId);
+
+        // assignment 삭제
+        assignmentRepository.delete(assignment);
+
+        return new DeleteAssignmentResponse(assignmentId);
     }
 
 }

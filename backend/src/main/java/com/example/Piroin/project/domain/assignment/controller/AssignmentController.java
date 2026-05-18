@@ -4,6 +4,7 @@ import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentRequest;
 import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentRequest;
 import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentResponse;
+import com.example.Piroin.project.domain.assignment.entity.DeleteAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.service.AssignmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,5 +44,15 @@ public class AssignmentController {
 
 
     // 3. 과제 삭제
+    @Operation(summary = "과제 삭제", description = "운영진이 과제를 삭제합니다.")
+    @DeleteMapping("/{assignmentId}")
+    @ResponseStatus(HttpStatus.OK)
+    public DeleteAssignmentResponse deleteAssignment(
+            @PathVariable Integer assignmentId
+    ) {
+
+        return assignmentService.deleteAssignment(assignmentId);
+    }
+
 }
 

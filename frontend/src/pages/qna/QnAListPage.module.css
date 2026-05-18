@@ -170,12 +170,11 @@
 
 
 /*질문*/
-/* 다음에 할 때 여기부터 하기 */
 .questionList {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 0 1rem;
+
 }
 
 .questionCard {
@@ -203,7 +202,7 @@
 .qIcon {
     flex-shrink: 0;
     padding-top: 1px;
-    color: var(--dark);
+    color: var(--main);
     font-family: var(--font-main);
     font-size: 36px;
     font-weight: 900;
@@ -220,9 +219,6 @@
     line-height: normal;
 }
 
-/* 여기부터인 것 같기도 하고 */
-
-/* 좋아요 + 댓글달기 버튼 묶음 */
 .questionActions {
     display: flex;
     align-items: center;
@@ -232,42 +228,49 @@
 }
 
 .likeBtn {
+    justify-content: center;
     display: flex;
     align-items: center;
-    gap: 3px;
-    background: none;
+    gap: 7px;
     border: none;
     cursor: pointer;
     font-family: var(--font-main);
-    font-size: 0.8rem;
+    font-size: 15px;
     color: var(--gray600);
-    padding: 0;
+    padding: 0 3px 0 0;
     transition: color 0.15s;
+    width: 37.5px;
+    height: 25px;
+    background-color: var(--gray50);
+    border-radius: 10px;
+
 }
 
 .likeBtn.liked {
-    color: #09C410;
+    color: var(--dark);
+    background-color: var(--light);
 }
 
 .commentBtn {
+    justify-content: center;
     display: flex;
     align-items: center;
     gap: 2px;
-    background: none;
     border: none;
     cursor: pointer;
     font-family: var(--font-main);
-    font-size: 0.8rem;
+    font-size: 15px;
     color: var(--gray600);
     padding: 0;
     white-space: nowrap;
+    border-radius: 10px;
+    background: var(--gray50);
+    width: 87px;
+    height: 25px;
+
 }
 
-.commentBtn:hover {
-    color: var(--black);
-}
 
-/* 카드 안 이미지 */
 .questionImage {
     width: 100%;
     border-radius: 8px;
@@ -276,28 +279,49 @@
     display: block;
 }
 
+
 /* ── 댓글 미리보기 ── */
 .commentPreview {
-    margin-top: 0.7rem;
+    margin-top: 26px;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+    padding-left: 20px;
+    border-top: 1px solid var(--gray200);
+    padding-top: 17px;
+
 }
+
+.commentWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+}
+
+
 
 .commentItem {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
+    max-width: 646px;
+    border-radius: 5px 20px 20px 20px;
+    background: var(--gray50);
+    padding: 0.5rem 0.8rem;
+
+
 }
 
 .commentAuthor {
     font-family: var(--font-main);
     font-size: 0.78rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--black);
     display: flex;
     align-items: center;
     gap: 3px;
+    line-height: normal;
 }
 
 .staffBadge {
@@ -308,11 +332,12 @@
 .commentContent {
     font-family: var(--font-main);
     font-size: 0.82rem;
-    color: var(--gray600);
-    background: #f5f5f5;
-    border-radius: 6px;
-    padding: 0.3rem 0.6rem;
-    line-height: 1.4;
+    color: var(--black);
+    font-weight: 400;
+    line-height: normal;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .commentMore {
@@ -327,6 +352,8 @@
 .commentMore:hover {
     color: var(--black);
 }
+
+/* 여기부터 시작 */
 
 /* ── 댓글 입력 행 ── */
 .commentInputRow {

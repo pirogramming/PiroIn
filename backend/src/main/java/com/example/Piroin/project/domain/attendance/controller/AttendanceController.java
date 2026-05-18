@@ -33,6 +33,7 @@ public class AttendanceController {
 
     // 1. 출석코드 비교
     @PostMapping("/mark")
+    @Operation(summary = "출석코드 입력", description = "부원이 운영진이 알려준 출석코드를 입력하여 출석을 합니다.")
     public ApiResponse<AttendanceMarkResponse> markAttendance(
             @RequestBody MarkAttendanceReq req,
             Authentication authentication

@@ -3,8 +3,12 @@ package com.example.Piroin.project.domain.curriculum.repository;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.DayOfWeek;
 import java.util.List;
+import java.util.Optional;
 
 /*
 StudySession(세션) DB 접근 인터페이스
@@ -17,4 +21,15 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
     List<StudySession> findByStatusOrderBySessionDateDescDayPartDesc(SessionStatus status);
 
     List<StudySession> findByWeek(Long week);
+
+    @Query("""
+        SELECT s
+        FROM StudySession s
+        WHERE s.week = :week
+        AND FUNCTION('DAY_OF_WEEK', s.sessionDate) = :dayValue
+    """)
+    Optional<StudySession> findByWeekAndDay(
+            @Param("week") Long week,
+            @Param("dayValue") DayOfWeek dayValue
+    );
 }

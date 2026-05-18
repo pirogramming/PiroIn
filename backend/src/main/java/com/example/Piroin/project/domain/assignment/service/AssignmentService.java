@@ -14,6 +14,8 @@ import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
 import com.example.Piroin.project.domain.attendance.repository.AttendanceCodeRepository;
 import com.example.Piroin.project.domain.attendance.repository.AttendanceRepository;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
+import com.example.Piroin.project.domain.curriculum.exception.code.CurriculumErrorCode;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.curriculum.service.CurriculumService;
 import com.example.Piroin.project.domain.user.dto.*;
@@ -95,21 +97,58 @@ public class AssignmentService {
     }
 
     // 2. 과제 수정
-    public ModifyAssignmentResponse modifyAssignment(Integer assignmentId,
-                                                     ModifyAssignmentRequest request) {
+    @Transactional
+    public ModifyAssignmentResponse modifyAssignment(
+            Integer assignmentId,
+            ModifyAssignmentRequest request
+    ) {
 
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new AssignmentException(
                         AssignmentErrorCode.ASSIGNMENT_NOT_FOUND
                 ));
 
+    /*
+        1. 최종적으로 사용할 week 결정
+           - request에 있으면 그 값 사용
+           - 없으면 기존 assignment 값 사용
+     */
+        String finalWeek = request.getWeek() != null
+                ? request.getWeek()
+                : assignment.getWeek();
+
+    /*
+        2. 최종적으로 사용할 day 결정
+           - request에 있으면 그 값 사용
+           - 없으면 기존 sessionDate의 요일 사용
+     */
+        DayOfWeek finalDay = request.getDay() != null
+                ? request.getDay()
+                : assignment.getSessionDate().getDayOfWeek();
+
+    /*
+        3. week/day 조합으로 StudySession 조회해서
+           새로운 sessionDate 계산
+     */
+        StudySession studySession = curriculumRepository
+                .findByWeekAndDay(
+                        Long.parseLong(finalWeek),
+                        finalDay
+                )
+                .orElseThrow(() -> new CurriculumException(
+                        CurriculumErrorCode.STUDY_SESSION_NOT_FOUND
+                ));
+
+        LocalDate newSessionDate = studySession.getSessionDate();
+
+    /*
+        4. 수정 적용
+     */
         assignment.update(
                 request.getTitle(),
-                request.getWeek(),
-                request.getSessionDate()
+                finalWeek,
+                newSessionDate
         );
-
-        assignmentRepository.save(assignment);
 
         return new ModifyAssignmentResponse(assignment.getId());
     }

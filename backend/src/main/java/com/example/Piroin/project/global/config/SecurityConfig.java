@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{id}").hasRole("ADMIN")
 
                         // understanding check: 생성은 ADMIN만 가능
-                        .requestMatchers(HttpMethod.POST, "/api/sessions/*/understanding-checks").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")
 
                         // Swagger
                         .requestMatchers(

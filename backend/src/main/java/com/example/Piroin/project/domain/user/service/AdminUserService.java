@@ -15,9 +15,24 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
 
+    // 전체 부원 목록 조회
     public List<StudentListResponse> getStudentList() {
 
         List<User> students = userRepository.findByRole(Role.MEMBER);
+
+        return students.stream()
+                .map(user -> new StudentListResponse(
+                        user.getId(),
+                        user.getName()
+                ))
+                .toList();
+    }
+
+    // 부원 이름 검색
+    public List<StudentListResponse> searchStudents(String name) {
+
+        List<User> students =
+                userRepository.findByRoleAndNameContaining(Role.MEMBER, name);
 
         return students.stream()
                 .map(user -> new StudentListResponse(

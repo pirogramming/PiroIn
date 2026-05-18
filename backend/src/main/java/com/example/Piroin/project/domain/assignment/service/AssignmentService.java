@@ -130,15 +130,19 @@ public class AssignmentService {
         3. week/day 조합으로 StudySession 조회해서
            새로운 sessionDate 계산
      */
-        StudySession studySession = curriculumRepository
-                .findByWeekAndDay(
-                        Long.parseLong(finalWeek),
-                        finalDay
-                )
+
+        // request에서 보낸 주차에 해당하는 세션들을 전부 찾아 리스트에 저장.
+        List<StudySession> weekSessions = curriculumRepository.findByWeek(Long.parseLong(finalWeek));
+
+        // request에서 보낸 요일에 해당하는 세션을 찾음.
+        StudySession studySession = weekSessions.stream()
+                .filter(s -> s.getSessionDate().getDayOfWeek() == finalDay) // 자바끼리 요일 비교
+                .findFirst()
                 .orElseThrow(() -> new CurriculumException(
                         CurriculumErrorCode.STUDY_SESSION_NOT_FOUND
                 ));
 
+        // 그 세션의 날짜를 추출.
         LocalDate newSessionDate = studySession.getSessionDate();
 
     /*

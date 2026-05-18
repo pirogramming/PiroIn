@@ -22,14 +22,14 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
 
     List<StudySession> findByWeek(Long week);
 
-    @Query("""
-        SELECT s
-        FROM StudySession s
-        WHERE s.week = :week
-        AND FUNCTION('DAY_OF_WEEK', s.sessionDate) = :dayValue
-    """)
-    Optional<StudySession> findByWeekAndDay(
-            @Param("week") Long week,
-            @Param("dayValue") DayOfWeek dayValue
-    );
+//    @Query("""
+//        SELECT s
+//        FROM StudySession s
+//        WHERE s.week = :week
+//        AND FUNCTION('DAY_OF_WEEK', s.sessionDate) = :dayValue
+//    """)
+//    Optional<StudySession> findByWeekAndDay(
+//            @Param("week") Long week,
+//            @Param("dayValue") DayOfWeek dayValue
+//    );
 }

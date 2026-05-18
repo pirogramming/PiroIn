@@ -28,4 +28,11 @@ public class QuestionReqDTO {
     public static class UnderstandingResponseReq {
         private UnderstandResChoice choice;
     }
+
+    // 이해도 체크 생성 요청
+    @Getter
+    @NoArgsConstructor
+    public static class UnderstandingCheckCreateReq {
+        private String content;
+    }
 }

@@ -50,7 +50,7 @@ public class CurriculumService {
 
     @Transactional
     public CurriculumResDTO.UpdateSessionRes updateSession(Long sessionId, CurriculumReqDTO.UpdateSessionReq req) {
-        StudySession session = curriculumRepository.findById(Math.toIntExact(sessionId))
+        StudySession session = curriculumRepository.findById(sessionId)
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
 
         session.update(req.getGeneration(), req.getWeek(), req.getSessionDate(), req.getDayPart(),
@@ -63,7 +63,7 @@ public class CurriculumService {
 
     @Transactional
     public void deleteSession(Long sessionId) {
-        StudySession session = curriculumRepository.findById(Math.toIntExact(sessionId))
+        StudySession session = curriculumRepository.findById(sessionId)
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
 
         curriculumRepository.delete(session);

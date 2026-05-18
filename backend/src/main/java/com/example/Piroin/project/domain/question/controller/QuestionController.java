@@ -73,6 +73,18 @@ public class QuestionController {
                 questionService.toggleLike(questionId, userId));
     }
 
+    // 이해도 체크 생성
+    // POST /api/sessions/{sessionId}/understanding-checks
+    @PostMapping("/api/sessions/{sessionId}/understanding-checks")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UnderstandingCheckCreateResponse>> createUnderstandingCheck(
+            @PathVariable Long sessionId,
+            @RequestBody QuestionReqDTO.UnderstandingCheckCreateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_CHECK_CREATED,
+                questionService.createUnderstandingCheck(sessionId, request, userId));
+    }
+
     // 이해도 체크 응답
     // POST /api/sessions/{sessionId}/understanding-checks/{checkId}/responses
     @PostMapping("/api/sessions/{sessionId}/understanding-checks/{checkId}/responses")

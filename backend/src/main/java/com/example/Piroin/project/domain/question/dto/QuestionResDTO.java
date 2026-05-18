@@ -105,8 +105,7 @@ public class QuestionResDTO {
 
     public record UnderstandingCheckResponse(
             Long checkId,
-            String title,
-            String description,
+            String content,
             Integer understoodCount,
             Integer notUnderstoodCount,
             LocalDateTime createdAt
@@ -137,6 +136,15 @@ public class QuestionResDTO {
             UnderstandResChoice selectedChoice,
             Integer understoodCount,
             Integer notUnderstoodCount
+    ) {
+    }
+
+    public record UnderstandingCheckCreateResponse(
+            Long checkId,
+            String content,
+            Integer understoodCount,
+            Integer notUnderstoodCount,
+            LocalDateTime createdAt
     ) {
     }
 }

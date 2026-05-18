@@ -39,6 +39,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{id}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{id}").hasRole("ADMIN")
 
+                        // understanding check: 생성은 ADMIN만 가능
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/*/understanding-checks").hasRole("ADMIN")
+
                         // Swagger
                         .requestMatchers(
                                 "/swagger-ui/**",

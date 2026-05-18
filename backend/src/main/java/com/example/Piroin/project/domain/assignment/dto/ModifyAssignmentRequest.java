@@ -1,13 +1,10 @@
 package com.example.Piroin.project.domain.assignment.dto;
 
 import lombok.Getter;
-
 import java.time.LocalDate;
 
 @Getter
-public class CreateAssignmentRequest {
-    private Integer assignmentId;
-
+public class ModifyAssignmentRequest {
     private String title;
 
     private String week;

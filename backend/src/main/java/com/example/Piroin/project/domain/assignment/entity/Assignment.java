@@ -25,4 +25,18 @@ public class Assignment {
     @Column(name = "session_date")
     private LocalDate sessionDate; // DATE 타입에 매칭
 
+    public void update(String title, String week, LocalDate sessionDate) {
+
+        if (title != null) {
+            this.title = title;
+        }
+
+        if (week != null) {
+            this.week = week;
+        }
+
+        if (sessionDate != null) {
+            this.sessionDate = sessionDate;
+        }
+    }
 }

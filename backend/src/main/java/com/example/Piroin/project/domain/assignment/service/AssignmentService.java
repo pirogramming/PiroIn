@@ -1,9 +1,6 @@
 package com.example.Piroin.project.domain.assignment.service;
 
-import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentRequest;
-import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentResponse;
-import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentRequest;
-import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentResponse;
+import com.example.Piroin.project.domain.assignment.dto.*;
 import com.example.Piroin.project.domain.assignment.entity.Assignment;
 import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
 import com.example.Piroin.project.domain.assignment.entity.DeleteAssignmentResponse;
@@ -18,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
 import java.util.List;
 
 @Service
@@ -92,6 +90,61 @@ public class AssignmentService {
         assignmentRepository.delete(assignment);
 
         return new DeleteAssignmentResponse(assignmentId);
+    }
+
+    // 4-1. 나의 과제 조회 (부원)
+    public GetMyAssignmentsResponse getMyAssignments(
+            Long userId,
+            String week
+    ) {
+
+        List<Assignment> assignments =
+                assignmentRepository.findByWeekOrderBySessionDateAsc(week);
+
+        List<AssignmentInfoResponse> responses =
+                assignments.stream()
+                        .map(assignment -> {
+
+                            AssignmentStatus submittedStatus =
+                                    assignmentItemRepository
+                                            .findByUserIdAndAssignmentId(
+                                                    userId,
+                                                    assignment.getId()
+                                            )
+                                            .map(AssignmentItem::getSubmitted)
+                                            .orElse(AssignmentStatus.PENDING);
+
+                            return AssignmentInfoResponse.builder()
+                                    .assignmentId(assignment.getId())
+                                    .title(assignment.getTitle())
+                                    .week(assignment.getWeek())
+                                    .sessionDate(assignment.getSessionDate().toString())
+                                    .day(convertDay(
+                                            assignment.getSessionDate().getDayOfWeek()
+                                    ))
+                                    .submitted(submittedStatus)
+                                    .build();
+                        })
+                        .toList();
+
+        return GetMyAssignmentsResponse.builder()
+                .week(week)
+                .assignments(responses)
+                .build();
+    }
+
+    // 4-2. 날짜를 요일로 전환 함수
+    private String convertDay(DayOfWeek dayOfWeek) {
+
+        return switch (dayOfWeek) {
+            case MONDAY -> "MONDAY";
+            case TUESDAY -> "TUESDAY";
+            case WEDNESDAY -> "WEDNESDAY";
+            case THURSDAY -> "THURSDAY";
+            case FRIDAY -> "FRIDAY";
+            case SATURDAY -> "SATURDAY";
+            case SUNDAY -> "SUNDAY";
+        };
     }
 
 }

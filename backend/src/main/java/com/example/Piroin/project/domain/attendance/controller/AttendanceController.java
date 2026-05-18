@@ -33,6 +33,7 @@ public class AttendanceController {
 
     // 1. 출석코드 비교
     @PostMapping("/mark")
+    @Operation(summary = "출석코드 입력", description = "부원이 운영진이 알려준 출석코드를 입력하여 출석을 합니다.")
     public ApiResponse<AttendanceMarkResponse> markAttendance(
             @RequestBody MarkAttendanceReq req,
             Authentication authentication
@@ -63,7 +64,7 @@ public class AttendanceController {
 
 
     // 2. 특정 유저의 출석 정보
-    @Operation(summary = "사용자 출석 정보 조회", description = "특정 사용자의 전체 출석 정보를 조회합니다.")
+    @Operation(summary = "사용자 전체 출석 정보 조회", description = "특정 사용자의 전체 출석 정보를 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),

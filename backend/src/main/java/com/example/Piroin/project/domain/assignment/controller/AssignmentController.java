@@ -1,21 +1,19 @@
 package com.example.Piroin.project.domain.assignment.controller;
 
-import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentRequest;
-import com.example.Piroin.project.domain.assignment.dto.CreateAssignmentResponse;
-import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentRequest;
-import com.example.Piroin.project.domain.assignment.dto.ModifyAssignmentResponse;
+import com.example.Piroin.project.domain.assignment.dto.*;
 import com.example.Piroin.project.domain.assignment.entity.DeleteAssignmentResponse;
 import com.example.Piroin.project.domain.assignment.service.AssignmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/assignments")
+@RequestMapping("/api/assignments")
 @Tag(name = "피로체크 과제 관리", description = "피로체크 과제 관리 API")
 public class AssignmentController {
 
@@ -53,6 +51,20 @@ public class AssignmentController {
 
         return assignmentService.deleteAssignment(assignmentId);
     }
+
+    // 4. 나의 과제 상태 조회 (부원)
+    @Operation(summary = "나의 과제 조회", description = "부원이 본인의 과제 상태를 조회합니다.")
+    @GetMapping("/me/{week}")
+    public GetMyAssignmentsResponse getMyAssignments(
+            @PathVariable String week,
+            Authentication authentication
+    ) {
+
+        Long userId = Long.valueOf(authentication.getName());
+
+        return assignmentService.getMyAssignments(userId, week);
+    }
+
 
 }
 

@@ -8,4 +8,6 @@ import java.util.Optional;
 
 public interface DepositRepository extends JpaRepository<Deposit, Long> {
     Optional<Deposit> findByUser(User user);
+
+    Optional<Deposit> findByUserId(Long userId);
 }

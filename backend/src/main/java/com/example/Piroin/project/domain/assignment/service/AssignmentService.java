@@ -65,7 +65,9 @@ public class AssignmentService {
                 )
                 .findFirst()
                 .orElseThrow(() ->
-                        new RuntimeException("해당 요일의 세션이 존재하지 않습니다."));
+                        new CurriculumException(
+                                CurriculumErrorCode.SESSION_DATE_NOT_FOUND
+                        ));
 
         // 실제 날짜 추출
         LocalDate sessionDate = matchedSession.getSessionDate();
@@ -79,6 +81,8 @@ public class AssignmentService {
 
         assignmentRepository.save(assignment);
 
+
+        // 생성한 과제로 모든 부원에게 assignmentItem 생성하기
         // ADMIN 제외 MEMBER만 조회 추천
         List<User> users =
                 userRepository.findByRole(Role.MEMBER);
@@ -95,6 +99,7 @@ public class AssignmentService {
 
         return new CreateAssignmentResponse(assignment.getId());
     }
+
 
     // 2. 과제 수정
     @Transactional

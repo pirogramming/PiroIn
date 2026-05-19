@@ -24,6 +24,12 @@ public enum CurriculumErrorCode {
             HttpStatus.NOT_FOUND,
             "CURRICULUM404",
             "해당 스터디 세션이 존재하지 않습니다."
+    ),
+
+    SESSION_DATE_NOT_FOUND(
+            HttpStatus.BAD_REQUEST,
+            "CURRICULUM405",
+            "해당 날짜의 세션이 없습니다. 세션을 먼저 생성해주세요."
     );
 
     private final HttpStatus status;

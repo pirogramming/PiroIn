@@ -9,13 +9,27 @@ import com.example.Piroin.project.domain.assignment.exception.AssignmentExceptio
 import com.example.Piroin.project.domain.assignment.exception.code.AssignmentErrorCode;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentItemRepository;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentRepository;
+import com.example.Piroin.project.domain.attendance.entity.Attendance;
+import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
+import com.example.Piroin.project.domain.attendance.repository.AttendanceCodeRepository;
+import com.example.Piroin.project.domain.attendance.repository.AttendanceRepository;
+import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
+import com.example.Piroin.project.domain.curriculum.exception.code.CurriculumErrorCode;
+import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
+import com.example.Piroin.project.domain.curriculum.service.CurriculumService;
+import com.example.Piroin.project.domain.user.dto.*;
 import com.example.Piroin.project.domain.user.entity.User;
+import com.example.Piroin.project.domain.user.enums.Role;
 import com.example.Piroin.project.domain.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.example.Piroin.project.domain.user.service.UserService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,19 +40,52 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final AssignmentItemRepository assignmentItemRepository;
     private final UserRepository userRepository;
+    private final AttendanceRepository attendanceRepository;
+    private final CurriculumRepository curriculumRepository;
+    private final AttendanceCodeRepository attendanceCodeRepository;
 
     // 1. 과제 생성
-    public CreateAssignmentResponse createAssignment(CreateAssignmentRequest request) {
+    @Transactional
+    public CreateAssignmentResponse createAssignment(
+            CreateAssignmentRequest request
+    ) {
 
+        // week 문자열 -> Long 변환
+        Long week = Long.valueOf(request.getWeek());
+
+        // 해당 주차 세션들 조회
+        List<StudySession> sessions =
+                curriculumRepository.findByWeek(week);
+
+        // 요청한 요일과 일치하는 세션 찾기
+        StudySession matchedSession = sessions.stream()
+                .filter(session ->
+                        session.getSessionDate().getDayOfWeek()
+                                == request.getDay()
+                )
+                .findFirst()
+                .orElseThrow(() ->
+                        new CurriculumException(
+                                CurriculumErrorCode.SESSION_DATE_NOT_FOUND
+                        ));
+
+        // 실제 날짜 추출
+        LocalDate sessionDate = matchedSession.getSessionDate();
+
+        // Assignment 생성
         Assignment assignment = Assignment.builder()
                 .title(request.getTitle())
                 .week(request.getWeek())
-                .sessionDate(request.getSessionDate())
+                .sessionDate(sessionDate)
                 .build();
 
         assignmentRepository.save(assignment);
 
-        List<User> users = userRepository.findAll();
+
+        // 생성한 과제로 모든 부원에게 assignmentItem 생성하기
+        // ADMIN 제외 MEMBER만 조회 추천
+        List<User> users =
+                userRepository.findByRole(Role.MEMBER);
 
         List<AssignmentItem> assignmentItems = users.stream()
                 .map(user -> AssignmentItem.builder()
@@ -53,22 +100,64 @@ public class AssignmentService {
         return new CreateAssignmentResponse(assignment.getId());
     }
 
+
     // 2. 과제 수정
-    public ModifyAssignmentResponse modifyAssignment(Integer assignmentId,
-                                                     ModifyAssignmentRequest request) {
+    @Transactional
+    public ModifyAssignmentResponse modifyAssignment(
+            Integer assignmentId,
+            ModifyAssignmentRequest request
+    ) {
 
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new AssignmentException(
                         AssignmentErrorCode.ASSIGNMENT_NOT_FOUND
                 ));
 
+    /*
+        1. 최종적으로 사용할 week 결정
+           - request에 있으면 그 값 사용
+           - 없으면 기존 assignment 값 사용
+     */
+        String finalWeek = request.getWeek() != null
+                ? request.getWeek()
+                : assignment.getWeek();
+
+    /*
+        2. 최종적으로 사용할 day 결정
+           - request에 있으면 그 값 사용
+           - 없으면 기존 sessionDate의 요일 사용
+     */
+        DayOfWeek finalDay = request.getDay() != null
+                ? request.getDay()
+                : assignment.getSessionDate().getDayOfWeek();
+
+    /*
+        3. week/day 조합으로 StudySession 조회해서
+           새로운 sessionDate 계산
+     */
+
+        // request에서 보낸 주차에 해당하는 세션들을 전부 찾아 리스트에 저장.
+        List<StudySession> weekSessions = curriculumRepository.findByWeek(Long.parseLong(finalWeek));
+
+        // request에서 보낸 요일에 해당하는 세션을 찾음.
+        StudySession studySession = weekSessions.stream()
+                .filter(s -> s.getSessionDate().getDayOfWeek() == finalDay) // 자바끼리 요일 비교
+                .findFirst()
+                .orElseThrow(() -> new CurriculumException(
+                        CurriculumErrorCode.STUDY_SESSION_NOT_FOUND
+                ));
+
+        // 그 세션의 날짜를 추출.
+        LocalDate newSessionDate = studySession.getSessionDate();
+
+    /*
+        4. 수정 적용
+     */
         assignment.update(
                 request.getTitle(),
-                request.getWeek(),
-                request.getSessionDate()
+                finalWeek,
+                newSessionDate
         );
-
-        assignmentRepository.save(assignment);
 
         return new ModifyAssignmentResponse(assignment.getId());
     }
@@ -147,4 +236,106 @@ public class AssignmentService {
         };
     }
 
+
+    // 5. (운영진) 학생들 과제 상태 열람
+    @Transactional(readOnly = true)
+    public StudentWeeklyStatusResponse getStudentWeeklyStatus(
+            Long userId,
+            Long week
+    ) {
+
+        List<StudySession> sessions =
+                curriculumRepository.findByWeek(week);
+
+        List<DayStatusResponse> dayResponses = new ArrayList<>();
+
+        for (StudySession session : sessions) {
+
+            LocalDate sessionDate = session.getSessionDate();
+
+            String day =
+                    sessionDate.getDayOfWeek().toString();
+
+            /*
+             * 과제 조회
+             */
+            List<Assignment> assignments =
+                    assignmentRepository.findBySessionDate(sessionDate);
+
+            List<AssignmentStatusResponse> assignmentResponses =
+                    assignments.stream()
+                            .map(assignment -> {
+
+                                AssignmentItem item =
+                                        assignmentItemRepository
+                                                .findByUserIdAndAssignmentId(
+                                                        userId,
+                                                        assignment.getId()
+                                                )
+                                                .orElse(null);
+
+                                String submitted =
+                                        item == null
+                                                ? "PENDING"
+                                                : item.getSubmitted().name();
+
+                                return AssignmentStatusResponse.builder()
+                                        .assignmentItemId(
+                                                item != null ? item.getId() : null
+                                        )
+                                        .assignmentId(assignment.getId())
+                                        .title(assignment.getTitle())
+                                        .submitted(submitted)
+                                        .build();
+                            })
+                            .toList();
+
+            /*
+             * 출석 조회
+             */
+            List<AttendanceCode> attendanceCodes =
+                    attendanceCodeRepository.findByAttendanceDate(sessionDate);
+
+            List<AttendanceStatusResponse> attendanceResponses =
+                    attendanceCodes.stream()
+                            .map(code -> {
+
+                                Attendance attendance =
+                                        attendanceRepository
+                                                .findByUserIdAndAttendanceCodeId(
+                                                        userId,
+                                                        code.getId()
+                                                )
+                                                .orElse(null);
+
+                                boolean attended =
+                                        attendance != null &&
+                                                attendance.getStatus();
+
+                                return AttendanceStatusResponse.builder()
+                                        .attendanceId(
+                                                attendance != null ? attendance.getId() : null
+                                        )
+                                        .attendanceCodeId(code.getId())
+                                        .attendanceOrder(code.getAttendanceOrder())
+                                        .attended(attended)
+                                        .build();
+                            })
+                            .toList();
+
+            dayResponses.add(
+                    DayStatusResponse.builder()
+                            .day(day)
+                            .sessionDate(sessionDate)
+                            .assignments(assignmentResponses)
+                            .attendances(attendanceResponses)
+                            .build()
+            );
+        }
+
+        return StudentWeeklyStatusResponse.builder()
+                .week(week)
+                .days(dayResponses)
+                .build();
+    }
 }

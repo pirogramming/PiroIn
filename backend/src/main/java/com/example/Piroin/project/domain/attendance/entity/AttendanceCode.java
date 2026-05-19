@@ -3,6 +3,8 @@ package com.example.Piroin.project.domain.attendance.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name = "attendance_code")
 @Getter
@@ -16,7 +18,7 @@ public class AttendanceCode {
     private Integer id; // SERIAL 타입에 매칭 (Long -> Integer)
 
     @Column(name = "attendance_date")
-    private String attendanceDate;
+    private LocalDate attendanceDate;
 
     @Column(name = "attendance_order")
     private String attendanceOrder; // '1, 2, 3' 코멘트 항목

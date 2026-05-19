@@ -32,11 +32,10 @@ public class AssignmentController {
     // 2. 과제 수정
     @Operation(summary = "과제 수정", description = "과제에 대한 과제명/주차/날짜를 운영진이 수정합니다.")
     @PatchMapping("/modify/{assignmentId}")
-    @ResponseStatus(HttpStatus.OK)
     public ModifyAssignmentResponse modifyAssignment(
             @PathVariable Integer assignmentId,
             @RequestBody ModifyAssignmentRequest request
-    ){
+    ) {
         return assignmentService.modifyAssignment(assignmentId, request);
     }
 

@@ -24,12 +24,14 @@ public interface AttendanceCodeRepository extends JpaRepository<AttendanceCode, 
 //    Optional<AttendanceCode> findByCodeAndStudySessionId(String code, Long studySessionId);
 
     // 특정 날짜에 발급된 코드 개수 조회
-    long countByAttendanceDate(String attendanceDate);
+    long countByAttendanceDate(LocalDate attendanceDate);
 
     // 만료되지 않은 코드 목록 조회
     List<AttendanceCode> findByIsExpiredFalse();
 
     Optional<AttendanceCode> findByCode(String code);
+
+    List<AttendanceCode> findByAttendanceDate(LocalDate attendanceDate);
 }
 
 

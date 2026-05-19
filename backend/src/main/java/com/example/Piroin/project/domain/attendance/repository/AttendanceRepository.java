@@ -14,6 +14,8 @@ import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
+    Optional<Attendance> findById(Integer id);
+
     // List<Attendance> findByUserId(Long userId);
 
     //Optional<Attendance> findByUserIdAndStudySessionId(Integer userId, Long studySessionId);
@@ -31,10 +33,15 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     // 2. 특정 유저 ID와 출석 코드의 날짜 조건으로 조회 (엔티티 그래프 참조: attendanceCode.attendanceDate)
     @Query("SELECT a FROM Attendance a WHERE a.user.id = :userId AND a.attendanceCode.attendanceDate = :attendanceDate")
-    List<Attendance> findByUserIdAndDate(@Param("userId") Integer userId, @Param("attendanceDate") String attendanceDate);
+    List<Attendance> findByUserIdAndDate(@Param("userId") Integer userId, @Param("attendanceDate") LocalDate attendanceDate);
 
     // 3. 특정 유저의 모든 출석 데이터 조회
     List<Attendance> findByUserId(Long userId);
+
+    Optional<Attendance> findByUserIdAndAttendanceCodeId(
+            Long userId,
+            Integer attendanceCodeId
+    );
 
     // 특정 날짜에 발급된 출석 코드의 개수를 세는 메서드
     //long countByAttendanceDate(String attendanceDate);

@@ -49,12 +49,12 @@ public class AttendanceService {
 
     // 1. 출석 시작 코드 (출석코드 생성 함수)
     @Transactional
-    public AttendanceCode generateCodeAndCreateAttendances(String dateStr) { // [수정] 세션 ID 대신 날짜를 직접 받음
+    public AttendanceCode generateCodeAndCreateAttendances(LocalDate date) { // [수정] 세션 ID 대신 날짜를 직접 받음
 
         // 1. [삭제] 더 이상 세션을 조회해서 날짜를 파싱할 필요가 없습니다. (curriculumRepository 조회 제거)
 
         // 2. 해당 날짜에 생성된 출석 코드 개수 조회
-        long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(dateStr);
+        long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(date);
 
         if (codeCountOfDay >= 3) {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
@@ -72,7 +72,7 @@ public class AttendanceService {
 
         // 5. 새로운 AttendanceCode 생성 및 저장
         AttendanceCode attendanceCode = AttendanceCode.builder()
-                .attendanceDate(dateStr) // [수정] 파라미터로 받은 날짜 주입
+                .attendanceDate(date) // [수정] 파라미터로 받은 날짜 주입
                 .attendanceOrder(attendanceOrder)
                 .code(code)
                 .isExpired(false)
@@ -181,7 +181,7 @@ public class AttendanceService {
 
         // 변경된 구조: User ID와 AttendanceCode의 날짜 조건으로 조회
         List<Attendance> attendances =
-                attendanceRepository.findByUserIdAndDate(userId, dateStr);
+                attendanceRepository.findByUserIdAndDate(userId, date);
 
         return attendances.stream()
                 .map(attendance -> new AttendanceSlotRes(
@@ -193,19 +193,21 @@ public class AttendanceService {
     }
 
     // 6. 유저의 전체 출석 현황을 날짜별로 묶어서 조회하는 함수
-    public List<AttendanceStatusRes> findByUserId(Integer userId) { // Long -> Integer
-        List<Attendance> attendances = attendanceRepository.findByUserId(Long.valueOf(userId));
+    public List<AttendanceStatusRes> findByUserId(Integer userId) {
 
-        // 변경된 구조: AttendanceCode에 저장된 String 날짜를 기준으로 그룹화(groupingBy)
-        Map<String, List<Attendance>> grouped = attendances.stream()
+        List<Attendance> attendances =
+                attendanceRepository.findByUserId(Long.valueOf(userId));
+
+        // LocalDate 기준으로 그룹화
+        Map<LocalDate, List<Attendance>> grouped = attendances.stream()
                 .collect(Collectors.groupingBy(
                         attendance -> attendance.getAttendanceCode().getAttendanceDate()
                 ));
 
         return grouped.entrySet().stream()
                 .map(entry -> {
-                    // String으로 정렬/그룹화된 키를 다시 LocalDate 객체로 변환하여 DTO에 주입
-                    LocalDate date = LocalDate.parse(entry.getKey());
+
+                    LocalDate date = entry.getKey();
 
                     List<AttendanceSlotRes> slots = entry.getValue().stream()
                             .map(attendance -> new AttendanceSlotRes(
@@ -221,7 +223,7 @@ public class AttendanceService {
 
                     return dto;
                 })
-                .sorted(Comparator.comparing(AttendanceStatusRes::getDate).reversed()) // 최신날짜 순 정렬
+                .sorted(Comparator.comparing(AttendanceStatusRes::getDate).reversed())
                 .toList();
     }
 

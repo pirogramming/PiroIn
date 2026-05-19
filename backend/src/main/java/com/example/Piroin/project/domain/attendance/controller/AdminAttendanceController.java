@@ -36,14 +36,12 @@ public class AdminAttendanceController {
     @PostMapping("/admin/attendance/start")
     public AttendanceCodeResponse startAttendance() {
 
-        // 1. 오늘 날짜 구하기 (LocalDate 활용)
+        // 오늘 날짜
         LocalDate today = LocalDate.now();
 
-        // 2. 서비스가 원하는 "yyyy-MM-dd" 형식의 문자열로 포맷팅
-        String todayStr = today.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-
-        // 3. 포맷팅된 오늘 날짜 문자열을 서비스에 넘겨줍니다.
-        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(todayStr);
+        // 서비스 호출
+        AttendanceCode code =
+                attendanceService.generateCodeAndCreateAttendances(today);
 
         return AttendanceCodeResponse.from(code);
     }

@@ -8,10 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class AssignmentStatusResponse {
-
+    private Integer assignmentItemId;
     private Integer assignmentId;
-
     private String title;
-
     private String submitted;
 }

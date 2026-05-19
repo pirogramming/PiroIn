@@ -14,6 +14,8 @@ import java.util.Optional;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
+    Optional<Attendance> findById(Integer id);
+
     // List<Attendance> findByUserId(Long userId);
 
     //Optional<Attendance> findByUserIdAndStudySessionId(Integer userId, Long studySessionId);

@@ -8,10 +8,12 @@ import lombok.Getter;
 @AllArgsConstructor
 @Builder
 public class AttendanceStatusResponse {
+    private Integer attendanceId;
 
     private Integer attendanceCodeId;
 
     private String attendanceOrder;
 
     private Boolean attended;
+
 }

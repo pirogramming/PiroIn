@@ -237,6 +237,7 @@ public class AssignmentService {
     }
 
 
+    // 5. (운영진) 학생들 과제 상태 열람
     @Transactional(readOnly = true)
     public StudentWeeklyStatusResponse getStudentWeeklyStatus(
             Long userId,
@@ -279,6 +280,9 @@ public class AssignmentService {
                                                 : item.getSubmitted().name();
 
                                 return AssignmentStatusResponse.builder()
+                                        .assignmentItemId(
+                                                item != null ? item.getId() : null
+                                        )
                                         .assignmentId(assignment.getId())
                                         .title(assignment.getTitle())
                                         .submitted(submitted)
@@ -309,6 +313,9 @@ public class AssignmentService {
                                                 attendance.getStatus();
 
                                 return AttendanceStatusResponse.builder()
+                                        .attendanceId(
+                                                attendance != null ? attendance.getId() : null
+                                        )
                                         .attendanceCodeId(code.getId())
                                         .attendanceOrder(code.getAttendanceOrder())
                                         .attended(attended)

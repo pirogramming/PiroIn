@@ -17,5 +17,5 @@ public interface AssignmentItemRepository extends JpaRepository<AssignmentItem, 
             String week
     );
 
-
+    Optional<AssignmentItem> findById(Integer id);
 }

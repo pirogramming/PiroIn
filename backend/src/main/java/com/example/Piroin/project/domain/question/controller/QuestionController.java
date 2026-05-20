@@ -44,10 +44,10 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Integer userId
     ) {
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED,
-                questionService.createQuestion(sessionId, request, userId));
+                questionService.createQuestion(sessionId, request, Long.valueOf(userId)));
     }
 
     // 댓글/대댓글 등록
@@ -60,6 +60,29 @@ public class QuestionController {
     ) {
         return ResponseUtil.success(QuestionSuccessCode.COMMENT_CREATED,
                 questionService.createComment(questionId, request, userId));
+    }
+
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @PostMapping("/api/questions/{questionId}/like")
+    public ResponseEntity<ApiResponse<QuestionResDTO.LikeRes>> toggleLike(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.LIKE_TOGGLED,
+                questionService.toggleLike(questionId, userId));
+    }
+
+    // 이해도 체크 생성
+    // POST /api/sessions/{sessionId}/understanding-checks
+    @PostMapping("/api/sessions/{sessionId}/understanding-checks")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UnderstandingCheckCreateResponse>> createUnderstandingCheck(
+            @PathVariable Long sessionId,
+            @RequestBody QuestionReqDTO.UnderstandingCheckCreateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_CHECK_CREATED,
+                questionService.createUnderstandingCheck(sessionId, request, userId));
     }
 
     // 이해도 체크 응답

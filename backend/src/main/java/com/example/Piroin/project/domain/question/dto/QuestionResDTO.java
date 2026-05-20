@@ -35,9 +35,18 @@ public class QuestionResDTO {
     public record CommentCreateRes(
             Long commentId,
             Long questionId,
-            String displayName,   // "작성자" / "익명N" / "운영진N"
+            String displayName,
             String content,
             LocalDateTime createdAt
+    ) {
+    }
+
+    // 좋아요 토글 응답
+    // isLiked: true면 좋아요 추가된 상태, false면 취소된 상태
+    public record LikeRes(
+            Long id,
+            Integer likeCount,
+            Boolean isLiked
     ) {
     }
 
@@ -96,8 +105,7 @@ public class QuestionResDTO {
 
     public record UnderstandingCheckResponse(
             Long checkId,
-            String title,
-            String description,
+            String content,
             Integer understoodCount,
             Integer notUnderstoodCount,
             LocalDateTime createdAt
@@ -128,6 +136,15 @@ public class QuestionResDTO {
             UnderstandResChoice selectedChoice,
             Integer understoodCount,
             Integer notUnderstoodCount
+    ) {
+    }
+
+    public record UnderstandingCheckCreateResponse(
+            Long checkId,
+            String content,
+            Integer understoodCount,
+            Integer notUnderstoodCount,
+            LocalDateTime createdAt
     ) {
     }
 }

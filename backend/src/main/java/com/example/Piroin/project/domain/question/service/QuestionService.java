@@ -210,6 +210,57 @@ public class QuestionService {
         return QuestionResDTO.CreateRes.from(questionRepository.save(question));
     }
 
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @Transactional
+    public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+
+        // 이미 좋아요를 눌렀는지 확인
+        return questionLikeRepository.findByQuestionAndUser(question, loginUser)
+                .map(existingLike -> {
+                    // 이미 눌렀으면 → 취소 (삭제 + likeCount -1)
+                    questionLikeRepository.delete(existingLike);
+                    question.decreaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), false);
+                })
+                .orElseGet(() -> {
+                    // 처음 누르면 → 추가 (저장 + likeCount +1)
+                    questionLikeRepository.save(QuestionLike.builder()
+                            .question(question)
+                            .user(loginUser)
+                            .createdAt(LocalDateTime.now())
+                            .build());
+                    question.increaseLikeCount();
+                    return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), true);
+                });
+    }
+
+    // 이해도 체크 생성
+    @Transactional
+    public QuestionResDTO.UnderstandingCheckCreateResponse createUnderstandingCheck(
+            Long sessionId, QuestionReqDTO.UnderstandingCheckCreateReq request, Long userId
+    ) {
+        validateUnderstandingCheckCreateRequest(request);
+        User loginUser = findLoginUser(userId);
+        validateAdmin(loginUser);
+        StudySession session = findSession(sessionId);
+
+        LocalDateTime now = LocalDateTime.now();
+        UnderstandingCheck check = understandingCheckRepository.save(UnderstandingCheck.builder()
+                .session(session)
+                .createdBy(loginUser)
+                .title(request.getContent().trim())
+                .createdAt(now)
+                .updatedAt(now)
+                .build());
+
+        return new QuestionResDTO.UnderstandingCheckCreateResponse(
+                check.getId(), check.getTitle(), 0, 0, check.getCreatedAt()
+        );
+    }
+
     // 이해도 체크 응답
     @Transactional
     public QuestionResDTO.UnderstandingResponseResult respondUnderstandingCheck(
@@ -234,6 +285,18 @@ public class QuestionService {
         }
         return userRepository.findById(userId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.UNAUTHORIZED, "로그인 사용자를 찾을 수 없습니다."));
+    }
+
+    private void validateAdmin(User loginUser) {
+        if (loginUser.getRole() != Role.ADMIN) {
+            throw new QuestionException(HttpStatus.FORBIDDEN, "관리자만 이해도 체크를 생성할 수 있습니다.");
+        }
+    }
+
+    private void validateUnderstandingCheckCreateRequest(QuestionReqDTO.UnderstandingCheckCreateReq request) {
+        if (request == null || request.getContent() == null || request.getContent().isBlank()) {
+            throw new IllegalArgumentException("이해도 체크 내용은 필수입니다.");
+        }
     }
 
     private Question findQuestion(Long questionId) {
@@ -319,7 +382,7 @@ public class QuestionService {
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
         return new QuestionResDTO.UnderstandingCheckResponse(
-                check.getId(), check.getTitle(), check.getDescription(),
+                check.getId(), check.getTitle(),
                 understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
                 understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD),
                 check.getCreatedAt()

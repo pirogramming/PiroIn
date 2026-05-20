@@ -1,8 +1,8 @@
 package com.example.Piroin.project.domain.assignment.entity;
 
-import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "assignment")
@@ -14,15 +14,29 @@ public class Assignment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id")
-    private StudySession session;
+    private Integer id; // SERIAL 타입에 매칭
 
     @Column(nullable = false)
     private String title;
 
-    private String content;
-}
+    @Column(length = 255)
+    private String week;
 
+    @Column(name = "session_date")
+    private LocalDate sessionDate; // DATE 타입에 매칭
+
+    public void update(String title, String week, LocalDate sessionDate) {
+
+        if (title != null) {
+            this.title = title;
+        }
+
+        if (week != null) {
+            this.week = week;
+        }
+
+        if (sessionDate != null) {
+            this.sessionDate = sessionDate;
+        }
+    }
+}

@@ -15,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,8 +34,15 @@ public class AdminAttendanceController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
     @PostMapping("/admin/attendance/start")
-    public AttendanceCodeResponse startAttendance(@PathVariable Long studySessionId) {
-        AttendanceCode code = attendanceService.generateCodeAndCreateAttendances(studySessionId);
+    public AttendanceCodeResponse startAttendance() {
+
+        // 오늘 날짜
+        LocalDate today = LocalDate.now();
+
+        // 서비스 호출
+        AttendanceCode code =
+                attendanceService.generateCodeAndCreateAttendances(today);
+
         return AttendanceCodeResponse.from(code);
     }
 
@@ -71,7 +79,7 @@ public class AdminAttendanceController {
     @PutMapping("/admin/users/{userId}/status")
     public boolean updateUserStatus(
             @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId,
+            @PathVariable Integer userId,
             @RequestBody UpdateUserStatusReq req) {
         return attendanceService.updateUserStatus(userId, req);
     }

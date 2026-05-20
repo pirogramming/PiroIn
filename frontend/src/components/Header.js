@@ -3,7 +3,7 @@ import styles from './Header.module.css';
 
 function Header({ type }) {
     return (
-        <header className={type === "dark" ? styles.dark : styles.light}>
+        <header className={`${styles.header} ${type === "dark" ? styles.dark : styles.light}`}>
             <NavLink to="/" className={styles.logo}>PIROIN</NavLink>
             <nav className={styles.nav}>
                 <NavLink to="/pirocheck" className={({ isActive }) => isActive ? styles.active : ''}>PIROCHECK</NavLink>

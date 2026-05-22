@@ -18,16 +18,10 @@ public class CurriculumController {
 
     private final CurriculumService curriculumService;
 
-    @GetMapping
-    public ResponseEntity<List<CurriculumResDTO.GetSessionRes>> getAllSessions() {
-        return ResponseEntity.ok(curriculumService.getAllSessions());
-    }
-
     @PostMapping
-    public ResponseEntity<CurriculumResDTO.CreateSessionRes> createSession(
-            @RequestBody CurriculumReqDTO.CreateSessionReq req) {
-        CurriculumResDTO.CreateSessionRes response = curriculumService.createSession(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<CurriculumResDTO.CreateDayRes> createDay(
+            @RequestBody CurriculumReqDTO.CreateDayReq req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(curriculumService.createDay(req));
     }
 
     @PatchMapping("/{sessionId}")

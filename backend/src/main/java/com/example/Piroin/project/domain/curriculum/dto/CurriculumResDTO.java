@@ -11,46 +11,28 @@ import java.util.List;
 
 public class CurriculumResDTO {
 
-    @Getter
-    @AllArgsConstructor
-    public static class CreateSessionRes {
-        private Long id;
-        private String createdBy;
-        private Integer generation;
-        private Long week;
-        private LocalDate sessionDate;
-        private SessionDayPart dayPart;
-        private String title;
-        private String hostName;
-        private SessionStatus status;
-        private String description;
-        private String sessionMaterialUrl;
-        private String assignmentUrl;
-        private String recordingUrl;
-        private String recordingPassword;
-        private String sessionMaterialName;
-        private String assignmentName;
-        private LocalDateTime createdAt;
-    }
+    public record SessionInfo(
+            Long sessionId,
+            SessionDayPart dayPart,
+            String title,
+            String hostName,
+            SessionStatus status,
+            String description,
+            String sessionMaterialUrl,
+            String sessionMaterialName,
+            String recordingUrl,
+            String recordingPassword
+    ) {}
 
-    @Getter
-    @AllArgsConstructor
-    public static class GetSessionRes {
-        private Long id;
-        private Long week;
-        private LocalDate sessionDate;
-        private SessionDayPart dayPart;
-        private String title;
-        private String hostName;
-        private SessionStatus status;
-        private String description;
-        private String sessionMaterialUrl;
-        private String assignmentUrl;
-        private String recordingUrl;
-        private String recordingPassword;
-        private String sessionMaterialName;
-        private String assignmentName;
-    }
+    public record CreateDayRes(
+            LocalDate sessionDate,
+            Integer generation,
+            Long week,
+            String assignmentUrl,
+            String assignmentName,
+            List<SessionInfo> sessions,
+            LocalDateTime createdAt
+    ) {}
 
     @Getter
     @AllArgsConstructor

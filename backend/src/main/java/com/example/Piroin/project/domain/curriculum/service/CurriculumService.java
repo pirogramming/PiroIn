@@ -9,6 +9,7 @@ import com.example.Piroin.project.domain.curriculum.exception.CurriculumExceptio
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.user.repository.UserRepository;
+import com.example.Piroin.project.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,28 +25,27 @@ public class CurriculumService {
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
 
-    @Transactional(readOnly = true)
-    public List<CurriculumResDTO.GetSessionRes> getAllSessions() {
-        return curriculumRepository.findAll().stream()
-                .map(CurriculumConverter::toGetSessionRes)
-                .collect(Collectors.toList());
-    }
-
     @Transactional
-    public CurriculumResDTO.CreateSessionRes createSession(CurriculumReqDTO.CreateSessionReq req) {
+    public CurriculumResDTO.CreateDayRes createDay(CurriculumReqDTO.CreateDayReq req) {
         if (req.getGeneration() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "기수는 필수입니다.");
         if (req.getWeek() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "주차는 필수입니다.");
         if (req.getSessionDate() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 날짜는 필수입니다.");
-        if (req.getDayPart() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "오전/오후는 필수입니다.");
-        if (req.getTitle() == null || req.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "제목은 필수입니다.");
+        if (req.getSessions() == null || req.getSessions().size() != 2)
+            throw new CurriculumException(HttpStatus.BAD_REQUEST, "AM/PM 세션 2개를 함께 입력해야 합니다.");
 
-        User user = userRepository.findById(req.getUserId())
+        req.getSessions().forEach(s -> {
+            if (s.getDayPart() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "dayPart는 필수입니다.");
+            if (s.getTitle() == null || s.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
+        });
+
+        User user = userRepository.findById(SecurityUtil.getCurrentUserId())
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        StudySession session = CurriculumConverter.toStudySession(req, user);
-        StudySession savedSession = curriculumRepository.save(session);
+        List<StudySession> sessions = req.getSessions().stream()
+                .map(sessionReq -> CurriculumConverter.toStudySession(sessionReq, req, user))
+                .collect(Collectors.toList());
 
-        return CurriculumConverter.toCreateSessionRes(savedSession);
+        return CurriculumConverter.toCreateDayRes(curriculumRepository.saveAll(sessions));
     }
 
     @Transactional

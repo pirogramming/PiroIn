@@ -4,6 +4,7 @@ import LoginPage from './pages/login/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
+import QnADetailePage from './pages/qna/QnADetailePage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/sessions" element={<QnAMainPage />} />
           <Route path="/sessions/questions" element={<QnAListPage />} />
+          <Route path="/sessions/questions/:id" element={<QnADetailePage />} />
           <Route path="/curriculum" element={<CurriculumPage />} />
         </Route>
 

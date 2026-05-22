@@ -37,7 +37,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/curriculums").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/curriculums").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
 
                         // understanding check: 생성은 ADMIN만 가능
                         .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")

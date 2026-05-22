@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +33,9 @@ public class CurriculumController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{sessionId}")
-    public ResponseEntity<Map<String, String>> deleteSession(@PathVariable Long sessionId) {
-        curriculumService.deleteSession(sessionId);
+    @DeleteMapping("/{sessionDate}")
+    public ResponseEntity<Map<String, String>> deleteDay(@PathVariable LocalDate sessionDate) {
+        curriculumService.deleteDay(sessionDate);
         return ResponseEntity.ok(Map.of("message", "세션이 정상적으로 삭제되었습니다."));
     }
 }

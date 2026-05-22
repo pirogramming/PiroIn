@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -62,11 +63,10 @@ public class CurriculumService {
     }
 
     @Transactional
-    public void deleteSession(Long sessionId) {
-        StudySession session = curriculumRepository.findById(sessionId)
-                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
-
-        curriculumRepository.delete(session);
+    public void deleteDay(LocalDate sessionDate) {
+        List<StudySession> sessions = curriculumRepository.findBySessionDate(sessionDate);
+        if (sessions.isEmpty()) throw new CurriculumException(HttpStatus.NOT_FOUND, "해당 세션을 찾을 수 없습니다.");
+        curriculumRepository.deleteAll(sessions);
     }
 
     @Transactional(readOnly = true)

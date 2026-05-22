@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,6 +26,18 @@ public class CurriculumService {
 
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
+
+    @Transactional(readOnly = true)
+    public List<CurriculumResDTO.CreateDayRes> getAllDays() {
+        Map<LocalDate, List<StudySession>> grouped = curriculumRepository.findAllByOrderBySessionDateAscDayPartAsc()
+                .stream()
+                .collect(Collectors.groupingBy(StudySession::getSessionDate, Collectors.toList()));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> CurriculumConverter.toCreateDayRes(entry.getValue()))
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public CurriculumResDTO.CreateDayRes createDay(CurriculumReqDTO.CreateDayReq req) {

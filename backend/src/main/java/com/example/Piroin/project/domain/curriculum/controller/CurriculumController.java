@@ -19,6 +19,11 @@ public class CurriculumController {
 
     private final CurriculumService curriculumService;
 
+    @GetMapping
+    public ResponseEntity<List<CurriculumResDTO.CreateDayRes>> getAllDays() {
+        return ResponseEntity.ok(curriculumService.getAllDays());
+    }
+
     @PostMapping
     public ResponseEntity<CurriculumResDTO.CreateDayRes> createDay(
             @RequestBody CurriculumReqDTO.CreateDayReq req) {

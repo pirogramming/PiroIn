@@ -21,6 +21,8 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
 
     List<StudySession> findBySessionDate(LocalDate sessionDate);
 
+    List<StudySession> findAllByOrderBySessionDateAscDayPartAsc();
+
 //    @Query("""
 //        SELECT s
 //        FROM StudySession s

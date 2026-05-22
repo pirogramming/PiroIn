@@ -2,6 +2,7 @@ import { useState } from 'react';
 import styles from './QnAListPage.module.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
+
 const CommentImoji = () => (<svg xmlns="http://www.w3.org/2000/svg" width="15" height="12" viewBox="0 0 15 12" fill="none">
     <path d="M3.95833 4.24177C3.38304 4.24177 2.91667 4.70814 2.91667 5.28344C2.91667 5.85874 3.38304 6.32511 3.95833 6.32511C4.53363 6.32511 5 5.85874 5 5.28344C5 4.70814 4.53363 4.24177 3.95833 4.24177Z" fill="currentColor" />
     <path d="M7.29167 4.24177C6.71637 4.24177 6.25 4.70814 6.25 5.28344C6.25 5.85874 6.71637 6.32511 7.29167 6.32511C7.86696 6.32511 8.33333 5.85874 8.33333 5.28344C8.33333 4.70814 7.86696 4.24177 7.29167 4.24177Z" fill="currentColor" />
@@ -71,6 +72,7 @@ const MOCK_QUESTIONS = [
         text: '벤브 어떻게 활성화 시켜요?',
         likes: 7,
         iLiked: false,    // 내가 좋아요 눌렀는지
+        isSolved: false, // 운영진이 해결 표시했는지
         image: null,      // 첨부 이미지 없음
         comments: [],     // 댓글 없음
     },
@@ -79,6 +81,7 @@ const MOCK_QUESTIONS = [
         text: '오류났어요',
         likes: 7,
         iLiked: false,
+        isSolved: false,
         image: 'https://dora-guide.com/wp-content/uploads/2019/11/Visual-studio-code-%EC%84%A4%EC%B9%98-%EB%B0%8F-%EC%82%AC%EC%9A%A9%EB%B2%95.png',
         comments: [
             { id: 1, author: '운영진1', isStaff: true, content: '사진 참고하세요' },
@@ -91,6 +94,7 @@ const MOCK_QUESTIONS = [
         text: '벤브 어떻게 활성화 시켜요?',
         likes: 7,
         iLiked: false,
+        isSolved: false,
         image: null,
         comments: [],
     },
@@ -99,6 +103,7 @@ const MOCK_QUESTIONS = [
         text: '벤브 어떻게 활성화 시켜요?',
         likes: 7,
         iLiked: false,
+        isSolved: true,
         image: null,
         comments: [],
     },
@@ -107,6 +112,7 @@ const MOCK_QUESTIONS = [
         text: '벤브 어떻게 활성화 시켜요?',
         likes: 7,
         iLiked: false,
+        isSolved: true,
         image: null,
         comments: [],
     },
@@ -119,6 +125,7 @@ const MOCK_QUESTIONS = [
 function QnAListPage({
     sessionTitle = '1주차 화요일 오전 세션(HTML/CSS)',
     sessionId = 1,
+    isStaff = true,
     onBack,
     onCardClick, // 카드 클릭 시 상세 페이지 이동 (questionId를 인자로 받아)
 }) {
@@ -128,8 +135,11 @@ function QnAListPage({
     // 현재 보고 있는 이해도 체크 인덱스 (0 = '이해했다')
     const [understandIndex, setUnderstandIndex] = useState(0);
 
-    // 저도 궁금해요 필터 켜져 있는지
+    // 저도 궁금해요 필터 켜져 있는지(부원)
     const [filterCurious, setFilterCurious] = useState(false);
+
+    // 미해결 질문 필터 켜져 있는지(운영진)
+    const [filterUnsolved, setFilterUnsolved] = useState(false);
 
     // 정렬 방식
     const [sortOrder, setSortOrder] = useState('정렬');
@@ -151,7 +161,7 @@ function QnAListPage({
     // 각 질문별 댓글 입력창 텍스트 (객체로 관리: { 질문id: 입력된텍스트 })
     const [commentInputs, setCommentInputs] = useState({});
 
-    // 새 질문 입력창 텍스트
+    // 새 질문 입력창 텍스트x
     const [newQuestion, setNewQuestion] = useState('');
 
     // API 요청 중인지 여부 (true면 버튼 비활성화 → 중복 제출 방지)
@@ -251,9 +261,11 @@ function QnAListPage({
     const currentUnderstand = UNDERSTAND[understandIndex];
 
     // 저도 궁금해요 필터가 켜져 있으면 필터링
-    const displayedQuestions = filterCurious
-        ? questions.filter(q => q.iLiked)
-        : questions;
+    const displayedQuestions = (() => {
+        if (isStaff && filterUnsolved) return questions.filter(q => q.comments.length === 0 && !q.isSolved);
+        if (!isStaff && filterCurious) return questions.filter(q => q.iLiked);
+        return questions;
+    })();
 
 
 
@@ -267,15 +279,27 @@ function QnAListPage({
             <h1 className={styles.title}>{sessionTitle}</h1>
 
             <div className={styles.filterRow}>
-                <label className={styles.curiousLabel}>
-                    <input
-                        type="checkbox"
-                        checked={filterCurious}
-                        onChange={e => setFilterCurious(e.target.checked)}
-                        className={styles.curiousCheckbox}
-                    />
-                    저도 궁금해요
-                </label>
+                {isStaff ? (
+                    <label className={styles.curiousLabel}>
+                        <input
+                            type="checkbox"
+                            checked={filterUnsolved}
+                            onChange={e => setFilterUnsolved(e.target.checked)}
+                            className={styles.curiousCheckbox}
+                        />
+                        미해결 질문
+                    </label>
+                ) : (
+                    <label className={styles.curiousLabel}>
+                        <input
+                            type="checkbox"
+                            checked={filterCurious}
+                            onChange={e => setFilterCurious(e.target.checked)}
+                            className={styles.curiousCheckbox}
+                        />
+                        저도 궁금해요
+                    </label>
+                )}
 
                 <div className={styles.sortWrapper}>
                     <button
@@ -321,15 +345,19 @@ function QnAListPage({
                     className={`${styles.oxBtn} ${styles.oxO} ${myUnderstand === true ? styles.oxActive : ''}`}
                     onClick={() => setMyUnderstand(prev => prev === true ? null : true)}
                     title="이해했어요"
+                    disabled={isStaff}
                 >
                     <OBtn />
+                    {isStaff && <span className={styles.oxCount}>7</span>}
                 </button>
                 <button
                     className={`${styles.oxBtn} ${styles.oxX} ${myUnderstand === false ? styles.oxActive : ''}`}
                     onClick={() => setMyUnderstand(prev => prev === false ? null : false)}
                     title="모르겠어요"
+                    disabled={isStaff}
                 >
                     <XBtn />
+                    {isStaff && <span className={styles.oxCount}>6</span>}
                 </button>
                 <button className={styles.arrowBtn} onClick={goNextUnderstand} disabled={understandIndex === UNDERSTAND.length - 1}>
                     <FiChevronRight size={30} />

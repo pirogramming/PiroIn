@@ -72,25 +72,4 @@ public class CurriculumConverter {
         );
     }
 
-    public static CurriculumResDTO.UpdateSessionRes toUpdateSessionRes(StudySession session) {
-        return new CurriculumResDTO.UpdateSessionRes(
-                session.getId(),
-                session.getCreatedBy().getName(),
-                session.getGeneration(),
-                session.getWeek(),
-                session.getSessionDate(),
-                session.getDayPart(),
-                session.getTitle(),
-                session.getHostName(),
-                session.getStatus(),
-                session.getDescription(),
-                session.getSessionMaterialUrl(),
-                session.getAssignmentUrl(),
-                session.getRecordingUrl(),
-                session.getRecordingPassword(),
-                session.getSessionMaterialName(),
-                session.getAssignmentName(),
-                session.getUpdatedAt()
-        );
-    }
 }

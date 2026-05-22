@@ -63,16 +63,28 @@ public class CurriculumService {
     }
 
     @Transactional
-    public CurriculumResDTO.UpdateSessionRes updateSession(Long sessionId, CurriculumReqDTO.UpdateSessionReq req) {
-        StudySession session = curriculumRepository.findById(sessionId)
-                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
+    public CurriculumResDTO.CreateDayRes updateDay(LocalDate sessionDate, CurriculumReqDTO.UpdateDayReq req) {
+        List<StudySession> sessions = curriculumRepository.findBySessionDate(sessionDate);
+        if (sessions.isEmpty()) throw new CurriculumException(HttpStatus.NOT_FOUND, "해당 세션을 찾을 수 없습니다.");
 
-        session.update(req.getGeneration(), req.getWeek(), req.getSessionDate(), req.getDayPart(),
-                req.getTitle(), req.getHostName(), req.getStatus(), req.getDescription(),
-                req.getSessionMaterialUrl(), req.getAssignmentUrl(), req.getRecordingUrl(),
-                req.getRecordingPassword(), req.getSessionMaterialName(), req.getAssignmentName());
+        req.getSessions().forEach(sessionReq -> {
+            if (sessionReq.getTitle() == null || sessionReq.getTitle().isBlank())
+                throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
 
-        return CurriculumConverter.toUpdateSessionRes(session);
+            sessions.stream()
+                    .filter(s -> s.getDayPart() == sessionReq.getDayPart())
+                    .findFirst()
+                    .ifPresent(s -> s.updateFull(
+                            req.getGeneration(), req.getWeek(),
+                            sessionReq.getTitle(), sessionReq.getHostName(),
+                            sessionReq.getDescription(), sessionReq.getSessionMaterialUrl(),
+                            sessionReq.getSessionMaterialName(), sessionReq.getRecordingUrl(),
+                            sessionReq.getRecordingPassword(), sessionReq.getAssignmentUrl(),
+                            sessionReq.getAssignmentName()
+                    ));
+        });
+
+        return CurriculumConverter.toCreateDayRes(sessions);
     }
 
     @Transactional

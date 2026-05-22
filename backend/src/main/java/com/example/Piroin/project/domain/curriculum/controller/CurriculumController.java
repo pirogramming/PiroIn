@@ -30,12 +30,11 @@ public class CurriculumController {
         return ResponseEntity.status(HttpStatus.CREATED).body(curriculumService.createDay(req));
     }
 
-    @PatchMapping("/{sessionId}")
-    public ResponseEntity<CurriculumResDTO.UpdateSessionRes> updateSession(
-            @PathVariable Long sessionId,
-            @RequestBody CurriculumReqDTO.UpdateSessionReq req) {
-        CurriculumResDTO.UpdateSessionRes response = curriculumService.updateSession(sessionId, req);
-        return ResponseEntity.ok(response);
+    @PatchMapping("/{sessionDate}")
+    public ResponseEntity<CurriculumResDTO.CreateDayRes> updateDay(
+            @PathVariable LocalDate sessionDate,
+            @RequestBody CurriculumReqDTO.UpdateDayReq req) {
+        return ResponseEntity.ok(curriculumService.updateDay(sessionDate, req));
     }
 
     @DeleteMapping("/{sessionDate}")

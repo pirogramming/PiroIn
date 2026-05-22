@@ -42,7 +42,7 @@
 }
 
 .curiousCheckbox {
-    accent-color: var(--dark);
+    accent-color: var(--main);
     width: 14px;
     height: 14px;
     cursor: pointer;
@@ -189,6 +189,22 @@
     gap: 20px;
     align-items: center;
 
+}
+
+.oxCount {
+    font-size: 20px;
+    margin-left: 14px;
+    color: var(--gray600);
+    font-family: var(--font-main);
+    font-weight: 500;
+}
+
+.oxBtn:disabled {
+    cursor: default;
+    background: var(--pale);
+    width: 70px;
+    height: 36px;
+    color: var(--dark);
 }
 
 .questionCard {

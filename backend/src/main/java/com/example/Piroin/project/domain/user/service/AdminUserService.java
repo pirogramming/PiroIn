@@ -157,7 +157,7 @@ public class AdminUserService {
         return switch (status) {
             case SUCCESS, PENDING -> 0;
             case INSUFFICIENT -> 10_000;
-            case FAILURE -> 20_000;
+            case FAILURE -> 30_000;
         };
     }
 

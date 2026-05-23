@@ -44,14 +44,14 @@
 
 .amountLabel {
     font-family: var(--font-main);
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #333;
+    font-size: 1.5rem;
+    font-weight: 650;
+    color: var(--gray600);
 }
 
 .amountValue {
     font-family: var(--font-title);
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 800;
     color: var(--main);
 }
@@ -65,7 +65,7 @@
 }
 
 .item {
-    background: #3a3a3a;
+    background: var(--gray600);
     border-radius: 12px;
     padding: 20px 28px;
     display: flex;
@@ -75,14 +75,14 @@
 
 .itemLabel {
     font-family: var(--font-main);
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 500;
     color: var(--white);
 }
 
 .itemValue {
     font-family: var(--font-main);
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--white);
 }

@@ -38,6 +38,7 @@ public class CurriculumReqDTO {
     public static class UpdateDayReq {
         private Integer generation;
         private Long week;
+        private LocalDate newSessionDate;
         private List<UpdateSessionItemReq> sessions;
     }
 

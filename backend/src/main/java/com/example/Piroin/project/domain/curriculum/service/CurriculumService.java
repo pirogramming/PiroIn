@@ -52,6 +52,9 @@ public class CurriculumService {
             if (s.getTitle() == null || s.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
         });
 
+        if (!curriculumRepository.findBySessionDate(req.getSessionDate()).isEmpty())
+            throw new CurriculumException(HttpStatus.CONFLICT, "해당 날짜에 이미 세션이 존재합니다.");
+
         User user = userRepository.findById(SecurityUtil.getCurrentUserId())
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
@@ -67,6 +70,10 @@ public class CurriculumService {
         List<StudySession> sessions = curriculumRepository.findBySessionDate(sessionDate);
         if (sessions.isEmpty()) throw new CurriculumException(HttpStatus.NOT_FOUND, "해당 세션을 찾을 수 없습니다.");
 
+        LocalDate newDate = req.getNewSessionDate();
+        if (newDate != null && !newDate.equals(sessionDate) && !curriculumRepository.findBySessionDate(newDate).isEmpty())
+            throw new CurriculumException(HttpStatus.CONFLICT, "해당 날짜에 이미 세션이 존재합니다.");
+
         req.getSessions().forEach(sessionReq -> {
             if (sessionReq.getTitle() == null || sessionReq.getTitle().isBlank())
                 throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
@@ -75,7 +82,7 @@ public class CurriculumService {
                     .filter(s -> s.getDayPart() == sessionReq.getDayPart())
                     .findFirst()
                     .ifPresent(s -> s.updateFull(
-                            req.getGeneration(), req.getWeek(),
+                            req.getGeneration(), req.getWeek(), newDate,
                             sessionReq.getTitle(), sessionReq.getHostName(),
                             sessionReq.getSessionMaterialUrl(),
                             sessionReq.getSessionMaterialName(), sessionReq.getRecordingUrl(),

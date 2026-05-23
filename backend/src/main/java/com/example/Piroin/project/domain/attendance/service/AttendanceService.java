@@ -66,6 +66,18 @@ public class AttendanceService {
             activeCode.expire();
         }
 
+        for (AttendanceCode activeCode : activeCodes) {
+            activeCode.expire();
+
+            List<Attendance> attendances =
+                    attendanceRepository.findByAttendanceCodeId(activeCode.getId());
+
+            for (Attendance attendance : attendances) {
+                depositService.recalculateDeposit(attendance.getUser().getId());
+            }
+        }
+
+
         // 4. 4자리 랜덤 코드 생성 및 차수(Order) 계산
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000));
         String attendanceOrder = String.valueOf(codeCountOfDay + 1); // 1회차, 2회차, 3회차
@@ -226,46 +238,46 @@ public class AttendanceService {
                 .sorted(Comparator.comparing(AttendanceStatusRes::getDate).reversed())
                 .toList();
     }
-
-    // 6. 유저 상태 변경 (관리자)
-    // 컨트롤러 부분은 출석만 받는데 여기는 출석&과제 둘 다 받아서 추후에 수정 예정
-    @Transactional
-    public boolean updateUserStatus(Integer userId, UpdateUserStatusReq req) {
-        boolean updated = false;
-
-        // 출석 상태 변경 코드
-        if (req.getAttendanceId() != null && req.getAttendanceStatus() != null) {
-            Attendance attendance = attendanceRepository.findById(req.getAttendanceId())
-                    .orElseThrow(() -> new IllegalArgumentException("출석 기록을 찾을 수 없습니다."));
-
-            if (!attendance.getUser().getId().equals(userId)) {
-                throw new IllegalArgumentException("요청된 사용자와 출석 기록의 사용자가 일치하지 않습니다.");
-            }
-
-            attendance.updateStatus(req.getAttendanceStatus());
-            updated = true;
-        }
-
-        // 과제 상태 변경 코드
-        if (req.getAssignmentItemId() != null && req.getAssignmentStatus() != null) {
-            AssignmentItem assignmentItem = assignmentItemRepository.findById(Math.toIntExact(req.getAssignmentItemId()))
-                    .orElseThrow(() -> new IllegalArgumentException("과제 기록을 찾을 수 없습니다."));
-
-            if (!assignmentItem.getUser().getId().equals(userId)) {
-                throw new IllegalArgumentException("요청된 사용자와 과제 기록의 사용자가 일치하지 않습니다.");
-            }
-
-            assignmentItem.updateSubmitted(req.getAssignmentStatus());
-            updated = true;
-        }
-
-        // 출석 변경 → 보증금 재계산 (과제 변경도 포함이 되어 있나..?)
-        if (updated) {
-            depositService.recalculateDeposit(Long.valueOf(userId));
-        }
-
-        return updated;
-    }
+//
+//    // 6. 유저 상태 변경 (관리자)
+//    // 컨트롤러 부분은 출석만 받는데 여기는 출석&과제 둘 다 받아서 추후에 수정 예정
+//    @Transactional
+//    public boolean updateUserStatus(Integer userId, UpdateUserStatusReq req) {
+//        boolean updated = false;
+//
+//        // 출석 상태 변경 코드
+//        if (req.getAttendanceId() != null && req.getAttendanceStatus() != null) {
+//            Attendance attendance = attendanceRepository.findById(req.getAttendanceId())
+//                    .orElseThrow(() -> new IllegalArgumentException("출석 기록을 찾을 수 없습니다."));
+//
+//            if (!attendance.getUser().getId().equals(userId)) {
+//                throw new IllegalArgumentException("요청된 사용자와 출석 기록의 사용자가 일치하지 않습니다.");
+//            }
+//
+//            attendance.updateStatus(req.getAttendanceStatus());
+//            updated = true;
+//        }
+//
+//        // 과제 상태 변경 코드
+//        if (req.getAssignmentItemId() != null && req.getAssignmentStatus() != null) {
+//            AssignmentItem assignmentItem = assignmentItemRepository.findById(Math.toIntExact(req.getAssignmentItemId()))
+//                    .orElseThrow(() -> new IllegalArgumentException("과제 기록을 찾을 수 없습니다."));
+//
+//            if (!assignmentItem.getUser().getId().equals(userId)) {
+//                throw new IllegalArgumentException("요청된 사용자와 과제 기록의 사용자가 일치하지 않습니다.");
+//            }
+//
+//            assignmentItem.updateSubmitted(req.getAssignmentStatus());
+//            updated = true;
+//        }
+//
+//        // 출석 변경 → 보증금 재계산 (과제 변경도 포함이 되어 있나..?)
+//        if (updated) {
+//            depositService.recalculateDeposit(Long.valueOf(userId));
+//        }
+//
+//        return updated;
+//    }
 
 
 }

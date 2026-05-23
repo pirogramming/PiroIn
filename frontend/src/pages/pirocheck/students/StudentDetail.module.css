@@ -1,0 +1,275 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+    min-height: calc(100vh - 100px);
+    background: var(--black);
+}
+
+.mockBanner {
+    background: #5a3e00;
+    color: #ffd166;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 480px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.card {
+    width: 480px;
+    background: #3a3a3a;
+    border-radius: 20px;
+    padding: 40px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 프로필 */
+.profileArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.profileImgPlaceholder {
+    font-size: 4rem;
+    width: 90px;
+    height: 90px;
+    background: #555;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profileName {
+    font-family: var(--font-main);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+/* 보증금 */
+.depositRow {
+    display: flex;
+    gap: 12px;
+}
+
+.depositBox {
+    flex: 1;
+    background: #e8f5e9;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.depositLabel {
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.depositValue {
+    font-family: var(--font-main);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.depositEditRow {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.defenceInput {
+    width: 80px;
+    border: none;
+    background: transparent;
+    font-family: var(--font-main);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+    outline: none;
+}
+
+.won {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    color: #333;
+}
+
+.saveBtn {
+    padding: 4px 10px;
+    background: #555;
+    border: none;
+    border-radius: 6px;
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.saveBtn:hover { background: #666; }
+
+/* 주차 블록 */
+.weekBlock {
+    background: #2a2a2a;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.weekHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    cursor: pointer;
+    color: var(--white);
+}
+
+.weekLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weekLogoPlaceholder {
+    color: var(--main);
+    font-size: 1.2rem;
+}
+
+.weekLabel {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.weekBody {
+    padding: 0 20px 16px;
+}
+
+.empty {
+    color: #aaa;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 12px 0;
+}
+
+/* 요일 블록 */
+.dayBlock { margin-top: 10px; }
+
+.dayHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 6px 0;
+}
+
+.dayLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dayLabel {
+    color: var(--main);
+    font-family: var(--font-title);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.sessionDate {
+    color: #aaa;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+}
+
+.dayBody {
+    padding: 8px 0 0 8px;
+}
+
+.sectionLabel {
+    color: #aaa;
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    margin: 8px 0 4px;
+}
+
+.statusRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.itemLabel {
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+}
+
+.select {
+    padding: 4px 10px;
+    background: #444;
+    border: none;
+    border-radius: 6px;
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.saveWeekBtn {
+    margin-top: 12px;
+    padding: 8px 24px;
+    background: transparent;
+    border: 1.5px solid var(--main);
+    border-radius: 50px;
+    color: var(--main);
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.saveWeekBtn:hover { background: var(--main); color: var(--black); }
+
+.divider {
+    border: none;
+    border-top: 1px solid #444;
+    margin: 10px 0;
+}
+
+/* 전체 저장 */
+.saveAllBtn {
+    padding: 14px 0;
+    background: var(--main);
+    border: none;
+    border-radius: 50px;
+    color: var(--black);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s;
+}
+
+.saveAllBtn:hover { opacity: 0.85; }

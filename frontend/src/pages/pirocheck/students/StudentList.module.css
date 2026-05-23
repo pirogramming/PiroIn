@@ -1,0 +1,100 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+    min-height: calc(100vh - 100px);
+    background: var(--black);
+}
+
+.mockBanner {
+    background: #5a3e00;
+    color: #ffd166;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 480px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.title {
+    font-family: var(--font-title);
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--main);
+    margin-bottom: 36px;
+    letter-spacing: 0;
+}
+
+.searchRow {
+    display: flex;
+    align-items: center;
+    background: #f5f5f5;
+    border-radius: 50px;
+    overflow: hidden;
+    width: 480px;
+    margin-bottom: 30px;
+    padding: 4px 4px 4px 20px;
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    color: #333;
+}
+
+.searchInput::placeholder { color: #aaa; }
+
+.searchBtn {
+    padding: 10px 24px;
+    background: var(--main);
+    border: none;
+    border-radius: 50px;
+    color: var(--black);
+    font-family: var(--font-main);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.list {
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.studentItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #3a3a3a;
+    border: none;
+    border-radius: 12px;
+    padding: 20px 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.studentItem:hover { background: #4a4a4a; }
+
+.studentName {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--white);
+}
+
+.arrow {
+    color: var(--white);
+    font-size: 1.4rem;
+    opacity: 0.6;
+}

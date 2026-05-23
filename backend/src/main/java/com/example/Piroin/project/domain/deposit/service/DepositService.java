@@ -22,7 +22,7 @@ public class DepositService {
     private final UserRepository userRepository;
     private final AttendanceRepository attendanceRepository;
 
-    // 보증금 재계산 로직 (운영진이 출석/과제 여부 수정 시)
+    // 보증금 재계산 로직 (운영진이 출석/과제 여부 수정 시, 출석코드 만료 시)
     @Transactional
     public void recalculateDeposit(Long userId) {
         User user = userRepository.findById(userId)

@@ -67,21 +67,20 @@ public class AdminAttendanceController {
         return attendanceService.expireActiveAttendanceCode();
     }
 
-    // 4. 출석 상태 변경 (관리자 전용)
-    // 현재는 출석만 변경되지만 나중에 출석 & 과제 변경으로 바꿀 예정
-    @Operation(summary = "출석 상태 변경", description = "관리자가 특정 사용자의 출석 상태를 변경합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 상태 변경 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
-    })
-
-    @PutMapping("/admin/users/{userId}/status")
-    public boolean updateUserStatus(
-            @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Integer userId,
-            @RequestBody UpdateUserStatusReq req) {
-        return attendanceService.updateUserStatus(userId, req);
-    }
+//    // 4. 출석 상태 변경 (관리자 전용)
+//    // 현재는 출석만 변경되지만 나중에 출석 & 과제 변경으로 바꿀 예정
+//    @Operation(summary = "출석 상태 변경", description = "관리자가 특정 사용자의 출석 상태를 변경합니다.")
+//    @ApiResponses(value = {
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 상태 변경 성공"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "출석 기록을 찾을 수 없음")
+//    })
+//    @PutMapping("/admin/users/{userId}/status")
+//    public boolean updateUserStatus(
+//            @Parameter(description = "사용자 ID", example = "1")
+//            @PathVariable Integer userId,
+//            @RequestBody UpdateUserStatusReq req) {
+//        return attendanceService.updateUserStatus(userId, req);
+//    }
 
 }

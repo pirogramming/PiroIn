@@ -82,7 +82,7 @@ public class CurriculumService {
                     .filter(s -> s.getDayPart() == sessionReq.getDayPart())
                     .findFirst()
                     .ifPresent(s -> s.updateFull(
-                            req.getGeneration(), req.getWeek(), newDate,
+                            req.getGeneration(), req.getWeek(), newDate, sessionReq.getStatus(),
                             sessionReq.getTitle(), sessionReq.getHostName(),
                             sessionReq.getSessionMaterialUrl(),
                             sessionReq.getSessionMaterialName(), sessionReq.getRecordingUrl(),

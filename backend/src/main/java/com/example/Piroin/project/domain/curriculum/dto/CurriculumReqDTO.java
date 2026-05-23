@@ -1,6 +1,7 @@
 package com.example.Piroin.project.domain.curriculum.dto;
 
 import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
+import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,6 +47,7 @@ public class CurriculumReqDTO {
     @NoArgsConstructor
     public static class UpdateSessionItemReq {
         private SessionDayPart dayPart;
+        private SessionStatus status;
         private String title;
         private String hostName;
         private String sessionMaterialUrl;

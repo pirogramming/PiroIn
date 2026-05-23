@@ -155,8 +155,13 @@ public class AdminUserService {
     private int calculateAssignmentPenalty(AssignmentStatus status) {
 
         return switch (status) {
+
             case SUCCESS, PENDING -> 0;
-            case INSUFFICIENT -> 10_000;
+
+            case INSUFFICIENT_MINOR -> 10_000;
+
+            case INSUFFICIENT_MAJOR -> 20_000;
+
             case FAILURE -> 30_000;
         };
     }

@@ -77,14 +77,13 @@ public class StudySession {
     private LocalDateTime updatedAt;
 
     public void updateFull(Integer generation, Long week, String title, String hostName,
-                           String description, String sessionMaterialUrl, String sessionMaterialName,
+                           String sessionMaterialUrl, String sessionMaterialName,
                            String recordingUrl, String recordingPassword,
                            String assignmentUrl, String assignmentName) {
         if (generation != null) this.generation = generation;
         if (week != null) this.week = week;
         this.title = title;
         this.hostName = (hostName != null && !hostName.isBlank()) ? hostName : "(미정)";
-        this.description = description;
         this.sessionMaterialUrl = sessionMaterialUrl;
         this.sessionMaterialName = sessionMaterialName;
         this.recordingUrl = recordingUrl;

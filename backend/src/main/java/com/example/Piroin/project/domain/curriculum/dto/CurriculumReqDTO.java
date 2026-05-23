@@ -24,7 +24,6 @@ public class CurriculumReqDTO {
         private SessionDayPart dayPart;
         private String title;
         private String hostName;
-        private String description;
         private String sessionMaterialUrl;
         private String sessionMaterialName;
         private String recordingUrl;
@@ -48,7 +47,6 @@ public class CurriculumReqDTO {
         private SessionDayPart dayPart;
         private String title;
         private String hostName;
-        private String description;
         private String sessionMaterialUrl;
         private String sessionMaterialName;
         private String recordingUrl;

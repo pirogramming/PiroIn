@@ -14,7 +14,6 @@ public class CurriculumResDTO {
             String title,
             String hostName,
             SessionStatus status,
-            String description,
             String sessionMaterialUrl,
             String sessionMaterialName,
             String recordingUrl,

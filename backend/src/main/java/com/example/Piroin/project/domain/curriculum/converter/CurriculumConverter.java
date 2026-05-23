@@ -25,7 +25,6 @@ public class CurriculumConverter {
                 .title(sessionReq.getTitle())
                 .hostName(sessionReq.getHostName() != null ? sessionReq.getHostName() : "(미정)")
                 .status(SessionStatus.BEFORE_SESSION)
-                .description(sessionReq.getDescription())
                 .sessionMaterialUrl(sessionReq.getSessionMaterialUrl())
                 .sessionMaterialName(sessionReq.getSessionMaterialName())
                 .recordingUrl(sessionReq.getRecordingUrl())
@@ -64,7 +63,6 @@ public class CurriculumConverter {
                 session.getTitle(),
                 session.getHostName(),
                 session.getStatus(),
-                session.getDescription(),
                 session.getSessionMaterialUrl(),
                 session.getSessionMaterialName(),
                 session.getRecordingUrl(),

@@ -77,7 +77,7 @@ public class CurriculumService {
                     .ifPresent(s -> s.updateFull(
                             req.getGeneration(), req.getWeek(),
                             sessionReq.getTitle(), sessionReq.getHostName(),
-                            sessionReq.getDescription(), sessionReq.getSessionMaterialUrl(),
+                            sessionReq.getSessionMaterialUrl(),
                             sessionReq.getSessionMaterialName(), sessionReq.getRecordingUrl(),
                             sessionReq.getRecordingPassword(), sessionReq.getAssignmentUrl(),
                             sessionReq.getAssignmentName()

@@ -24,6 +24,7 @@ function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
+        localStorage.setItem('role', data.role); 
         navigate('/home');
       } else {
         alert('이름 또는 비밀번호가 올바르지 않습니다.');

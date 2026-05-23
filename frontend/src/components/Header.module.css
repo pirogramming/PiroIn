@@ -10,6 +10,7 @@
     --header-bg: var(--black);
     --header-color: var(--white);
     --logo-color: var(--main);
+    border-bottom: none;  /* 추가 */
 }
 
 .header {
@@ -20,7 +21,6 @@
     align-items: center;
     padding: 0 80px;
     box-sizing: border-box;
-    border-bottom: 1px solid #eee;
     position: relative;
     position: sticky;
     top: 0;

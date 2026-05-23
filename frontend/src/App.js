@@ -6,6 +6,7 @@ import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
 import PiroCheckMain from './pages/pirocheck/PIroCheckMain';
+import Attendance from './pages/pirocheck/attendance/Attendance'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         {/* 다크 헤더 페이지 */}
         <Route element={<Layout headerType="dark" />}>
           <Route path="/pirocheck" element={<PiroCheckMain />}/>
+          <Route path="/pirocheck/attendance" element={<Attendance />}/>
         </Route>
 
       </Routes>

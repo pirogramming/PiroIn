@@ -36,8 +36,8 @@ public class SecurityConfig {
                         // curriculum: GET은 로그인한 누구나, POST/PATCH/DELETE는 ADMIN만 -> 이중 보안 느낌
                         .requestMatchers(HttpMethod.GET, "/api/curriculums").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/curriculums").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{id}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
 
                         // understanding check: 생성은 ADMIN만 가능
                         .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")

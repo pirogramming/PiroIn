@@ -1,8 +1,6 @@
-jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION}
-
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: jdbc:postgresql://${RDS_ENDPOINT}:5432/${RDS_DB_NAME}
     username: ${RDS_USERNAME}
@@ -21,6 +19,10 @@ spring:
       hibernate:
         format_sql: true
         packagesToScan: com.example.Piroin.project.domain
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION}
 
 management:
   endpoints:

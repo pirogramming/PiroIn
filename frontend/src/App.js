@@ -4,7 +4,7 @@ import LoginPage from './pages/login/LoginPage';
 import OnboardingPage from './pages/OnboardingPage';
 import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
-import QnADetailePage from './pages/qna/QnADetailePage';
+import QnADetailPage from './pages/qna/QnADetailPage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
 import PiroCheckMain from './pages/pirocheck/PIroCheckMain';
 import Attendance from './pages/pirocheck/attendance/Attendance'
@@ -23,14 +23,14 @@ function App() {
         <Route element={<Layout headerType="light" />}>
           <Route path="/sessions" element={<QnAMainPage />} />
           <Route path="/sessions/questions" element={<QnAListPage />} />
-          <Route path="/sessions/questions/:id" element={<QnADetailePage />} />
+          <Route path="/sessions/questions/:id" element={<QnADetailPage />} />
           <Route path="/curriculum" element={<CurriculumPage />} />
         </Route>
-        
+
         {/* 다크 헤더 페이지 */}
         <Route element={<Layout headerType="dark" />}>
-          <Route path="/pirocheck" element={<PiroCheckMain />}/>
-          <Route path="/pirocheck/attendance" element={<Attendance />}/>
+          <Route path="/pirocheck" element={<PiroCheckMain />} />
+          <Route path="/pirocheck/attendance" element={<Attendance />} />
         </Route>
 
       </Routes>

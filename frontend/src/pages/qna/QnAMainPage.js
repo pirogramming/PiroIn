@@ -15,6 +15,7 @@ const pastSessions = [ // css 보려고 걍 적어둠
 ];
 
 function QNAMainPage() {
+
     return (
         <div className={styles.page}>
             <section className={styles.section}>

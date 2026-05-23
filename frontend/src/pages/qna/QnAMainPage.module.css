@@ -127,3 +127,9 @@
 .listItem:hover .enterBtn {
     color: var(--dark);
 }
+
+.empty {
+    text-align: center;
+    color: #888;
+    margin-top: 40px;
+}

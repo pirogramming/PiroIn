@@ -1,0 +1,28 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    height: calc(100vh - 100px); 
+    background: var(--black);
+}
+
+.menuBtn {
+    width: 420px;
+    padding: 25px 0;
+    background: #3a3a3a;
+    border: none;
+    border-radius: 10px;
+    color: var(--main);
+    font-family: var(--font-title);
+    font-size: 2rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menuBtn:hover {
+    background: var(--dark);
+    color: var(--white);
+}

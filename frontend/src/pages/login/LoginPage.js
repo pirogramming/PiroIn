@@ -3,19 +3,19 @@ import { useNavigate } from 'react-router-dom';  // 추가
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
-  const navigate = useNavigate();  
+  const navigate = useNavigate();
   const [focused, setFocused] = useState('');
-  const [form, setForm] = useState({ name: '', password: '' }); 
+  const [form, setForm] = useState({ name: '', password: '' });
 
- 
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  
+
   const handleLogin = async () => {
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -24,7 +24,8 @@ function LoginPage() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem('token', data.token);
-        navigate('/home');
+        localStorage.setItem('role', data.role);
+        navigate('/sessions');  // 로그인 성공 시 이동할 페이지
       } else {
         alert('이름 또는 비밀번호가 올바르지 않습니다.');
       }
@@ -39,25 +40,25 @@ function LoginPage() {
       <div className={styles.form}>
         <input
           type="text"
-          name="name"         
+          name="name"
           placeholder="이름"
-          value={form.name}  
-          onChange={handleChange}  
+          value={form.name}
+          onChange={handleChange}
           className={`${styles.input} ${focused === 'name' ? styles.inputFocused : ''}`}
           onFocus={() => setFocused('name')}
           onBlur={() => setFocused('')}
         />
         <input
           type="password"
-          name="password"        
+          name="password"
           placeholder="비밀번호"
-          value={form.password}   
-          onChange={handleChange}  
+          value={form.password}
+          onChange={handleChange}
           className={`${styles.input} ${focused === 'pw' ? styles.inputFocused : ''}`}
           onFocus={() => setFocused('pw')}
           onBlur={() => setFocused('')}
         />
-        <button className={styles.button} onClick={handleLogin}>로그인</button> 
+        <button className={styles.button} onClick={handleLogin}>로그인</button>
       </div>
     </div>
   );

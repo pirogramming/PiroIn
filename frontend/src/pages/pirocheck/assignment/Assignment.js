@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../../utils/Api';
 import styles from './Assignment.module.css';
 import LogoImg from '../../../assets/images/logo.png';
 import EditIcon from '../../../assets/images/icon_edit.svg';
@@ -14,26 +15,7 @@ const dayMap = {
     SATURDAY: 'SAT',
 };
 
-// 임시 데이터 (백엔드 연동 전)
-const MOCK_DATA = [
-    {
-        week: '1',
-        assignments: [
-            { assignmentId: 1, title: '코딩앵무 클론 코딩', week: '1', day: 'TUESDAY', sessionDate: 'HTML/CSS, Git 기초', submitted: 'SUBMITTED' },
-            { assignmentId: 2, title: '피로그래밍 페이지 클론 코딩', week: '1', day: 'TUESDAY', sessionDate: 'HTML/CSS, Git 기초', submitted: 'NOT_SUBMITTED' },
-            { assignmentId: 3, title: '코딩앵무 클론 코딩', week: '1', day: 'THURSDAY', sessionDate: 'JS', submitted: 'SUBMITTED' },
-            { assignmentId: 4, title: '숫자야구 게임', week: '1', day: 'THURSDAY', sessionDate: 'JS', submitted: 'LATE' },
-            { assignmentId: 5, title: '파이썬 코딩도장', week: '1', day: 'THURSDAY', sessionDate: 'JS', submitted: 'NOT_SUBMITTED' },
-            { assignmentId: 6, title: '아르사 팀플', week: '1', day: 'SATURDAY', sessionDate: 'DB 개론', submitted: 'SUBMITTED' },
-        ],
-    },
-    { week: '2', assignments: [] },
-    { week: '3', assignments: [] },
-    { week: '4', assignments: [] },
-    { week: '5', assignments: [] },
-];
-
-const IS_MOCK = true; // 백엔드 연동 시 false로 변경
+const IS_MOCK = false; 
 
 // 제출 상태 아이콘 (부원용)
 function StatusIcon({ status }) {
@@ -69,7 +51,7 @@ function AssignmentModal({ item, onClose, onSave }) {
             ? `/api/assignments/modify/${item.assignmentId}`
             : '/api/assignments/create';
         const method = isEdit ? 'PATCH' : 'POST';
-        await fetch(url, {
+        await authFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: form.title, week: form.week, day: form.day }),
@@ -164,13 +146,9 @@ function Assignment() {
     const [modalItem, setModalItem] = useState(undefined); // undefined=닫힘, null=생성, object=수정
 
     const fetchAll = async () => {
-        if (IS_MOCK) {
-            setWeeks(MOCK_DATA);
-            return;
-        }
         const results = await Promise.all(
             ['1', '2', '3', '4', '5'].map(w =>
-                fetch(`/api/assignments/me/${w}`)
+                authFetch(`/api/assignments/me/${w}`)
                     .then(r => r.json())
                     .catch(() => ({ week: w, assignments: [] }))
             )
@@ -182,17 +160,12 @@ function Assignment() {
 
     const handleDelete = async (assignmentId) => {
         if (!window.confirm('삭제하시겠습니까?')) return;
-        if (!IS_MOCK) {
-            await fetch(`/api/assignments/${assignmentId}`, { method: 'DELETE' });
-        }
+        await authFetch(`/api/assignments/${assignmentId}`, { method: 'DELETE' });
         fetchAll();
-    };
+    };  
 
     return (
         <div className={styles.container}>
-            {IS_MOCK && (
-                <div className={styles.mockBanner}>⚠️ 현재 임시 데이터로 표시 중입니다. 백엔드 연동 후 IS_MOCK을 false로 변경하세요.</div>
-            )}
             <div className={styles.title}>ASSIGNMENT CHECK</div>
 
             {weeks.map((w, i) => (

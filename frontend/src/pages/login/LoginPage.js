@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';  // 추가
+import { useNavigate } from 'react-router-dom';  
+import { authFetch } from '../../utils/Api';
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
@@ -15,7 +16,7 @@ function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await authFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

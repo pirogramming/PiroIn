@@ -160,6 +160,16 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 질문 목록 실시간 댓글 생성 이벤트 응답
+    public record CommentCreatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            Integer commentCount,
+            List<PreviewCommentResponse> previewComments
+    ) {
+    }
+
     public record UnderstandingResponseResult(
             Long checkId,
             UnderstandResChoice selectedChoice,

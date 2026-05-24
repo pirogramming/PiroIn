@@ -17,6 +17,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
@@ -136,9 +138,12 @@ public class QuestionService {
         // 4. 표시명 결정 (질문 작성자가 아닌 경우 익명 번호 부여)
         String displayName = assignAnonymousIdentity(question, loginUser);
 
-        return new QuestionResDTO.CommentCreateRes(
+        QuestionResDTO.CommentCreateRes response = new QuestionResDTO.CommentCreateRes(
                 comment.getId(), question.getId(), displayName, comment.getContent(), comment.getCreatedAt()
         );
+        publishCommentCreatedEventAfterCommit(question);
+
+        return response;
     }
 
     // parentCommentId가 있으면 해당 댓글 조회, 없으면 null 반환
@@ -498,5 +503,32 @@ public class QuestionService {
                         comment.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    private void publishCommentCreatedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+        QuestionResDTO.CommentCreatedEvent event = new QuestionResDTO.CommentCreatedEvent(
+                "COMMENT_CREATED",
+                sessionId,
+                question.getId(),
+                questionCommentRepository.countByQuestionAndDeletedAtIsNull(question),
+                getPreviewComments(question)
+        );
+
+        publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
+    }
+
+    private void publishAfterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 }

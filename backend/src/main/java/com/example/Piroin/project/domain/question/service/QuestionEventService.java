@@ -1,5 +1,6 @@
 package com.example.Piroin.project.domain.question.service;
 
+import com.example.Piroin.project.domain.question.dto.QuestionResDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -33,6 +34,21 @@ public class QuestionEventService {
         }
 
         return emitter;
+    }
+
+    public void publishCommentCreated(Long sessionId, QuestionResDTO.CommentCreatedEvent event) {
+        List<SseEmitter> emitters = sessionEmitters.getOrDefault(sessionId, List.of());
+
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("comment-created")
+                        .data(event));
+            } catch (IOException | IllegalStateException e) {
+                removeEmitter(sessionId, emitter);
+                emitter.completeWithError(e);
+            }
+        }
     }
 
     private void removeEmitter(Long sessionId, SseEmitter emitter) {

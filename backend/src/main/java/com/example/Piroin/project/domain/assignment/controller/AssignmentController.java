@@ -64,6 +64,15 @@ public class AssignmentController {
         return assignmentService.getMyAssignments(userId, week);
     }
 
+    // 5. 생성한 과제 조회 (운영진)
+    @Operation(summary = "과제 목록 조회", description = "주차별로 화/목/토 과제 목록을 조회합니다.")
+    @GetMapping("/{week}/view")
+    public AssignmentWeekViewResponse getAssignmentView(
+            @PathVariable String week
+    ) {
+        return assignmentService.getAssignmentView(week);
+    }
+
 
 }
 

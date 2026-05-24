@@ -16,10 +16,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     Optional<Attendance> findById(Integer id);
 
-    // List<Attendance> findByUserId(Long userId);
-
-    //Optional<Attendance> findByUserIdAndStudySessionId(Integer userId, Long studySessionId);
-
 
     // 연관관계 필드명이 attendanceCode 라면 내부 ID인 Id를 조합하여 명명
     Optional<Attendance> findByUserIdAndAttendanceCodeId(Long userId, Long attendanceCodeId);
@@ -42,6 +38,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
             Long userId,
             Integer attendanceCodeId
     );
+
+    List<Attendance> findByAttendanceCodeId(Integer id);
 
     // 특정 날짜에 발급된 출석 코드의 개수를 세는 메서드
     //long countByAttendanceDate(String attendanceDate);

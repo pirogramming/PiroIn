@@ -18,4 +18,6 @@ public interface AssignmentItemRepository extends JpaRepository<AssignmentItem, 
     );
 
     Optional<AssignmentItem> findById(Integer id);
+
+    List<AssignmentItem> findByUserId(Long userId);
 }

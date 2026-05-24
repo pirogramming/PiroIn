@@ -40,7 +40,24 @@ public class Deposit {
     @Column(name = "ascent_defence", nullable = false)
     private Integer ascentDefence;
 
+    // 출석 차감액만 새로 계산할 때 사용
     public void updateAttendanceAmount(Integer descentAttendance) {
+        this.descentAttendance = descentAttendance;
+
+        int baseAmount = 100_000;
+
+        this.amount = baseAmount
+                - this.descentAssignment
+                - this.descentAttendance
+                + this.ascentDefence;
+    }
+
+    // 과제 차감 + 출석 차감을 한 번에 재계산할 때 사용
+    public void updateDepositAmount(
+            Integer descentAssignment,
+            Integer descentAttendance
+    ) {
+        this.descentAssignment = descentAssignment;
         this.descentAttendance = descentAttendance;
 
         int baseAmount = 100_000;

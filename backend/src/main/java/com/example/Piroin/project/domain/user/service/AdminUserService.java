@@ -2,12 +2,15 @@ package com.example.Piroin.project.domain.user.service;
 
 import com.example.Piroin.project.domain.assignment.entity.Assignment;
 import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
+import com.example.Piroin.project.domain.assignment.enums.AssignmentStatus;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentItemRepository;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentRepository;
 import com.example.Piroin.project.domain.attendance.entity.Attendance;
 import com.example.Piroin.project.domain.attendance.repository.AttendanceCodeRepository;
 import com.example.Piroin.project.domain.attendance.repository.AttendanceRepository;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
+import com.example.Piroin.project.domain.deposit.entity.Deposit;
+import com.example.Piroin.project.domain.deposit.repository.DepositRepository;
 import com.example.Piroin.project.domain.user.dto.*;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.user.enums.Role;
@@ -29,6 +32,7 @@ public class AdminUserService {
     private final UserService userService;
     private final AssignmentItemRepository assignmentItemRepository;
     private final AttendanceRepository attendanceRepository;
+    private final DepositRepository depositRepository;
     private final CurriculumRepository curriculumRepository;
     private final AssignmentRepository assignmentRepository;
     private final AttendanceCodeRepository attendanceCodeRepository;
@@ -69,37 +73,31 @@ public class AdminUserService {
     ) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new RuntimeException("사용자가 존재하지 않습니다.")
-                );
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
 
-        // 과제 상태 수정
         if (request.getAssignments() != null) {
-
             for (UpdateStudentStatusRequest.AssignmentStatusRequest dto
                     : request.getAssignments()) {
 
+                // 해당 assignmentItem 존재하지 않을 때
                 AssignmentItem assignmentItem =
                         assignmentItemRepository.findById(dto.getAssignmentItemId())
                                 .orElseThrow(() ->
                                         new RuntimeException("과제 정보가 존재하지 않습니다.")
                                 );
 
-                // 본인 데이터 검증
+                // assignmentItem가 userId의 과제가 아닐 경우
                 if (!assignmentItem.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 과제가 아닙니다.");
                 }
 
-                // PATCH 방식 -> null이면 수정 안 함
                 if (dto.getSubmitted() != null) {
                     assignmentItem.updateSubmitted(dto.getSubmitted());
                 }
             }
         }
 
-        // 출석 상태 수정
         if (request.getAttendances() != null) {
-
             for (UpdateStudentStatusRequest.AttendanceStatusRequest dto
                     : request.getAttendances()) {
 
@@ -109,17 +107,18 @@ public class AdminUserService {
                                         new RuntimeException("출석 정보가 존재하지 않습니다.")
                                 );
 
-                // 본인 데이터 검증
+                // assignmentId가 userId의 것이 아닐 때
                 if (!attendance.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 출석이 아닙니다.");
                 }
 
-                // PATCH 방식
                 if (dto.getStatus() != null) {
                     attendance.updateStatus(dto.getStatus());
                 }
             }
         }
+
+        recalculateDeposit(userId);
 
         return new UpdateStudentStatusResponse(
                 userId,
@@ -128,99 +127,49 @@ public class AdminUserService {
         );
     }
 
-//    // 5. 부원 출석/과제 상태 조회
-//    @Transactional(readOnly = true)
-//    public StudentWeeklyStatusResponse getStudentWeeklyStatus(
-//            Long userId,
-//            Long week
-//    ) {
-//
-//        List<StudySession> sessions =
-//                curriculumRepository.findByWeek(week);
-//
-//        List<DayStatusResponse> dayResponses = new ArrayList<>();
-//
-//        for (StudySession session : sessions) {
-//
-//            LocalDate sessionDate = session.getSessionDate();
-//
-//            String day =
-//                    sessionDate.getDayOfWeek().toString();
-//
-//            /*
-//             * 과제 조회
-//             */
-//            List<Assignment> assignments =
-//                    assignmentRepository.findBySessionDate(sessionDate);
-//
-//            List<AssignmentStatusResponse> assignmentResponses =
-//                    assignments.stream()
-//                            .map(assignment -> {
-//
-//                                AssignmentItem item =
-//                                        assignmentItemRepository
-//                                                .findByUserIdAndAssignmentId(
-//                                                        userId,
-//                                                        assignment.getId()
-//                                                )
-//                                                .orElse(null);
-//
-//                                String submitted =
-//                                        item == null
-//                                                ? "PENDING"
-//                                                : item.getSubmitted().name();
-//
-//                                return AssignmentStatusResponse.builder()
-//                                        .assignmentId(assignment.getId())
-//                                        .title(assignment.getTitle())
-//                                        .submitted(submitted)
-//                                        .build();
-//                            })
-//                            .toList();
-//
-//            /*
-//             * 출석 조회
-//             */
-//            List<AttendanceCode> attendanceCodes =
-//                    attendanceCodeRepository.findByAttendanceDate(sessionDate);
-//
-//            List<AttendanceStatusResponse> attendanceResponses =
-//                    attendanceCodes.stream()
-//                            .map(code -> {
-//
-//                                Attendance attendance =
-//                                        attendanceRepository
-//                                                .findByUserIdAndAttendanceCodeId(
-//                                                        userId,
-//                                                        code.getId()
-//                                                )
-//                                                .orElse(null);
-//
-//                                boolean attended =
-//                                        attendance != null &&
-//                                                attendance.getStatus();
-//
-//                                return AttendanceStatusResponse.builder()
-//                                        .attendanceCodeId(code.getId())
-//                                        .attendanceOrder(code.getAttendanceOrder())
-//                                        .attended(attended)
-//                                        .build();
-//                            })
-//                            .toList();
-//
-//            dayResponses.add(
-//                    DayStatusResponse.builder()
-//                            .day(day)
-//                            .sessionDate(sessionDate)
-//                            .assignments(assignmentResponses)
-//                            .attendances(attendanceResponses)
-//                            .build()
-//            );
-//        }
-//
-//        return StudentWeeklyStatusResponse.builder()
-//                .week(week)
-//                .days(dayResponses)
-//                .build();
-//    }
+
+    // 4. 보증금 재계산 메소드(출석 & 과제 공통)
+    private void recalculateDeposit(Long userId) {
+
+        Deposit deposit = depositRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("보증금 정보가 존재하지 않습니다."));
+
+        List<AssignmentItem> assignmentItems =
+                assignmentItemRepository.findByUserId(userId);
+
+        int assignmentPenalty = assignmentItems.stream()
+                .mapToInt(item -> calculateAssignmentPenalty(item.getSubmitted()))
+                .sum();
+
+        List<Attendance> attendances =
+                attendanceRepository.findByUserId(userId);
+
+        int attendancePenalty = attendances.stream()
+                .mapToInt(attendance -> attendance.getStatus() ? 0 : 10_000)
+                .sum();
+
+        deposit.updateDepositAmount(
+                assignmentPenalty,
+                attendancePenalty
+        );
+    }
+
+    // 5. 과제에 대한 보증금 계산 로직
+    private int calculateAssignmentPenalty(AssignmentStatus status) {
+
+        return switch (status) {
+
+            case SUCCESS, PENDING -> 0;
+
+            case INSUFFICIENT_MINOR -> 10_000;
+
+            case INSUFFICIENT_MAJOR -> 20_000;
+
+            case FAILURE -> 30_000;
+        };
+    }
+
+    // 6. 출석에 대한 보증금 계산 로직
+    // (AttendanceService에 있음!!)
+
 }

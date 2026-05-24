@@ -1,5 +1,6 @@
 package com.example.Piroin.project.domain.deposit.controller;
 
+import com.example.Piroin.project.domain.deposit.dto.AdminDepositViewResponse;
 import com.example.Piroin.project.domain.deposit.dto.DepositResponse;
 import com.example.Piroin.project.domain.deposit.service.DepositService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,8 @@ public class DepositController {
 
     private final DepositService depositService;
 
+
+    // 1. 나의 보증금 조회
     @Operation(summary = "나의 보증금 조회", description = "사용자가 본인의 남은 보증금, 차감된 보증금, 방어권을 조회합니다.")
     @GetMapping("/me")
     public DepositResponse getMyDeposit(
@@ -25,5 +28,15 @@ public class DepositController {
         Long userId = Long.valueOf(authentication.getName());
 
         return depositService.getMyDeposit(userId);
+    }
+
+
+    // 2. 운영진이 특정 부원의 보증금을 조회
+    @Operation(summary = "특정 부원 보증금 조회", description = "운영진이 특정 부원의 보증금 상태를 조회합니다.")
+    @GetMapping("/{userId}/deposit/view")
+    public AdminDepositViewResponse getUserDeposit(
+            @PathVariable Long userId
+    ) {
+        return depositService.getUserDeposit(userId);
     }
 }

@@ -1,6 +1,7 @@
 package com.example.Piroin.project.domain.deposit.service;
 
 import com.example.Piroin.project.domain.attendance.repository.AttendanceRepository;
+import com.example.Piroin.project.domain.deposit.dto.AdminDepositViewResponse;
 import com.example.Piroin.project.domain.deposit.dto.DepositResponse;
 import com.example.Piroin.project.domain.deposit.entity.Deposit;
 import com.example.Piroin.project.domain.deposit.exception.DepositException;
@@ -48,6 +49,24 @@ public class DepositService {
                 );
 
         return DepositResponse.builder()
+                .amount(deposit.getAmount())
+                .descentAssignment(deposit.getDescentAssignment())
+                .descentAttendance(deposit.getDescentAttendance())
+                .ascentDefence(deposit.getAscentDefence())
+                .build();
+    }
+
+
+    // 3. 운영진이 특정 부원의 보증금 조회 로직
+    @Transactional(readOnly = true)
+    public AdminDepositViewResponse getUserDeposit(Long userId) {
+
+        Deposit deposit = depositRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("보증금 정보가 존재하지 않습니다."));
+
+        return AdminDepositViewResponse.builder()
+                .userId(deposit.getUser().getId())
+                .name(deposit.getUser().getName())
                 .amount(deposit.getAmount())
                 .descentAssignment(deposit.getDescentAssignment())
                 .descentAttendance(deposit.getDescentAttendance())

@@ -79,12 +79,14 @@ public class AdminUserService {
             for (UpdateStudentStatusRequest.AssignmentStatusRequest dto
                     : request.getAssignments()) {
 
+                // 해당 assignmentItem 존재하지 않을 때
                 AssignmentItem assignmentItem =
                         assignmentItemRepository.findById(dto.getAssignmentItemId())
                                 .orElseThrow(() ->
                                         new RuntimeException("과제 정보가 존재하지 않습니다.")
                                 );
 
+                // assignmentItem가 userId의 과제가 아닐 경우
                 if (!assignmentItem.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 과제가 아닙니다.");
                 }
@@ -105,6 +107,7 @@ public class AdminUserService {
                                         new RuntimeException("출석 정보가 존재하지 않습니다.")
                                 );
 
+                // assignmentId가 userId의 것이 아닐 때
                 if (!attendance.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 출석이 아닙니다.");
                 }
@@ -125,7 +128,7 @@ public class AdminUserService {
     }
 
 
-    // 4. 보증금 재계산 메소드(출석 & 과제)
+    // 4. 보증금 재계산 메소드(출석 & 과제 공통)
     private void recalculateDeposit(Long userId) {
 
         Deposit deposit = depositRepository.findByUserId(userId)

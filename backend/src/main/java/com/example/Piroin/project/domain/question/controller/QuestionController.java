@@ -81,8 +81,8 @@ public class QuestionController {
             @RequestBody QuestionReqDTO.UpdateReq request,
             @AuthenticationPrincipal Long userId
     ) {
-    return ResponseUtil.success(QuestionSuccessCode.QUESTION_UPDATED,
-            questionService.updateQuestion(questionId, request, userId));
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_UPDATED,
+                questionService.updateQuestion(questionId, request, userId));
     }
 
     // 질문 삭제
@@ -92,8 +92,19 @@ public class QuestionController {
             @PathVariable Long questionId,
             @AuthenticationPrincipal Long userId
     ) {
-    return ResponseUtil.success(QuestionSuccessCode.QUESTION_DELETED,
-            questionService.deleteQuestion(questionId, userId));
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_DELETED,
+                questionService.deleteQuestion(questionId, userId));
+    }
+
+    // 질문 상태 완료 전환 (관리자 전용)
+    // PATCH /api/questions/{questionId}/status
+    @PatchMapping("/api/questions/{questionId}/status")
+    public ResponseEntity<ApiResponse<QuestionResDTO.StatusUpdateRes>> updateQuestionStatus(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_STATUS_UPDATED,
+                questionService.updateQuestionStatus(questionId, userId));
     }
 
     // 이해도 체크 생성

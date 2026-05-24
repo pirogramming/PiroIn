@@ -79,4 +79,10 @@ public class Question {
         this.deletedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
+
+    // 질문 상태를 해결 완료로 변경 (관리자만 호출)
+    public void markResolved() {
+        this.isResolved = true;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

@@ -271,6 +271,21 @@ public class QuestionService {
         );
     }
 
+    // 질문 상태 완료 전환
+    // PATCH /api/questions/{questionId}/status
+    @Transactional
+    public QuestionResDTO.StatusUpdateRes updateQuestionStatus(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        validateAdmin(loginUser);   // 관리자만 호출 가능
+
+        Question question = findQuestion(questionId);
+        question.markResolved();
+
+        return new QuestionResDTO.StatusUpdateRes(
+                question.getId(), question.getIsResolved(), question.getUpdatedAt()
+        );
+    }
+
     // 이해도 체크 생성
     @Transactional
     public QuestionResDTO.UnderstandingCheckCreateResponse createUnderstandingCheck(

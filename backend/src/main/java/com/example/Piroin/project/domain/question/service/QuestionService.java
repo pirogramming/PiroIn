@@ -22,8 +22,12 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -462,74 +466,117 @@ public class QuestionService {
 
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session) {
         List<Question> questions = questionRepository.findBySessionAndDeletedAtIsNull(session);
+        QuestionSummaryContext summaryContext = getQuestionSummaryContext(questions);
 
         List<QuestionResDTO.QuestionSummaryResponse> popularQuestions = questions.stream()
                 .filter(q -> !q.getIsResolved() && q.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
                 .sorted(Comparator.comparing(Question::getLikeCount, Comparator.reverseOrder())
                         .thenComparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse).toList();
+                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
 
         List<QuestionResDTO.QuestionSummaryResponse> unresolvedQuestions = questions.stream()
                 .filter(q -> !q.getIsResolved() && q.getLikeCount() < POPULAR_LIKE_THRESHOLD)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse).toList();
+                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
 
         List<QuestionResDTO.QuestionSummaryResponse> resolvedQuestions = questions.stream()
                 .filter(Question::getIsResolved)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(this::toQuestionSummaryResponse).toList();
+                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
 
         return new QuestionResDTO.QuestionGroupsResponse(popularQuestions, unresolvedQuestions, resolvedQuestions);
     }
 
-    private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse(Question question) {
+    private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse(
+            Question question,
+            QuestionSummaryContext summaryContext
+    ) {
+        Long questionId = question.getId();
         return new QuestionResDTO.QuestionSummaryResponse(
-                question.getId(), question.getContent(), question.getImageUrl(),
+                questionId, question.getContent(), question.getImageUrl(),
                 question.getIsResolved(),
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 question.getLikeCount(),
-                questionCommentRepository.countByQuestionAndDeletedAtIsNull(question),
-                // 목록 화면에서 바로 렌더링할 댓글 미리보기 3개를 함께 내려준다.
-                getPreviewComments(question),
+                summaryContext.commentCounts().getOrDefault(questionId, 0),
+                // 목록 화면은 최상위 댓글 중 먼저 달린 3개만 미리보기로 보여준다.
+                summaryContext.previewComments().getOrDefault(questionId, List.of()),
                 question.getCreatedAt()
         );
     }
 
-    private List<QuestionResDTO.PreviewCommentResponse> getPreviewComments(Question question) {
-        // 최신 댓글 3개를 미리보기 대상으로 삼되, 화면 표시는 댓글이 달린 순서대로 보이게 오래된 순으로 정렬한다.
-        return questionCommentRepository
-                .findTop3ByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtDesc(question)
-                .stream()
-                .sorted(Comparator.comparing(QuestionComment::getCreatedAt))
-                .map(comment -> new QuestionResDTO.PreviewCommentResponse(
-                        comment.getId(),
-                        getDisplayName(question, comment.getUser()),
-                        comment.getContent(),
-                        comment.getCreatedAt()
-                ))
+    private QuestionSummaryContext getQuestionSummaryContext(List<Question> questions) {
+        if (questions.isEmpty()) {
+            return new QuestionSummaryContext(Map.of(), Map.of());
+        }
+
+        List<Long> questionIds = questions.stream()
+                .map(Question::getId)
                 .toList();
+        Map<Long, Question> questionsById = questions.stream()
+                .collect(Collectors.toMap(Question::getId, question -> question));
+
+        Map<Long, Integer> commentCounts = new HashMap<>();
+        questionCommentRepository.countByQuestionIds(questionIds)
+                .forEach(row -> commentCounts.put(row.getQuestionId(), Math.toIntExact(row.getCommentCount())));
+
+        Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments = new HashMap<>();
+        questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
+                .forEach(row -> {
+                    Question question = questionsById.get(row.getQuestionId());
+                    if (question == null) {
+                        return;
+                    }
+                    previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
+                            .add(toPreviewCommentResponse(question, row));
+                });
+
+        return new QuestionSummaryContext(commentCounts, previewComments);
+    }
+
+    private QuestionResDTO.PreviewCommentResponse toPreviewCommentResponse(
+            Question question,
+            QuestionCommentRepository.PreviewCommentRow row
+    ) {
+        return new QuestionResDTO.PreviewCommentResponse(
+                row.getCommentId(),
+                getPreviewDisplayName(question, row),
+                row.getContent(),
+                row.getCreatedAt()
+        );
+    }
+
+    private String getPreviewDisplayName(Question question, QuestionCommentRepository.PreviewCommentRow row) {
+        if (row.getUserId().equals(question.getUser().getId())) {
+            return "작성자";
+        }
+        if (row.getAnonymousNo() == null) {
+            Role role = Role.valueOf(row.getUserRole());
+            return role == Role.ADMIN ? "운영진" : "익명";
+        }
+        return buildDisplayName(Role.valueOf(row.getUserRole()), row.getAnonymousNo());
     }
 
     private void publishCommentCreatedEventAfterCommit(Question question) {
         Long sessionId = question.getSession().getId();
+        Long questionId = question.getId();
+        QuestionSummaryContext summaryContext = getQuestionSummaryContext(List.of(question));
 
         // 프론트가 전체 목록을 다시 조회하지 않고 해당 질문만 갱신할 수 있는 최소 데이터만 보낸다.
         QuestionResDTO.CommentCreatedEvent event = new QuestionResDTO.CommentCreatedEvent(
                 "COMMENT_CREATED",
                 sessionId,
-                question.getId(),
-                questionCommentRepository.countByQuestionAndDeletedAtIsNull(question),
-                getPreviewComments(question)
+                questionId,
+                summaryContext.commentCounts().getOrDefault(questionId, 0),
+                summaryContext.previewComments().getOrDefault(questionId, List.of())
         );
 
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
     }
 
-    // 롤백된 댓글이 실시간 화면에 먼저 보이지 않도록 트랜잭션 커밋 이후에만 이벤트를 발행한다.
+    // 롤백된 댓글이 실시간 화면에 먼저 보이지 않도록, 활성화된 트랜잭션 동기화 안에서만 커밋 이후 이벤트를 발행한다.
     private void publishAfterCommit(Runnable action) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            action.run();
-            return;
+            throw new IllegalStateException("publishAfterCommit must be called within an active transaction synchronization");
         }
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -538,5 +585,11 @@ public class QuestionService {
                 action.run();
             }
         });
+    }
+
+    private record QuestionSummaryContext(
+            Map<Long, Integer> commentCounts,
+            Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments
+    ) {
     }
 }

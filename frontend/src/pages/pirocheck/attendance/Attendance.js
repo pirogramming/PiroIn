@@ -14,8 +14,11 @@ function cloverForSlot(status) {
     return <img src={CloverEmpty} className={styles.cloverSvg} alt="미정" />;
 }
 
-function slotIcon(status) {
-    if (status === true) return <img src={Coin1} className={styles.histSvg} alt="출석" />;
+function historyIcon(slots) {
+    const successCount = slots.filter(s => s.status === true).length;
+    if (successCount === 3) return <img src={Coin3} className={styles.histSvg} alt="3회 출석" />;
+    if (successCount === 2) return <img src={Coin2} className={styles.histSvg} alt="2회 출석" />;
+    if (successCount === 1) return <img src={Coin1} className={styles.histSvg} alt="1회 출석" />;
     return <img src={AngryIcon} className={styles.histSvg} alt="결석" />;
 }
 
@@ -166,10 +169,7 @@ function MemberView() {
                     <div key={i} className={styles.historyRow}>
                         <span className={styles.weekLabel}>{row.week}주차</span>
                         <div className={styles.historySlots}>
-                            {[0, 1, 2].map(j => {
-                                const slot = row.slots[j] ?? { status: false };
-                                return <div key={j}>{slotIcon(slot.status)}</div>;
-                            })}
+                            {historyIcon(row.slots)}
                         </div>
                     </div>
                 ))}

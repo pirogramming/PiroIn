@@ -6,7 +6,12 @@ import QnAMainPage from './pages/qna/QnAMainPage';
 import QnAListPage from './pages/qna/QnAListPage';
 import QnADetailPage from './pages/qna/QnADetailPage';
 import CurriculumPage from './pages/curriculum/CurriculumPage';
-import CurriculumCreate from './pages/curriculum/CurriculumCreate';
+import PiroCheckMain from './pages/pirocheck/PIroCheckMain';
+import Attendance from './pages/pirocheck/attendance/Attendance'
+import Assignment from './pages/pirocheck/assignment/Assignment';
+import Deposit from './pages/pirocheck/deposit/Deposit';
+import StudentList from './pages/pirocheck/students/StudentList';
+import StudentDetail from './pages/pirocheck/students/StudentDetail';
 
 function App() {
   return (
@@ -22,9 +27,8 @@ function App() {
         <Route element={<Layout headerType="light" />}>
           <Route path="/sessions" element={<QnAMainPage />} />
           <Route path="/sessions/questions" element={<QnAListPage />} />
-          <Route path="/curriculums" element={<CurriculumPage />} />
-          {/* 임시 API (role 연결 전이라 create 페이지 일단 따로 만듦) */}
-          <Route path="/curriculums/create" element={<CurriculumCreate />} />
+          <Route path="/sessions/questions/:id" element={<QnADetailPage />} />
+          <Route path="/curriculum" element={<CurriculumPage />} />
         </Route>
 
         {/* 다크 헤더 페이지 */}

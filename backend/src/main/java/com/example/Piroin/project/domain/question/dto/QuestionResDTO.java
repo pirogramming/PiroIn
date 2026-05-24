@@ -145,7 +145,28 @@ public class QuestionResDTO {
             Boolean isPopular,
             Integer likeCount,
             Integer commentCount,
+            // 댓글이 없으면 빈 배열로 내려가며, 프론트는 빈 배열일 때 미리보기 영역을 숨긴다.
+            List<PreviewCommentResponse> previewComments,
             LocalDateTime createdAt
+    ) {
+    }
+
+    // 질문 목록용 댓글 미리보기 응답. 메인 목록에서는 대댓글 없이 최상위 댓글만 보여준다.
+    public record PreviewCommentResponse(
+            Long commentId,
+            String displayName,
+            String content,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 댓글 생성 시 SSE로 내려가는 목록 갱신 이벤트 응답
+    public record CommentCreatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            Integer commentCount,
+            List<PreviewCommentResponse> previewComments
     ) {
     }
 

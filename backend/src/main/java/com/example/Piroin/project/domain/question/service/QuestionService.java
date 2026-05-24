@@ -473,7 +473,22 @@ public class QuestionService {
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 question.getLikeCount(),
                 questionCommentRepository.countByQuestionAndDeletedAtIsNull(question),
+                getPreviewComments(question),
                 question.getCreatedAt()
         );
+    }
+
+    private List<QuestionResDTO.PreviewCommentResponse> getPreviewComments(Question question) {
+        return questionCommentRepository
+                .findTop3ByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtDesc(question)
+                .stream()
+                .sorted(Comparator.comparing(QuestionComment::getCreatedAt))
+                .map(comment -> new QuestionResDTO.PreviewCommentResponse(
+                        comment.getId(),
+                        getDisplayName(question, comment.getUser()),
+                        comment.getContent(),
+                        comment.getCreatedAt()
+                ))
+                .toList();
     }
 }

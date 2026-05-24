@@ -15,6 +15,12 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
     List<QuestionComment> findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(Question question);
 
     /*
+    질문 목록 미리보기용 최신 최상위 댓글 3개
+    조회는 최신순으로 가져오고, 서비스에서 오래된 순으로 다시 정렬해 내려준다.
+    */
+    List<QuestionComment> findTop3ByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtDesc(Question question);
+
+    /*
     특정 댓글의 대댓글 목록(등록순)
     용도: 댓글 아래 대댓글을 가져올 때
     */

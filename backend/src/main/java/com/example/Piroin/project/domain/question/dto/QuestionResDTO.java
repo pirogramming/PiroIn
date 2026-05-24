@@ -145,6 +145,17 @@ public class QuestionResDTO {
             Boolean isPopular,
             Integer likeCount,
             Integer commentCount,
+            // previewComment == NULL일 시 프론트에서 렌더링 x
+            List<PreviewCommentResponse> previewComments,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 질문 목록용 댓글 미리보기 응답
+    public record PreviewCommentResponse(
+            Long commentId,
+            String displayName,
+            String content,
             LocalDateTime createdAt
     ) {
     }

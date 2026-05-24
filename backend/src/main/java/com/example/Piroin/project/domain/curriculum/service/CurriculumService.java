@@ -9,12 +9,15 @@ import com.example.Piroin.project.domain.curriculum.exception.CurriculumExceptio
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.user.repository.UserRepository;
+import com.example.Piroin.project.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,48 +28,77 @@ public class CurriculumService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public List<CurriculumResDTO.GetSessionRes> getAllSessions() {
-        return curriculumRepository.findAll().stream()
-                .map(CurriculumConverter::toGetSessionRes)
+    public List<CurriculumResDTO.CreateDayRes> getAllDays() {
+        Map<LocalDate, List<StudySession>> grouped = curriculumRepository.findAllByOrderBySessionDateAscDayPartAsc()
+                .stream()
+                .collect(Collectors.groupingBy(StudySession::getSessionDate, Collectors.toList()));
+
+        return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> CurriculumConverter.toCreateDayRes(entry.getValue()))
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public CurriculumResDTO.CreateSessionRes createSession(CurriculumReqDTO.CreateSessionReq req) {
+    public CurriculumResDTO.CreateDayRes createDay(CurriculumReqDTO.CreateDayReq req) {
         if (req.getGeneration() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "기수는 필수입니다.");
         if (req.getWeek() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "주차는 필수입니다.");
         if (req.getSessionDate() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 날짜는 필수입니다.");
-        if (req.getDayPart() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "오전/오후는 필수입니다.");
-        if (req.getTitle() == null || req.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "제목은 필수입니다.");
+        if (req.getSessions() == null || req.getSessions().size() != 2)
+            throw new CurriculumException(HttpStatus.BAD_REQUEST, "AM/PM 세션 2개를 함께 입력해야 합니다.");
 
-        User user = userRepository.findById(req.getUserId())
+        req.getSessions().forEach(s -> {
+            if (s.getDayPart() == null) throw new CurriculumException(HttpStatus.BAD_REQUEST, "dayPart는 필수입니다.");
+            if (s.getTitle() == null || s.getTitle().isBlank()) throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
+        });
+
+        if (!curriculumRepository.findBySessionDate(req.getSessionDate()).isEmpty())
+            throw new CurriculumException(HttpStatus.CONFLICT, "해당 날짜에 이미 세션이 존재합니다.");
+
+        User user = userRepository.findById(SecurityUtil.getCurrentUserId())
                 .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
 
-        StudySession session = CurriculumConverter.toStudySession(req, user);
-        StudySession savedSession = curriculumRepository.save(session);
+        List<StudySession> sessions = req.getSessions().stream()
+                .map(sessionReq -> CurriculumConverter.toStudySession(sessionReq, req, user))
+                .collect(Collectors.toList());
 
-        return CurriculumConverter.toCreateSessionRes(savedSession);
+        return CurriculumConverter.toCreateDayRes(curriculumRepository.saveAll(sessions));
     }
 
     @Transactional
-    public CurriculumResDTO.UpdateSessionRes updateSession(Long sessionId, CurriculumReqDTO.UpdateSessionReq req) {
-        StudySession session = curriculumRepository.findById(sessionId)
-                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
+    public CurriculumResDTO.CreateDayRes updateDay(LocalDate sessionDate, CurriculumReqDTO.UpdateDayReq req) {
+        List<StudySession> sessions = curriculumRepository.findBySessionDate(sessionDate);
+        if (sessions.isEmpty()) throw new CurriculumException(HttpStatus.NOT_FOUND, "해당 세션을 찾을 수 없습니다.");
 
-        session.update(req.getGeneration(), req.getWeek(), req.getSessionDate(), req.getDayPart(),
-                req.getTitle(), req.getHostName(), req.getStatus(), req.getDescription(),
-                req.getSessionMaterialUrl(), req.getAssignmentUrl(), req.getRecordingUrl(),
-                req.getRecordingPassword(), req.getSessionMaterialName(), req.getAssignmentName());
+        LocalDate newDate = req.getNewSessionDate();
+        if (newDate != null && !newDate.equals(sessionDate) && !curriculumRepository.findBySessionDate(newDate).isEmpty())
+            throw new CurriculumException(HttpStatus.CONFLICT, "해당 날짜에 이미 세션이 존재합니다.");
 
-        return CurriculumConverter.toUpdateSessionRes(session);
+        req.getSessions().forEach(sessionReq -> {
+            if (sessionReq.getTitle() == null || sessionReq.getTitle().isBlank())
+                throw new CurriculumException(HttpStatus.BAD_REQUEST, "세션 제목은 필수입니다.");
+
+            sessions.stream()
+                    .filter(s -> s.getDayPart() == sessionReq.getDayPart())
+                    .findFirst()
+                    .ifPresent(s -> s.updateFull(
+                            req.getGeneration(), req.getWeek(), newDate, sessionReq.getStatus(),
+                            sessionReq.getTitle(), sessionReq.getHostName(),
+                            sessionReq.getSessionMaterialUrl(),
+                            sessionReq.getSessionMaterialName(), sessionReq.getRecordingUrl(),
+                            sessionReq.getRecordingPassword(), sessionReq.getAssignmentUrl(),
+                            sessionReq.getAssignmentName()
+                    ));
+        });
+
+        return CurriculumConverter.toCreateDayRes(sessions);
     }
 
     @Transactional
-    public void deleteSession(Long sessionId) {
-        StudySession session = curriculumRepository.findById(sessionId)
-                .orElseThrow(() -> new CurriculumException(HttpStatus.NOT_FOUND, "세션을 찾을 수 없습니다."));
-
-        curriculumRepository.delete(session);
+    public void deleteDay(LocalDate sessionDate) {
+        List<StudySession> sessions = curriculumRepository.findBySessionDate(sessionDate);
+        if (sessions.isEmpty()) throw new CurriculumException(HttpStatus.NOT_FOUND, "해당 세션을 찾을 수 없습니다.");
+        curriculumRepository.deleteAll(sessions);
     }
 
     @Transactional(readOnly = true)

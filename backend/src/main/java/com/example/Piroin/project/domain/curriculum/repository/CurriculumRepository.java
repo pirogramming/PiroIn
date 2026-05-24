@@ -4,6 +4,7 @@ import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /*
@@ -15,4 +16,21 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
     List<StudySession> findByStatusOrderBySessionDateAscDayPartAsc(SessionStatus status);
 
     List<StudySession> findByStatusOrderBySessionDateDescDayPartDesc(SessionStatus status);
+
+    List<StudySession> findByWeek(Long week);
+
+    List<StudySession> findBySessionDate(LocalDate sessionDate);
+
+    List<StudySession> findAllByOrderBySessionDateAscDayPartAsc();
+
+//    @Query("""
+//        SELECT s
+//        FROM StudySession s
+//        WHERE s.week = :week
+//        AND FUNCTION('DAY_OF_WEEK', s.sessionDate) = :dayValue
+//    """)
+//    Optional<StudySession> findByWeekAndDay(
+//            @Param("week") Long week,
+//            @Param("dayValue") DayOfWeek dayValue
+//    );
 }

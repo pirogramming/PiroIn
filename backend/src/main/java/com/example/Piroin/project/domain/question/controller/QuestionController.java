@@ -23,10 +23,8 @@ public class QuestionController {
             @PathVariable Long sessionId,
             @RequestParam(defaultValue = "0") int understandingIndex
     ) {
-        QuestionResDTO.QuestionRoomResponse response =
-                questionService.getQuestionRoom(sessionId, understandingIndex);
-
-        return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK, response);
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK,
+                questionService.getQuestionRoom(sessionId, understandingIndex));
     }
 
     // 질문 상세 조회
@@ -36,10 +34,89 @@ public class QuestionController {
             @PathVariable Long questionId,
             @AuthenticationPrincipal Long userId
     ) {
-        QuestionResDTO.QuestionDetailResponse response =
-                questionService.getQuestionDetail(questionId, userId);
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_DETAIL_OK,
+                questionService.getQuestionDetail(questionId, userId));
+    }
 
-        return ResponseUtil.success(QuestionSuccessCode.QUESTION_DETAIL_OK, response);
+    // 질문 등록
+    // POST /api/sessions/{sessionId}/questions
+    @PostMapping("/api/sessions/{sessionId}/questions")
+    public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
+            @PathVariable Long sessionId,
+            @RequestBody QuestionReqDTO.CreateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED,
+                questionService.createQuestion(sessionId, request, userId));
+    }
+
+    // 댓글/대댓글 등록
+    // POST /api/questions/{questionId}/comments
+    @PostMapping("/api/questions/{questionId}/comments")
+    public ResponseEntity<ApiResponse<QuestionResDTO.CommentCreateRes>> createComment(
+            @PathVariable Long questionId,
+            @RequestBody QuestionReqDTO.CommentReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.COMMENT_CREATED,
+                questionService.createComment(questionId, request, userId));
+    }
+
+    // 좋아요 토글
+    // POST /api/questions/{questionId}/like
+    @PostMapping("/api/questions/{questionId}/like")
+    public ResponseEntity<ApiResponse<QuestionResDTO.LikeRes>> toggleLike(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.LIKE_TOGGLED,
+                questionService.toggleLike(questionId, userId));
+    }
+
+    // 질문 수정
+    // PATCH /api/questions/{questionId}/modify
+    @PatchMapping("/api/questions/{questionId}/modify")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> updateQuestion(
+            @PathVariable Long questionId,
+            @RequestBody QuestionReqDTO.UpdateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_UPDATED,
+                questionService.updateQuestion(questionId, request, userId));
+    }
+
+    // 질문 삭제
+    // DELETE /api/questions/{questionId}
+    @DeleteMapping("/api/questions/{questionId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> deleteQuestion(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_DELETED,
+                questionService.deleteQuestion(questionId, userId));
+    }
+
+    // 질문 상태 완료 전환 (관리자 전용)
+    // PATCH /api/questions/{questionId}/status
+    @PatchMapping("/api/questions/{questionId}/status")
+    public ResponseEntity<ApiResponse<QuestionResDTO.StatusUpdateRes>> updateQuestionStatus(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_STATUS_UPDATED,
+                questionService.updateQuestionStatus(questionId, userId));
+    }
+
+    // 이해도 체크 생성
+    // POST /api/sessions/{sessionId}/understanding-checks
+    @PostMapping("/api/sessions/{sessionId}/understanding-checks")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UnderstandingCheckCreateResponse>> createUnderstandingCheck(
+            @PathVariable Long sessionId,
+            @RequestBody QuestionReqDTO.UnderstandingCheckCreateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_CHECK_CREATED,
+                questionService.createUnderstandingCheck(sessionId, request, userId));
     }
 
     // 이해도 체크 응답
@@ -51,23 +128,7 @@ public class QuestionController {
             @RequestBody QuestionReqDTO.UnderstandingResponseReq request,
             @AuthenticationPrincipal Long userId
     ) {
-        QuestionResDTO.UnderstandingResponseResult response =
-                questionService.respondUnderstandingCheck(sessionId, checkId, request, userId);
-
-        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK, response);
-    }
-
-    // 질문 등록
-    // POST /api/sessions/{sessionId}/questions
-    @PostMapping("/api/sessions/{sessionId}/questions")
-    public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
-            @PathVariable Long sessionId,
-            @RequestBody QuestionReqDTO.CreateReq request,
-            @AuthenticationPrincipal Long userId
-    ) {
-        QuestionResDTO.CreateRes response =
-                questionService.createQuestion(sessionId, request, userId);
-
-        return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED, response);
+        return ResponseUtil.success(QuestionSuccessCode.UNDERSTANDING_RESPONSE_OK,
+                questionService.respondUnderstandingCheck(sessionId, checkId, request, userId));
     }
 }

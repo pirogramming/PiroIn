@@ -76,29 +76,24 @@ public class StudySession {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public void update(Integer generation, Long week, LocalDate sessionDate, SessionDayPart dayPart,
-                       String title, String hostName, SessionStatus status, String description,
-                       String sessionMaterialUrl, String assignmentUrl, String recordingUrl,
-                       String recordingPassword, String sessionMaterialName, String assignmentName) {
+    public void updateFull(Integer generation, Long week, LocalDate sessionDate, SessionStatus status, String title, String hostName,
+                           String sessionMaterialUrl, String sessionMaterialName,
+                           String recordingUrl, String recordingPassword,
+                           String assignmentUrl, String assignmentName) {
         if (generation != null) this.generation = generation;
         if (week != null) this.week = week;
         if (sessionDate != null) this.sessionDate = sessionDate;
-        if (dayPart != null) this.dayPart = dayPart;
-        if (title != null) this.title = title;
-        if (hostName != null) this.hostName = hostName;
         if (status != null) this.status = status;
-        if (description != null) this.description = description;
-        if (sessionMaterialUrl != null) this.sessionMaterialUrl = sessionMaterialUrl;
-        if (assignmentUrl != null) this.assignmentUrl = assignmentUrl;
-        if (recordingUrl != null) this.recordingUrl = recordingUrl;
-        if (recordingPassword != null) this.recordingPassword = recordingPassword;
-        if (sessionMaterialName != null) this.sessionMaterialName = sessionMaterialName;
-        if (assignmentName != null) this.assignmentName = assignmentName;
+        this.title = title;
+        this.hostName = (hostName != null && !hostName.isBlank()) ? hostName : "(미정)";
+        this.sessionMaterialUrl = sessionMaterialUrl;
+        this.sessionMaterialName = sessionMaterialName;
+        this.recordingUrl = recordingUrl;
+        this.recordingPassword = recordingPassword;
+        this.assignmentUrl = assignmentUrl;
+        this.assignmentName = assignmentName;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public LocalDate getDate() {
-        return null;
-    }
 }
 

@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -19,28 +20,26 @@ public class CurriculumController {
     private final CurriculumService curriculumService;
 
     @GetMapping
-    public ResponseEntity<List<CurriculumResDTO.GetSessionRes>> getAllSessions() {
-        return ResponseEntity.ok(curriculumService.getAllSessions());
+    public ResponseEntity<List<CurriculumResDTO.CreateDayRes>> getAllDays() {
+        return ResponseEntity.ok(curriculumService.getAllDays());
     }
 
     @PostMapping
-    public ResponseEntity<CurriculumResDTO.CreateSessionRes> createSession(
-            @RequestBody CurriculumReqDTO.CreateSessionReq req) {
-        CurriculumResDTO.CreateSessionRes response = curriculumService.createSession(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<CurriculumResDTO.CreateDayRes> createDay(
+            @RequestBody CurriculumReqDTO.CreateDayReq req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(curriculumService.createDay(req));
     }
 
-    @PatchMapping("/{sessionId}")
-    public ResponseEntity<CurriculumResDTO.UpdateSessionRes> updateSession(
-            @PathVariable Long sessionId,
-            @RequestBody CurriculumReqDTO.UpdateSessionReq req) {
-        CurriculumResDTO.UpdateSessionRes response = curriculumService.updateSession(sessionId, req);
-        return ResponseEntity.ok(response);
+    @PatchMapping("/{sessionDate}")
+    public ResponseEntity<CurriculumResDTO.CreateDayRes> updateDay(
+            @PathVariable LocalDate sessionDate,
+            @RequestBody CurriculumReqDTO.UpdateDayReq req) {
+        return ResponseEntity.ok(curriculumService.updateDay(sessionDate, req));
     }
 
-    @DeleteMapping("/{sessionId}")
-    public ResponseEntity<Map<String, String>> deleteSession(@PathVariable Long sessionId) {
-        curriculumService.deleteSession(sessionId);
+    @DeleteMapping("/{sessionDate}")
+    public ResponseEntity<Map<String, String>> deleteDay(@PathVariable LocalDate sessionDate) {
+        curriculumService.deleteDay(sessionDate);
         return ResponseEntity.ok(Map.of("message", "세션이 정상적으로 삭제되었습니다."));
     }
 }

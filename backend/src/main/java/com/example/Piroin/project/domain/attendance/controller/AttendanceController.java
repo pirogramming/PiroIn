@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 //import com.example.Piroin.project.global.util.SecurityUtil;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,29 +32,23 @@ public class AttendanceController {
 
 
     // 1. 출석코드 비교
-    @Operation(summary = "출석 체크", description = "출석 코드를 입력하여 출석을 체크합니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "출석 성공 또는 이미 출석 완료"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 출석 코드 또는 출석 체크 진행중이 아님")
-    })
     @PostMapping("/mark")
+    @Operation(summary = "출석코드 입력", description = "부원이 운영진이 알려준 출석코드를 입력하여 출석을 합니다.")
     public ApiResponse<AttendanceMarkResponse> markAttendance(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "출석 체크 요청",
-                    required = true,
-                    content = @Content(schema = @Schema(implementation = MarkAttendanceReq.class))
-            )
             @RequestBody MarkAttendanceReq req,
-            @AuthenticationPrincipal Long userId
+            Authentication authentication
     ) {
+
+        Long userId = Long.valueOf(authentication.getName());
+
         AttendanceMarkResponse response = attendanceService.markAttendance(
                 userId,
-                req.getStudySessionId(),
                 req.getCode()
         );
 
-        boolean isSuccess = "SUCCESS".equals(response.getStatusCode()) ||
-                "ALREADY_MARKED".equals(response.getStatusCode());
+        boolean isSuccess =
+                "SUCCESS".equals(response.getStatusCode()) ||
+                        "ALREADY_MARKED".equals(response.getStatusCode());
 
         if (isSuccess) {
             return ApiResponse.success(response);
@@ -69,7 +64,7 @@ public class AttendanceController {
 
 
     // 2. 특정 유저의 출석 정보
-    @Operation(summary = "사용자 출석 정보 조회", description = "특정 사용자의 전체 출석 정보를 조회합니다.")
+    @Operation(summary = "사용자 전체 출석 정보 조회", description = "특정 사용자의 전체 출석 정보를 조회합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
@@ -77,7 +72,7 @@ public class AttendanceController {
     })
     @GetMapping("/user")
     public ApiResponse<List<AttendanceStatusRes>> getAttendanceByUserId(@AuthenticationPrincipal Long userId) {
-        return ApiResponse.success(attendanceService.findByUserId(userId));
+        return ApiResponse.success(attendanceService.findByUserId(Math.toIntExact(userId)));
     }
 
     // 3. 특정 유저의 특정 일자 출석 정보
@@ -93,7 +88,7 @@ public class AttendanceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.success(attendanceService.findByUserIdAndDate(userId, date));
+        return ApiResponse.success(attendanceService.findByUserIdAndDate(Math.toIntExact(userId), date));
     }
 
 

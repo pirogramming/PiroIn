@@ -1,0 +1,103 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+    min-height: calc(100vh - 100px);
+    background: var(--black);
+}
+
+.mockBanner {
+    background: #5a3e00;
+    color: #ffd166;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 480px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.title {
+    font-family: var(--font-title);
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--main);
+    margin-bottom: 36px;
+    letter-spacing: 0;
+}
+
+.searchRow {
+    display: flex;
+    align-items: center;
+    background: var(--gray600);
+    border-radius: 10px;
+    overflow: hidden;
+    width: 480px;
+    margin-bottom: 30px;
+    padding: 6px 6px 6px 20px;
+}
+
+.searchInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    color: var(--white);
+}
+
+.searchInput::placeholder { color: var(--gray200); }
+
+.searchBtn {
+    padding: 7px 15px;
+    background: var(--dark);
+    border: none;
+    border-radius: 10px;
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.searchBtn:hover {
+    background: var(--main);
+    transition: all ease-in-out 0.2s;
+}
+
+.list {
+    width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.studentItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--gray600);
+    border: 1px solid var(--gray50);
+    border-radius: 10px;
+    padding: 7px 15px 7px 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.studentItem:hover { background: #4a4a4a; }
+
+.studentName {
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--white);
+}
+
+.arrow {
+    width: 25px; height: 25px;
+}

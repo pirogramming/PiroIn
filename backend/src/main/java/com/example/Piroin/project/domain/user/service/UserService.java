@@ -12,6 +12,7 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    // 로그인
     public User login(String name, String password) {
         User user = userRepository.findByName(name)
                 .orElseThrow(() -> new InvalidLoginException("해당 사용자가 존재하지 않습니다."));
@@ -22,4 +23,7 @@ public class UserService {
 
         return user;
     }
+
+
+    // 부원 목록 조회
 }

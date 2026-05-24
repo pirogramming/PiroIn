@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class QuestionResDTO {
-
     // 질문 등록 응답
     @Getter
     @Builder
@@ -32,31 +31,66 @@ public class QuestionResDTO {
         }
     }
 
+    // 댓글 등록 응답
+    public record CommentCreateRes(
+            Long commentId,
+            Long questionId,
+            String displayName,
+            String content,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 좋아요 토글 응답
+    // isLiked: true면 좋아요 추가된 상태, false면 취소된 상태
+    public record LikeRes(
+            Long id,
+            Integer likeCount,
+            Boolean isLiked
+    ) {
+    }
+
+    // 질문 수정/삭제 응답 (형태가 동일해서 하나로 공유)
+    // deletedAt에 값이 있으면 삭제된 상태
+    public record UpdateDeleteRes(
+            Long id,
+            String content,
+            LocalDateTime updatedAt,
+            LocalDateTime deletedAt
+    ) {
+    }
+
     // 질문 상세 응답
-    // GET /api/questions/{questionId}
     public record QuestionDetailResponse(
             Long questionId,
-            String displayName,   // "작성자" 고정 (질문자는 항상 작성자로 표시)
+            String displayName,
             String content,
             String imageUrl,
             Boolean isResolved,
             Boolean isPopular,
             Integer likeCount,
-            Boolean isLiked,      // 현재 로그인 유저의 좋아요 여부
+            Boolean isLiked,
             LocalDateTime createdAt,
             List<CommentResponse> comments
     ) {
     }
 
-    // 댓글 및 대댓글 응답
-    // replies가 비어 있으면 일반 댓글, 값이 있으면 해당 댓글의 대댓글 목록
+    // 댓글 조회 응답 (상세 페이지용)
     public record CommentResponse(
             Long commentId,
-            String displayName,   // "작성자" / "익명N" / "운영진N"
+            String displayName,
             String content,
             String imageUrl,
             LocalDateTime createdAt,
-            List<CommentResponse> replies  // 대댓글 목록 (최상위 댓글에만 값 있음)
+            List<CommentResponse> replies
+    ) {
+    }
+
+    // 질문 상태 변경 응답
+    public record StatusUpdateRes(
+            Long id,
+            Boolean isResolved,
+            LocalDateTime updatedAt
     ) {
     }
 
@@ -89,8 +123,7 @@ public class QuestionResDTO {
 
     public record UnderstandingCheckResponse(
             Long checkId,
-            String title,
-            String description,
+            String content,
             Integer understoodCount,
             Integer notUnderstoodCount,
             LocalDateTime createdAt
@@ -121,6 +154,15 @@ public class QuestionResDTO {
             UnderstandResChoice selectedChoice,
             Integer understoodCount,
             Integer notUnderstoodCount
+    ) {
+    }
+
+    public record UnderstandingCheckCreateResponse(
+            Long checkId,
+            String content,
+            Integer understoodCount,
+            Integer notUnderstoodCount,
+            LocalDateTime createdAt
     ) {
     }
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../../utils/Api';
 import styles from './Assignment.module.css';
 import LogoImg from '../../../assets/images/logo.png';
 import EditIcon from '../../../assets/images/icon_edit.svg';
@@ -50,7 +51,7 @@ function AssignmentModal({ item, onClose, onSave }) {
             ? `/api/assignments/modify/${item.assignmentId}`
             : '/api/assignments/create';
         const method = isEdit ? 'PATCH' : 'POST';
-        await fetch(url, {
+        await authFetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: form.title, week: form.week, day: form.day }),
@@ -147,7 +148,7 @@ function Assignment() {
     const fetchAll = async () => {
         const results = await Promise.all(
             ['1', '2', '3', '4', '5'].map(w =>
-                fetch(`/api/assignments/me/${w}`)
+                authFetch(`/api/assignments/me/${w}`)
                     .then(r => r.json())
                     .catch(() => ({ week: w, assignments: [] }))
             )

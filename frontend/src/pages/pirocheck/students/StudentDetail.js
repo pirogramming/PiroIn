@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
+import { authFetch } from '../../../utils/Api';
 import styles from './StudentDetail.module.css';
 import ProfileImg from '../../../assets/images/profile.svg';
 import Logo2 from '../../../assets/images/logo2.svg';
@@ -191,7 +192,7 @@ function StudentDetail() {
             // TODO: GET /api/admin/admin/student/{userId}/status/{week} (1~5주차)
 
             // 커리큘럼에서 세션 제목 가져오기
-            const curriculumRes = await fetch('/api/curriculums');
+            const curriculumRes = await authFetch('/api/curriculums');
             const curriculums = await curriculumRes.json();
 
             // weeks 데이터에 sessionTitles 추가

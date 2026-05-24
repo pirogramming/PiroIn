@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../../utils/Api';
 import styles from './Deposit.module.css';
 
 const IS_MOCK = false
@@ -7,7 +8,7 @@ function Deposit() {
     const [deposit, setDeposit] = useState(null);
 
     useEffect(() => {
-        fetch('/api/deposit/me')
+        authFetch('/api/deposit/me')
             .then(r => r.json())
             .then(data => setDeposit(data))
             .catch(() => {}); 

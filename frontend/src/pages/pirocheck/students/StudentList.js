@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../../../utils/Api';
 import styles from './StudentList.module.css';
 import ArrowRight from '../../../assets/images/icon_arrow_right.svg';
 
@@ -15,7 +16,7 @@ function StudentList() {
             const url = keyword
                 ? `/api/admin/studentlist/search?name=${keyword}`
                 : '/api/admin/studentlist';
-            const res = await fetch(url);
+            const res = await authFetch(url);
             const data = await res.json();
             setStudents(Array.isArray(data) ? data : data.data || []);
         } catch (e) {} 

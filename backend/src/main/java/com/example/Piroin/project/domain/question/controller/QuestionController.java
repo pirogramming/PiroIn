@@ -85,6 +85,17 @@ public class QuestionController {
             questionService.updateQuestion(questionId, request, userId));
     }
 
+    // 질문 삭제
+    // DELETE /api/questions/{questionId}
+    @DeleteMapping("/api/questions/{questionId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> deleteQuestion(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+    return ResponseUtil.success(QuestionSuccessCode.QUESTION_DELETED,
+            questionService.deleteQuestion(questionId, userId));
+    }
+
     // 이해도 체크 생성
     // POST /api/sessions/{sessionId}/understanding-checks
     @PostMapping("/api/sessions/{sessionId}/understanding-checks")

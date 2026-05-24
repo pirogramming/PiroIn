@@ -73,4 +73,10 @@ public class Question {
         this.content = content;
         this.updatedAt = LocalDateTime.now();
     }
+
+    // 질문 소프트 삭제 (DB에서 실제로 지우지 않고 deleted_at에 시각 기록)
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

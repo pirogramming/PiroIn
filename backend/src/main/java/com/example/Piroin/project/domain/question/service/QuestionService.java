@@ -256,6 +256,21 @@ public class QuestionService {
         );
     }
 
+    // 질문 삭제
+    @Transactional
+    public QuestionResDTO.UpdateDeleteRes deleteQuestion(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+        validateQuestionOwner(question, loginUser);
+
+        question.softDelete();
+
+        return new QuestionResDTO.UpdateDeleteRes(
+                question.getId(), question.getContent(),
+                question.getUpdatedAt(), question.getDeletedAt()
+        );
+    }
+
     // 이해도 체크 생성
     @Transactional
     public QuestionResDTO.UnderstandingCheckCreateResponse createUnderstandingCheck(

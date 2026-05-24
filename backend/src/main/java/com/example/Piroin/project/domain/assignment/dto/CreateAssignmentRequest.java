@@ -7,7 +7,6 @@ import java.time.LocalDate;
 
 @Getter
 public class CreateAssignmentRequest {
-    private Integer assignmentId;
 
     private String title;
 

@@ -3,6 +3,8 @@ package com.example.Piroin.project.domain.deposit.service;
 import com.example.Piroin.project.domain.attendance.repository.AttendanceRepository;
 import com.example.Piroin.project.domain.deposit.dto.AdminDepositViewResponse;
 import com.example.Piroin.project.domain.deposit.dto.DepositResponse;
+import com.example.Piroin.project.domain.deposit.dto.UpdateDefenceRequest;
+import com.example.Piroin.project.domain.deposit.dto.UpdateDefenceResponse;
 import com.example.Piroin.project.domain.deposit.entity.Deposit;
 import com.example.Piroin.project.domain.deposit.exception.DepositException;
 import com.example.Piroin.project.domain.deposit.exception.code.DepositErrorCode;
@@ -72,5 +74,26 @@ public class DepositService {
                 .descentAttendance(deposit.getDescentAttendance())
                 .ascentDefence(deposit.getAscentDefence())
                 .build();
+    }
+
+    // 4. 운영진이 특정 부원의 보증금을 수정
+    @Transactional
+    public UpdateDefenceResponse updateUserDefence(
+            Long userId,
+            UpdateDefenceRequest request
+    ) {
+
+        Deposit deposit = depositRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("보증금 정보가 존재하지 않습니다."));
+
+        if (request.getAscentDefence() != null) {
+            deposit.updateDefenceAmount(request.getAscentDefence());
+        }
+
+        return new UpdateDefenceResponse(
+                deposit.getUser().getId(),
+                deposit.getAmount(),
+                deposit.getAscentDefence()
+        );
     }
 }

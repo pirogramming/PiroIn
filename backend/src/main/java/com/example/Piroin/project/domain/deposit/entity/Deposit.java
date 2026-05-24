@@ -68,6 +68,18 @@ public class Deposit {
                 + this.ascentDefence;
     }
 
+    // 보증금 계산
+    public void updateDefenceAmount(Integer ascentDefence) {
+        this.ascentDefence = ascentDefence;
+
+        int baseAmount = 100_000;
+
+        this.amount = baseAmount
+                - this.descentAssignment
+                - this.descentAttendance
+                + this.ascentDefence;
+    }
+
 
 }
 

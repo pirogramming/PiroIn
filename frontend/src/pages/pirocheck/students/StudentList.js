@@ -3,15 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './StudentList.module.css';
 import ArrowRight from '../../../assets/images/icon_arrow_right.svg';
 
-const MOCK_STUDENTS = [
-    { userId: 1, name: '김피로' },
-    { userId: 2, name: '이피로' },
-    { userId: 3, name: '박피로' },
-    { userId: 4, name: '최피로' },
-    { userId: 5, name: '정피로' },
-];
-
-const IS_MOCK = true;
+const IS_MOCK = false;
 
 function StudentList() {
     const navigate = useNavigate();
@@ -19,20 +11,14 @@ function StudentList() {
     const [search, setSearch] = useState('');
 
     const fetchStudents = async (keyword = '') => {
-        if (IS_MOCK) {
-            if (keyword) {
-                setStudents(MOCK_STUDENTS.filter(s => s.name.includes(keyword)));
-            } else {
-                setStudents(MOCK_STUDENTS);
-            }
-            return;
-        }
-        const url = keyword
-            ? `/api/admin/studentlist/search?name=${keyword}`
-            : '/api/admin/studentlist';
-        const res = await fetch(url);
-        const data = await res.json();
-        setStudents(data);
+        try {
+            const url = keyword
+                ? `/api/admin/studentlist/search?name=${keyword}`
+                : '/api/admin/studentlist';
+            const res = await fetch(url);
+            const data = await res.json();
+            setStudents(Array.isArray(data) ? data : data.data || []);
+        } catch (e) {} 
     };
 
     useEffect(() => { fetchStudents(); }, []);
@@ -41,11 +27,6 @@ function StudentList() {
 
     return (
         <div className={styles.container}>
-            {IS_MOCK && (
-                <div className={styles.mockBanner}>
-                    ⚠️ 현재 임시 데이터로 표시 중입니다.
-                </div>
-            )}
 
             <div className={styles.title}>PIROGRAMMER</div>
 

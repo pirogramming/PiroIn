@@ -44,10 +44,10 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
-            @AuthenticationPrincipal Integer userId
+            @AuthenticationPrincipal Long userId
     ) {
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED,
-                questionService.createQuestion(sessionId, request, Long.valueOf(userId)));
+                questionService.createQuestion(sessionId, request, userId));
     }
 
     // 댓글/대댓글 등록

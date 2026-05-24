@@ -10,6 +10,8 @@ import PiroCheckMain from './pages/pirocheck/PIroCheckMain';
 import Attendance from './pages/pirocheck/attendance/Attendance'
 import Assignment from './pages/pirocheck/assignment/Assignment';
 import Deposit from './pages/pirocheck/deposit/Deposit';
+import StudentList from './pages/pirocheck/students/StudentList';
+import StudentDetail from './pages/pirocheck/students/StudentDetail';
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
             <Route path="/pirocheck/attendance" element={<Attendance />}/>
             <Route path="/pirocheck/assignment" element={<Assignment />}/>
             <Route path="/pirocheck/deposit" element={<Deposit />}/>
+            <Route path="/pirocheck/students" element={<StudentList />}/>
+            <Route path="/pirocheck/students/:userId" element={<StudentDetail />}/>
         </Route>
 
       </Routes>

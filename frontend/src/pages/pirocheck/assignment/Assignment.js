@@ -160,8 +160,9 @@ function Assignment() {
 
     const handleDelete = async (assignmentId) => {
         if (!window.confirm('삭제하시겠습니까?')) return;
+        await authFetch(`/api/assignments/${assignmentId}`, { method: 'DELETE' });
         fetchAll();
-    };
+    };  
 
     return (
         <div className={styles.container}>

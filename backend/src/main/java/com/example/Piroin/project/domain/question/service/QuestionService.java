@@ -57,6 +57,7 @@ public class QuestionService {
 
     @Transactional(readOnly = true)
     public SseEmitter subscribeQuestionEvents(Long sessionId) {
+        // 존재하는 세션에 대해서만 SSE 연결을 허용한다.
         findSession(sessionId);
         return questionEventService.subscribe(sessionId);
     }
@@ -141,6 +142,8 @@ public class QuestionService {
         QuestionResDTO.CommentCreateRes response = new QuestionResDTO.CommentCreateRes(
                 comment.getId(), question.getId(), displayName, comment.getContent(), comment.getCreatedAt()
         );
+
+        // DB 반영이 끝난 뒤 같은 질문방 구독자들이 목록 댓글 미리보기를 갱신하도록 알린다.
         publishCommentCreatedEventAfterCommit(question);
 
         return response;
@@ -486,12 +489,14 @@ public class QuestionService {
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 question.getLikeCount(),
                 questionCommentRepository.countByQuestionAndDeletedAtIsNull(question),
+                // 목록 화면에서 바로 렌더링할 댓글 미리보기 3개를 함께 내려준다.
                 getPreviewComments(question),
                 question.getCreatedAt()
         );
     }
 
     private List<QuestionResDTO.PreviewCommentResponse> getPreviewComments(Question question) {
+        // 최신 댓글 3개를 미리보기 대상으로 삼되, 화면 표시는 댓글이 달린 순서대로 보이게 오래된 순으로 정렬한다.
         return questionCommentRepository
                 .findTop3ByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtDesc(question)
                 .stream()
@@ -507,6 +512,8 @@ public class QuestionService {
 
     private void publishCommentCreatedEventAfterCommit(Question question) {
         Long sessionId = question.getSession().getId();
+
+        // 프론트가 전체 목록을 다시 조회하지 않고 해당 질문만 갱신할 수 있는 최소 데이터만 보낸다.
         QuestionResDTO.CommentCreatedEvent event = new QuestionResDTO.CommentCreatedEvent(
                 "COMMENT_CREATED",
                 sessionId,
@@ -518,6 +525,7 @@ public class QuestionService {
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
     }
 
+    // 롤백된 댓글이 실시간 화면에 먼저 보이지 않도록 트랜잭션 커밋 이후에만 이벤트를 발행한다.
     private void publishAfterCommit(Runnable action) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             action.run();

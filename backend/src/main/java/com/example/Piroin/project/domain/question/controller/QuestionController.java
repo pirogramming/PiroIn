@@ -31,6 +31,7 @@ public class QuestionController {
 
     // 질문 목록 실시간 이벤트 구독
     // GET /api/sessions/{sessionId}/questions/events
+    // text/event-stream으로 연결을 유지하며, 댓글 생성 같은 목록 갱신 이벤트를 받는다.
     @GetMapping(value = "/api/sessions/{sessionId}/questions/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribeQuestionEvents(@PathVariable Long sessionId) {
         return questionService.subscribeQuestionEvents(sessionId);

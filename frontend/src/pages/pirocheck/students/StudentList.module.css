@@ -64,6 +64,11 @@
     cursor: pointer;
 }
 
+.searchBtn:hover {
+    background: var(--main);
+    transition: all ease-in-out 0.2s;
+}
+
 .list {
     width: 450px;
     display: flex;
@@ -94,8 +99,5 @@
 }
 
 .arrow {
-    color: var(--white);
-    font-size: 1.6rem;
-    opacity: 0.7;
-    margin-bottom: 1px;
+    width: 25px; height: 25px;
 }

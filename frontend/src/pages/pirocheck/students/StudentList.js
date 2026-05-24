@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './StudentList.module.css';
+import ArrowRight from '../../../assets/images/icon_arrow_right.svg';
 
 const MOCK_STUDENTS = [
     { userId: 1, name: '김피로' },
@@ -67,7 +68,7 @@ function StudentList() {
                         onClick={() => navigate(`/pirocheck/students/${s.userId}`, { state: { name: s.name } })}
                     >
                         <span className={styles.studentName}>{s.name}</span>
-                        <span className={styles.arrow}>›</span>
+                        <img src={ArrowRight} className={styles.arrow} alt="arrow" />
                     </button>
                 ))}
             </div>

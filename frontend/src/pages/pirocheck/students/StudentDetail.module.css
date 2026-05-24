@@ -22,9 +22,9 @@
 
 .card {
     width: 480px;
-    background: #3a3a3a;
+    background: var(--gray600);
     border-radius: 20px;
-    padding: 40px 32px;
+    padding: 40px 40px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -38,22 +38,18 @@
     gap: 12px;
 }
 
-.profileImgPlaceholder {
-    font-size: 4rem;
-    width: 90px;
-    height: 90px;
-    background: #555;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.profileImg {
+    width: 100px;
+    height: 100px;
+    margin-left: 2px;
+    object-fit: cover;
 }
 
 .profileName {
     font-family: var(--font-main);
-    font-size: 1.4rem;
+    font-size: 1.8rem;
     font-weight: 700;
-    color: var(--white);
+    color: var(--dark);
 }
 
 /* 보증금 */
@@ -62,11 +58,21 @@
     gap: 12px;
 }
 
-.depositBox {
+.depositBoxGreen {
     flex: 1;
-    background: #e8f5e9;
-    border-radius: 12px;
-    padding: 16px;
+    background: var(--light);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.depositBoxGray {
+    flex: 1;
+    background: var(--pale);
+    border-radius: 10px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -74,15 +80,16 @@
 
 .depositLabel {
     font-family: var(--font-main);
-    font-size: 0.85rem;
-    color: #555;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--gray600);
 }
 
 .depositValue {
     font-family: var(--font-main);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: #333;
+    color: var(--black);
 }
 
 .depositEditRow {
@@ -96,35 +103,37 @@
     border: none;
     background: transparent;
     font-family: var(--font-main);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     font-weight: 700;
-    color: #333;
+    color: var(--black);
     outline: none;
 }
 
 .won {
     font-family: var(--font-main);
-    font-size: 1rem;
-    color: #333;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--black);
 }
 
 .saveBtn {
     padding: 4px 10px;
-    background: #555;
+    background: var(--gray200);
     border: none;
     border-radius: 6px;
-    color: var(--white);
+    color: var(--gray600);
     font-family: var(--font-main);
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 550;
     cursor: pointer;
+    margin-left: 30px;
 }
 
-.saveBtn:hover { background: #666; }
+.saveBtn:hover { background: var(--gray600); color: var(--white); transition: all ease-in-out 0.2s; }
 
 /* 주차 블록 */
 .weekBlock {
-    background: #2a2a2a;
+    background: var(--gray600);
     border-radius: 12px;
     overflow: hidden;
 }
@@ -144,32 +153,53 @@
     gap: 10px;
 }
 
-.weekLogoPlaceholder {
-    color: var(--main);
-    font-size: 1.2rem;
+.weekLogo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
 }
 
 .weekLabel {
     font-family: var(--font-main);
-    font-size: 1rem;
+    font-size: 1.3rem;
     font-weight: 600;
     color: var(--white);
+    margin-left: 5px;
+}
+
+/* 토글 애니메이션 */
+.toggleIcon {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.3s ease;
+}
+
+.toggleIcon2 {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+}
+
+.toggleOpen {
+    transform: rotate(180deg);
 }
 
 .weekBody {
-    padding: 0 20px 16px;
+    padding: 0 0 16px;
+    margin-left: 45px;
+    margin-right: 20px;
 }
 
 .empty {
     color: #aaa;
     font-family: var(--font-main);
-    font-size: 0.9rem;
+    font-size: 1rem;
     text-align: center;
     padding: 12px 0;
 }
 
 /* 요일 블록 */
-.dayBlock { margin-top: 10px; }
 
 .dayHeader {
     display: flex;
@@ -186,62 +216,99 @@
 }
 
 .dayLabel {
-    color: var(--main);
-    font-family: var(--font-title);
-    font-size: 0.95rem;
-    font-weight: 700;
+    color: var(--dark);
+    font-family: var(--font-main);
+    font-size: 1.2rem;
+    font-weight: 650;
 }
 
 .sessionDate {
-    color: #aaa;
+    color: var(--light);
     font-family: var(--font-main);
-    font-size: 0.85rem;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .dayBody {
-    padding: 8px 0 0 8px;
+    padding: 5px 16px 0 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 출석/과제 그룹 - 레이블 옆에 아이템들 */
+.statusGroup {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
 }
 
 .sectionLabel {
-    color: #aaa;
+    color: var(--white);
     font-family: var(--font-main);
-    font-size: 0.8rem;
-    margin: 8px 0 4px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    min-width: 30px;
+    padding-top: 4px;
 }
 
-.statusRow {
+.statusItems {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.statusItem {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 0;
 }
 
 .itemLabel {
     color: var(--white);
     font-family: var(--font-main);
-    font-size: 0.9rem;
+    font-size: 1rem;
+    font-weight: 450;
+    padding-top: 3px;
 }
 
 .select {
-    padding: 4px 10px;
-    background: #444;
-    border: none;
+    padding: 3px 28px 3px 12px; 
+    width: 80px; 
+    box-sizing: border-box;
+
+    background: var(--gray600);
+    border: 1px solid var(--white);
     border-radius: 6px;
     color: var(--white);
     font-family: var(--font-main);
     font-size: 0.85rem;
-    cursor: pointer;
+    cursor: pointer;    
+
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    
+    background-position: right 10px center; 
+}
+
+.select::-ms-expand {
+    display: none;
 }
 
 .saveWeekBtn {
-    margin-top: 12px;
-    padding: 8px 24px;
+    margin: 20px 0;
+    padding: 5px 30px;
     background: transparent;
     border: 1.5px solid var(--main);
-    border-radius: 50px;
+    border-radius: 10px;
     color: var(--main);
     font-family: var(--font-main);
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     display: block;
@@ -249,7 +316,7 @@
     margin-right: auto;
 }
 
-.saveWeekBtn:hover { background: var(--main); color: var(--black); }
+.saveWeekBtn:hover { background: var(--main); color: var(--white); transition: all ease-in-out 0.2s; }
 
 .divider {
     border: none;
@@ -259,17 +326,18 @@
 
 /* 전체 저장 */
 .saveAllBtn {
-    padding: 14px 0;
-    background: var(--main);
+    width: 60%;
+    margin: 0 auto;
+    padding: 10px 0;
+    background: var(--dark);
     border: none;
-    border-radius: 50px;
-    color: var(--black);
+    border-radius: 10px;
+    color: var(--white);
     font-family: var(--font-main);
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    width: 100%;
     transition: opacity 0.2s;
 }
 
-.saveAllBtn:hover { opacity: 0.85; }
+.saveAllBtn:hover { background: var(--main); transition: all ease-in-out 0.2s; }

@@ -338,7 +338,7 @@ public class QuestionService {
 
     private void validateAdmin(User loginUser) {
         if (loginUser.getRole() != Role.ADMIN) {
-            throw new QuestionException(HttpStatus.FORBIDDEN, "관리자만 이해도 체크를 생성할 수 있습니다.");
+            throw new QuestionException(HttpStatus.FORBIDDEN, "관리자만 사용할 수 있는 기능입니다.");
         }
     }
 

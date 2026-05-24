@@ -1,40 +1,23 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../../utils/Api';
 import styles from './Deposit.module.css';
 
-// 임시 데이터
-const MOCK_DATA = {
-    amount: 100000,
-    descentAssignment: 10000,
-    descentAttendance: 10000,
-    ascentDefence: 10000,
-};
-
-const IS_MOCK = true; // 백엔드 연동 시 false로 변경
+const IS_MOCK = false
 
 function Deposit() {
     const [deposit, setDeposit] = useState(null);
 
     useEffect(() => {
-        if (IS_MOCK) {
-            setDeposit(MOCK_DATA);
-            return;
-        }
-        fetch('/api/deposit/me')
+        authFetch('/api/deposit/me')
             .then(r => r.json())
             .then(data => setDeposit(data))
-            .catch(() => setDeposit(MOCK_DATA));
+            .catch(() => {}); 
     }, []);
 
     if (!deposit) return null;
 
     return (
         <div className={styles.container}>
-            {IS_MOCK && (
-                <div className={styles.mockBanner}>
-                    ⚠️ 현재 임시 데이터로 표시 중입니다. 백엔드 연동 후 IS_MOCK을 false로 변경하세요.
-                </div>
-            )}
-
             <div className={styles.title}>DEPOSIT CHECK</div>
 
             <div className={styles.amountBox}>

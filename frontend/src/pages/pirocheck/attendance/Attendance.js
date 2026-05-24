@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { authFetch } from '../../../utils/Api';
 import styles from './Attendance.module.css';
 import CloverGreen from '../../../assets/images/CloverGreen.svg';
 import CloverRed from '../../../assets/images/CloverRed.svg';
@@ -14,8 +15,11 @@ function cloverForSlot(status) {
     return <img src={CloverEmpty} className={styles.cloverSvg} alt="미정" />;
 }
 
-function slotIcon(status) {
-    if (status === true) return <img src={Coin1} className={styles.histSvg} alt="출석" />;
+function historyIcon(slots) {
+    const successCount = slots.filter(s => s.status === true).length;
+    if (successCount === 3) return <img src={Coin3} className={styles.histSvg} alt="3회 출석" />;
+    if (successCount === 2) return <img src={Coin2} className={styles.histSvg} alt="2회 출석" />;
+    if (successCount === 1) return <img src={Coin1} className={styles.histSvg} alt="1회 출석" />;
     return <img src={AngryIcon} className={styles.histSvg} alt="결석" />;
 }
 
@@ -27,7 +31,7 @@ function AdminView() {
     useEffect(() => {
         const fetchActiveCode = async () => {
             try {
-                const res = await fetch('/api/admin/attendance/active-code');
+                const res = await authFetch('/api/admin/attendance/active-code');
                 if (res.ok) {
                     const data = await res.json();
                     if (!data.isExpired) {
@@ -41,14 +45,14 @@ function AdminView() {
     }, []);
 
     const handleGenerate = async () => {
-        const res = await fetch('/api/admin/attendance/start', { method: 'POST' });
+        const res = await authFetch('/api/admin/attendance/start', { method: 'POST' });
         const data = await res.json();
         setCode(data.code);
         setHasCode(true);
     };
 
     const handleExpire = async () => {
-        await fetch('/api/admin/attendance/active-code/expire', { method: 'PUT' });
+        await authFetch('/api/admin/attendance/active-code/expire', { method: 'PUT' });
         setCode(null);
         setHasCode(false);
     };
@@ -72,7 +76,7 @@ function AdminView() {
                         종료
                     </button>
                 )}
-                <a className={styles.manageLink} href="/attendance/manage">출석 관리</a>
+                <a className={styles.manageLink} href="/pirocheck/students">출석 관리</a>
             </div>
         </>
     );
@@ -96,7 +100,7 @@ function MemberView() {
         ]
     }));
 
-    fetch('/api/attendance/user')
+    authFetch('/api/attendance/user')
         .then(r => r.json())
         .then(data => {
             const apiData = data.data || [];
@@ -112,7 +116,7 @@ function MemberView() {
 
     const handleSubmit = async () => {
         if (!inputCode.trim()) return;
-        const res = await fetch('/api/attendance/mark', {
+        const res = await authFetch('/api/attendance/mark', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: inputCode }),
@@ -123,7 +127,7 @@ function MemberView() {
         if (result.statusCode === 'SUCCESS') {
             setMessage('출석 성공!');
             const today = new Date().toISOString().split('T')[0];
-            fetch(`/api/attendance/user/date?date=${today}`)
+            authFetch(`/api/attendance/user/date?date=${today}`)
                 .then(r => r.json())
                 .then(d => setTodaySlots(d.data || []));
         } else if (result.statusCode === 'INVALID_CODE') {
@@ -166,10 +170,7 @@ function MemberView() {
                     <div key={i} className={styles.historyRow}>
                         <span className={styles.weekLabel}>{row.week}주차</span>
                         <div className={styles.historySlots}>
-                            {[0, 1, 2].map(j => {
-                                const slot = row.slots[j] ?? { status: false };
-                                return <div key={j}>{slotIcon(slot.status)}</div>;
-                            })}
+                            {historyIcon(row.slots)}
                         </div>
                     </div>
                 ))}

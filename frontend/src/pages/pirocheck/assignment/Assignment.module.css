@@ -103,7 +103,7 @@
 
 .dayLabel {
     color: var(--dark);
-    font-family: var(--font-title);
+    font-family: var(--font-main);
     font-size: 1.2rem;
     font-weight: 700;
 }
@@ -212,7 +212,7 @@
 }
 
 .modalTitle {
-    font-family: var(--font-title);
+    font-family: var(--font-main);
     font-size: 3rem;
     font-weight: 800;
     color: var(--main);

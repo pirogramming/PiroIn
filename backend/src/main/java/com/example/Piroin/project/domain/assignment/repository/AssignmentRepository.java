@@ -11,4 +11,6 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Integer>
     List<Assignment> findByWeekOrderBySessionDateAsc(String week);
 
     List<Assignment> findBySessionDate(LocalDate sessionDate);
+
+    List<Assignment> findBySessionDateOrderByIdAsc(LocalDate sessionDate);
 }

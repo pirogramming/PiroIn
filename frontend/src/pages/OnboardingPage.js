@@ -7,10 +7,15 @@ function OnboardingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate('/login');
-    }, 2000);
-    return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+          const token = localStorage.getItem('token');
+          if (token) {
+              navigate('/pirocheck');
+          } else {
+              navigate('/login');
+          }
+      }, 2000);
+      return () => clearTimeout(timer);
   }, []);
 
   return (

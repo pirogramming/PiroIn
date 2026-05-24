@@ -338,4 +338,44 @@ public class AssignmentService {
                 .days(dayResponses)
                 .build();
     }
+
+
+    // 6. 생성한 과제 조회
+    @Transactional(readOnly = true)
+    public AssignmentWeekViewResponse getAssignmentView(String week) {
+
+        Long weekValue = Long.valueOf(week);
+
+        List<StudySession> sessions =
+                curriculumRepository.findByWeekOrderBySessionDateAsc(weekValue);
+
+        List<AssignmentWeekViewResponse.DayAssignmentResponse> days =
+                sessions.stream()
+                        .map(session -> {
+                            LocalDate sessionDate = session.getSessionDate();
+
+                            List<AssignmentWeekViewResponse.AssignmentInfo> assignments =
+                                    assignmentRepository.findBySessionDateOrderByIdAsc(sessionDate)
+                                            .stream()
+                                            .map(assignment ->
+                                                    AssignmentWeekViewResponse.AssignmentInfo.builder()
+                                                            .assignmentId(assignment.getId())
+                                                            .title(assignment.getTitle())
+                                                            .build()
+                                            )
+                                            .toList();
+
+                            return AssignmentWeekViewResponse.DayAssignmentResponse.builder()
+                                    .day(sessionDate.getDayOfWeek().toString())
+                                    .sessionDate(sessionDate)
+                                    .assignments(assignments)
+                                    .build();
+                        })
+                        .toList();
+
+        return AssignmentWeekViewResponse.builder()
+                .week(week)
+                .days(days)
+                .build();
+    }
 }

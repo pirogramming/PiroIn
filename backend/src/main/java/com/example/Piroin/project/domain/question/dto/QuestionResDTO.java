@@ -50,6 +50,16 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 질문 수정/삭제 응답 (형태가 동일해서 하나로 공유)
+    // deletedAt에 값이 있으면 삭제된 상태
+    public record UpdateDeleteRes(
+            Long id,
+            String content,
+            LocalDateTime updatedAt,
+            LocalDateTime deletedAt
+    ) {
+    }
+
     // 질문 상세 응답
     public record QuestionDetailResponse(
             Long questionId,

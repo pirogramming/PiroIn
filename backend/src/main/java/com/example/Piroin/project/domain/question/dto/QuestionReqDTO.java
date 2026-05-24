@@ -13,6 +13,13 @@ public class QuestionReqDTO {
         private String content;
     }
 
+    // 질문 수정 요청
+    @Getter
+    @NoArgsConstructor
+    public static class UpdateReq {
+        private String content;
+    }
+
     // 댓글/대댓글 등록 요청
     // parentCommentId가 null이면 일반 댓글, 값이 있으면 대댓글
     @Getter

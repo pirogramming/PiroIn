@@ -73,6 +73,18 @@ public class QuestionController {
                 questionService.toggleLike(questionId, userId));
     }
 
+    // 질문 수정
+    // PATCH /api/questions/{questionId}/modify
+    @PatchMapping("/api/questions/{questionId}/modify")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> updateQuestion(
+            @PathVariable Long questionId,
+            @RequestBody QuestionReqDTO.UpdateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+    return ResponseUtil.success(QuestionSuccessCode.QUESTION_UPDATED,
+            questionService.updateQuestion(questionId, request, userId));
+    }
+
     // 이해도 체크 생성
     // POST /api/sessions/{sessionId}/understanding-checks
     @PostMapping("/api/sessions/{sessionId}/understanding-checks")

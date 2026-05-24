@@ -67,4 +67,10 @@ public class Question {
         }
         this.updatedAt = LocalDateTime.now();
     }
+
+    // 질문 내용 수정
+    public void updateContent(String content) {
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
 }

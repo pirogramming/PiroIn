@@ -237,6 +237,25 @@ public class QuestionService {
                 });
     }
 
+    // 질문 수정
+    @Transactional
+    public QuestionResDTO.UpdateDeleteRes updateQuestion(
+            Long questionId,
+            QuestionReqDTO.UpdateReq request,
+            Long userId
+    ) {
+        User loginUser = findLoginUser(userId);
+        Question question = findQuestion(questionId);
+        validateQuestionOwner(question, loginUser);
+
+        question.updateContent(request.getContent());
+
+        return new QuestionResDTO.UpdateDeleteRes(
+                question.getId(), question.getContent(),
+                question.getUpdatedAt(), question.getDeletedAt()
+        );
+    }
+
     // 이해도 체크 생성
     @Transactional
     public QuestionResDTO.UnderstandingCheckCreateResponse createUnderstandingCheck(
@@ -317,6 +336,12 @@ public class QuestionService {
     private void validateCheckBelongsToSession(UnderstandingCheck check, StudySession session) {
         if (!check.getSession().getId().equals(session.getId())) {
             throw new IllegalArgumentException("해당 세션의 이해도 체크가 아닙니다.");
+        }
+    }
+
+    private void validateQuestionOwner(Question question, User loginUser) {
+        if (!question.getUser().getId().equals(loginUser.getId())) {
+            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정/삭제할 수 있습니다.");
         }
     }
 

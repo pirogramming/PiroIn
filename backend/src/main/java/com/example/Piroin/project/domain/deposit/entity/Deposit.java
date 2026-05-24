@@ -40,16 +40,21 @@ public class Deposit {
     @Column(name = "ascent_defence", nullable = false)
     private Integer ascentDefence;
 
-    // 출석 차감액만 새로 계산할 때 사용
-    public void updateAttendanceAmount(Integer descentAttendance) {
-        this.descentAttendance = descentAttendance;
+    private static final int BASE_AMOUNT = 100_000;
 
-        int baseAmount = 100_000;
-
-        this.amount = baseAmount
+    private int calculateAmount() {
+        int calculatedAmount = BASE_AMOUNT
                 - this.descentAssignment
                 - this.descentAttendance
                 + this.ascentDefence;
+
+        return Math.min(BASE_AMOUNT, calculatedAmount);
+    }
+
+    // 출석 차감액만 새로 계산할 때 사용
+    public void updateAttendanceAmount(Integer descentAttendance) {
+        this.descentAttendance = descentAttendance;
+        this.amount = calculateAmount();
     }
 
     // 과제 차감 + 출석 차감을 한 번에 재계산할 때 사용
@@ -59,25 +64,13 @@ public class Deposit {
     ) {
         this.descentAssignment = descentAssignment;
         this.descentAttendance = descentAttendance;
-
-        int baseAmount = 100_000;
-
-        this.amount = baseAmount
-                - this.descentAssignment
-                - this.descentAttendance
-                + this.ascentDefence;
+        this.amount = calculateAmount();
     }
 
-    // 보증금 계산
+    // 보증금 방어권 수정
     public void updateDefenceAmount(Integer ascentDefence) {
         this.ascentDefence = ascentDefence;
-
-        int baseAmount = 100_000;
-
-        this.amount = baseAmount
-                - this.descentAssignment
-                - this.descentAttendance
-                + this.ascentDefence;
+        this.amount = calculateAmount();
     }
 
 

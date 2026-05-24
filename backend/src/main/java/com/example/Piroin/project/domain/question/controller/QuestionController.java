@@ -7,9 +7,11 @@ import com.example.Piroin.project.domain.question.service.QuestionService;
 import com.example.Piroin.project.global.response.ApiResponse;
 import com.example.Piroin.project.global.response.ResponseUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +27,13 @@ public class QuestionController {
     ) {
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK,
                 questionService.getQuestionRoom(sessionId, understandingIndex));
+    }
+
+    // 질문 목록 실시간 이벤트 구독
+    // GET /api/sessions/{sessionId}/questions/events
+    @GetMapping(value = "/api/sessions/{sessionId}/questions/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribeQuestionEvents(@PathVariable Long sessionId) {
+        return questionService.subscribeQuestionEvents(sessionId);
     }
 
     // 질문 상세 조회

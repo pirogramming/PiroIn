@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -36,6 +37,7 @@ public class QuestionService {
     private final UnderstandingResponseRepository understandingResponseRepository;
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
+    private final QuestionEventService questionEventService;
 
     // 질문 방 조회
     @Transactional(readOnly = true)
@@ -49,6 +51,12 @@ public class QuestionService {
                 getUnderstandingSlice(session, understandingIndex),
                 getQuestionGroups(session)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public SseEmitter subscribeQuestionEvents(Long sessionId) {
+        findSession(sessionId);
+        return questionEventService.subscribe(sessionId);
     }
 
     // 질문 상세 조회

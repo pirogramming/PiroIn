@@ -44,10 +44,10 @@ public class QuestionController {
     public ResponseEntity<ApiResponse<QuestionResDTO.CreateRes>> createQuestion(
             @PathVariable Long sessionId,
             @RequestBody QuestionReqDTO.CreateReq request,
-            @AuthenticationPrincipal Integer userId
+            @AuthenticationPrincipal Long userId
     ) {
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_CREATED,
-                questionService.createQuestion(sessionId, request, Long.valueOf(userId)));
+                questionService.createQuestion(sessionId, request, userId));
     }
 
     // 댓글/대댓글 등록
@@ -71,6 +71,29 @@ public class QuestionController {
     ) {
         return ResponseUtil.success(QuestionSuccessCode.LIKE_TOGGLED,
                 questionService.toggleLike(questionId, userId));
+    }
+
+    // 질문 수정
+    // PATCH /api/questions/{questionId}/modify
+    @PatchMapping("/api/questions/{questionId}/modify")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> updateQuestion(
+            @PathVariable Long questionId,
+            @RequestBody QuestionReqDTO.UpdateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+    return ResponseUtil.success(QuestionSuccessCode.QUESTION_UPDATED,
+            questionService.updateQuestion(questionId, request, userId));
+    }
+
+    // 질문 삭제
+    // DELETE /api/questions/{questionId}
+    @DeleteMapping("/api/questions/{questionId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.UpdateDeleteRes>> deleteQuestion(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+    return ResponseUtil.success(QuestionSuccessCode.QUESTION_DELETED,
+            questionService.deleteQuestion(questionId, userId));
     }
 
     // 이해도 체크 생성

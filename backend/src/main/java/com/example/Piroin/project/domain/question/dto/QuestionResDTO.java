@@ -86,6 +86,14 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 질문 상태 변경 응답
+    public record StatusUpdateRes(
+            Long id,
+            Boolean isResolved,
+            LocalDateTime updatedAt
+    ) {
+    }
+
     // 질문 방 전체 응답
     public record QuestionRoomResponse(
             SessionResponse session,

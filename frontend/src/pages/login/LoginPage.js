@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';  
+import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/Api';
 import styles from './LoginPage.module.css';
 
@@ -16,7 +16,7 @@ function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      const response = await authFetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -24,13 +24,17 @@ function LoginPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('로그인 응답:', data);
         localStorage.setItem('token', data.token);
         localStorage.setItem('role', data.role);
         navigate('/sessions');  // 로그인 성공 시 이동할 페이지
       } else {
+        const errData = await response.json();
+        console.log('로그인 실패 응답:', errData);
         alert('이름 또는 비밀번호가 올바르지 않습니다.');
       }
     } catch (error) {
+      console.log('catch 에러:', error);
       alert('서버 오류가 발생했습니다.');
     }
   };

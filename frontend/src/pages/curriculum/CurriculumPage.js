@@ -210,24 +210,27 @@ function SessionForm({ day, week, onClose, onSave }) {
     return (
         <div className={styles.formOverlay}>
             <div className={styles.formCard}>
-                <div className={styles.formTitle}>
-                  {form.week}주차 {getWeekDay(form.sessionDate)} 세션 {isEdit ? '수정' : '생성'}
-                </div>
+              <div className={styles.formSection}>
+                  <label className={styles.formLabel}>주차</label>
+                  <select className={styles.formInput} value={form.week}
+                      onChange={e => setForm({ ...form, week: e.target.value })}>
+                      {weeks.map(w => <option key={w} value={w}>{w}주차</option>)}
+                  </select>
+              </div>
 
-                <div className={styles.formRow2}>
-                    <div className={styles.formSection}>
-                        <label className={styles.formLabel}>주차</label>
-                        <select className={styles.formInput} value={form.week}
-                            onChange={e => setForm({ ...form, week: e.target.value })}>
-                            {weeks.map(w => <option key={w} value={w}>{w}주차</option>)}
-                        </select>
-                    </div>
-                    <div className={styles.formSection}>
-                        <label className={styles.formLabel}>날짜</label>
-                        <input className={styles.formInput} type="date" value={form.sessionDate}
-                            onChange={e => setForm({ ...form, sessionDate: e.target.value })} />
-                    </div>
-                </div>
+              <div className={styles.formRow2}>
+                  <div className={styles.formSection}>
+                      <label className={styles.formLabel}>제목</label>
+                      <input className={styles.formInput} 
+                          value={`${form.week}주차 ${getWeekDay(form.sessionDate)} 세션`}
+                          readOnly />
+                  </div>
+                  <div className={styles.formSection}>
+                      <label className={styles.formLabel}>날짜</label>
+                      <input className={styles.formInput} type="date" value={form.sessionDate}
+                          onChange={e => setForm({ ...form, sessionDate: e.target.value })} />
+                  </div>
+              </div>
 
                 {/* 오전 세션 */}
                 <div className={styles.formSectionTitle}>

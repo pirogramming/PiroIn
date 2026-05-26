@@ -149,6 +149,7 @@
     width: 18px;
     height: 18px;
     object-fit: contain;
+    filter: brightness(0) saturate(100%) invert(44%) sepia(98%) saturate(500%) hue-rotate(90deg) brightness(95%) contrast(110%);
 }
 
 .sessionTitle {
@@ -180,7 +181,7 @@
 }
 
 .sessionLink:hover {
-  color: var(--main);
+  color: var(--dark);
   transition: all ease-in-out 0.2s;
   cursor: pointer;
 }
@@ -272,7 +273,7 @@
 .formOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.3);
+    background: var(--gray20);
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -316,14 +317,14 @@
     font-family: var(--font-main);
     font-size: 1rem;
     font-weight: 700;
-    color: var(--main);
+    color: var(--dark);
 }
 
 .pmLabel {
     font-family: var(--font-main);
     font-size: 1rem;
     font-weight: 700;
-    color: #666;
+    color: var(--dark);
 }
 
 .statusBtns {
@@ -335,16 +336,22 @@
 .statusBtn {
     padding: 4px 12px;
     background: transparent;
-    border: 1.5px solid var(--main);
-    border-radius: 50px;
-    color: var(--main);
+    border: 1.5px solid var(--dark);
+    border-radius: 7px;
+    color: var(--dark);
     font-family: var(--font-main);
     font-size: 0.8rem;
     cursor: pointer;
 }
 
+.statusBtn:hover {
+  background: var(--dark);
+  color: var(--white);
+  transition: all ease-in-out 0.2s;
+}
+
 .statusActive {
-    background: var(--main);
+    background: var(--dark);
     color: var(--white);
 }
 
@@ -373,23 +380,24 @@
     box-sizing: border-box;
 }
 
-.formInput:focus { border-color: var(--main); }
+.formInput:focus { border-color: var(--dark); }
 
 .saveFormBtn {
-    padding: 12px 0;
+    width: 40%;
+    margin: 30px auto 0;
+    padding: 10px 0;
     background: transparent;
-    border: 1.5px solid var(--main);
-    border-radius: 50px;
-    color: var(--main);
+    border: 1.5px solid var(--dark);
+    border-radius: 10px;
+    color: var(--dark);
     font-family: var(--font-main);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    margin-top: 8px;
 }
 
-.saveFormBtn:hover { background: var(--main); color: var(--white); }
+.saveFormBtn:hover { background: var(--dark); color: var(--white); }
 
 .cancelBtn {
     padding: 10px 0;

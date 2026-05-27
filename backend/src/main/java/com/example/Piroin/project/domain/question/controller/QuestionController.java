@@ -23,10 +23,11 @@ public class QuestionController {
     @GetMapping("/api/sessions/{sessionId}/questions")
     public ResponseEntity<ApiResponse<QuestionResDTO.QuestionRoomResponse>> getQuestionRoom(
             @PathVariable Long sessionId,
-            @RequestParam(defaultValue = "0") int understandingIndex
+            @RequestParam(defaultValue = "0") int understandingIndex,
+            @AuthenticationPrincipal Long userId
     ) {
         return ResponseUtil.success(QuestionSuccessCode.QUESTION_ROOM_OK,
-                questionService.getQuestionRoom(sessionId, understandingIndex));
+                questionService.getQuestionRoom(sessionId, understandingIndex, userId));  // ← userId 추가
     }
 
     // 질문 목록 실시간 이벤트 구독

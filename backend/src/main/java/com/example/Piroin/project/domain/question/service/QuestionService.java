@@ -47,15 +47,16 @@ public class QuestionService {
 
     // 질문 방 조회
     @Transactional(readOnly = true)
-    public QuestionResDTO.QuestionRoomResponse getQuestionRoom(Long sessionId, int understandingIndex) {
+    public QuestionResDTO.QuestionRoomResponse getQuestionRoom(Long sessionId, int understandingIndex, Long userId) {
         if (understandingIndex < 0) {
             throw new IllegalArgumentException("이해도 조회 인덱스는 0 이상이어야 합니다.");
         }
         StudySession session = findSession(sessionId);
+        User loginUser = findLoginUser(userId);
         return new QuestionResDTO.QuestionRoomResponse(
                 toSessionResponse(session),
                 getUnderstandingSlice(session, understandingIndex),
-                getQuestionGroups(session)
+                getQuestionGroups(session, loginUser)
         );
     }
 
@@ -464,7 +465,7 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session) {
+    private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session, User loginUser) {
         List<Question> questions = questionRepository.findBySessionAndDeletedAtIsNull(session);
         QuestionSummaryContext summaryContext = getQuestionSummaryContext(questions);
 
@@ -472,30 +473,33 @@ public class QuestionService {
                 .filter(q -> !q.getIsResolved() && q.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
                 .sorted(Comparator.comparing(Question::getLikeCount, Comparator.reverseOrder())
                         .thenComparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
+                .map(q -> toQuestionSummaryResponse(q, summaryContext, loginUser)).toList();
 
         List<QuestionResDTO.QuestionSummaryResponse> unresolvedQuestions = questions.stream()
                 .filter(q -> !q.getIsResolved() && q.getLikeCount() < POPULAR_LIKE_THRESHOLD)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
+                .map(q -> toQuestionSummaryResponse(q, summaryContext, loginUser)).toList();
 
         List<QuestionResDTO.QuestionSummaryResponse> resolvedQuestions = questions.stream()
                 .filter(Question::getIsResolved)
                 .sorted(Comparator.comparing(Question::getCreatedAt, Comparator.reverseOrder()))
-                .map(question -> toQuestionSummaryResponse(question, summaryContext)).toList();
+                .map(q -> toQuestionSummaryResponse(q, summaryContext, loginUser)).toList();
 
         return new QuestionResDTO.QuestionGroupsResponse(popularQuestions, unresolvedQuestions, resolvedQuestions);
     }
 
-    private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse(
+    private QuestionResDTO.QuestionSummaryResponse toQuestionSummaryResponse (
             Question question,
-            QuestionSummaryContext summaryContext
+            QuestionSummaryContext summaryContext,
+            User loginUser
     ) {
         Long questionId = question.getId();
+        boolean isLiked = questionLikeRepository.existsByQuestionAndUser(question, loginUser);
         return new QuestionResDTO.QuestionSummaryResponse(
                 questionId, question.getContent(), question.getImageUrl(),
                 question.getIsResolved(),
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
+                isLiked,
                 question.getLikeCount(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 // 목록 화면은 최상위 댓글 중 먼저 달린 3개만 미리보기로 보여준다.

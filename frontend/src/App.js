@@ -26,19 +26,19 @@ function App() {
         {/* 라이트 헤더 페이지 */}
         <Route element={<Layout headerType="light" />}>
           <Route path="/sessions" element={<QnAMainPage />} />
-          <Route path="/sessions/questions" element={<QnAListPage />} />
-          <Route path="/sessions/questions/:id" element={<QnADetailPage />} />
+          <Route path="/sessions/:sessionId/questions" element={<QnAListPage />} />
+          <Route path="/sessions/:sessionId/questions/:questionId" element={<QnADetailPage />} />
           <Route path="/curriculum" element={<CurriculumPage />} />
         </Route>
 
         {/* 다크 헤더 페이지 */}
         <Route element={<Layout headerType="dark" />}>
-            <Route path="/pirocheck" element={<PiroCheckMain />}/>
-            <Route path="/pirocheck/attendance" element={<Attendance />}/>
-            <Route path="/pirocheck/assignment" element={<Assignment />}/>
-            <Route path="/pirocheck/deposit" element={<Deposit />}/>
-            <Route path="/pirocheck/students" element={<StudentList />}/>
-            <Route path="/pirocheck/students/:userId" element={<StudentDetail />}/>
+          <Route path="/pirocheck" element={<PiroCheckMain />} />
+          <Route path="/pirocheck/attendance" element={<Attendance />} />
+          <Route path="/pirocheck/assignment" element={<Assignment />} />
+          <Route path="/pirocheck/deposit" element={<Deposit />} />
+          <Route path="/pirocheck/students" element={<StudentList />} />
+          <Route path="/pirocheck/students/:userId" element={<StudentDetail />} />
         </Route>
 
       </Routes>

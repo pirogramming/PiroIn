@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentItemRepository;
 import com.example.Piroin.project.domain.attendance.dto.UpdateUserStatusReq;
+import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
 
 
 import java.time.LocalDate;
@@ -114,6 +115,34 @@ public class AttendanceService {
         // 기존: List로 받아서 0번째 꺼내기 (비어있을 시 위험)
         // 수정: 레파지토리의 findFirst 기능을 사용하여 가장 최신 활성 코드 하나만 안전하게 조회
         return attendanceCodeRepository.findFirstByIsExpiredFalseOrderByIdDesc();
+    }
+
+    // Q&A 이해도 체크 화면의 분모(13/29 중 29)를 계산한다.
+    @Transactional(readOnly = true)
+    public int countAttendedBySession(StudySession session) {
+        if (session == null) {
+            throw new IllegalArgumentException("세션 정보는 필수입니다.");
+        }
+
+        String attendanceOrder = resolveAttendanceOrder(session.getDayPart());
+        long attendedCount = attendanceRepository.countAttendedByDateAndOrder(
+                session.getSessionDate(),
+                attendanceOrder
+        );
+
+        return Math.toIntExact(attendedCount);
+    }
+
+    // 현재 정책: 오전 세션은 1회차, 오후 세션은 2회차 출석 인원을 이해도 체크 분모로 사용한다.
+    private String resolveAttendanceOrder(SessionDayPart dayPart) {
+        if (dayPart == null) {
+            throw new IllegalArgumentException("세션 오전/오후 정보는 필수입니다.");
+        }
+
+        return switch (dayPart) {
+            case AM -> "1";
+            case PM -> "2";
+        };
     }
 
     // 3. 출석 체크
@@ -304,4 +333,3 @@ public class AttendanceService {
     }
 
  */
-

@@ -27,6 +27,19 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     // 1. 특정 출석 코드 ID에 해당하는 결석 데이터 조회
     List<Attendance> findByAttendanceCodeIdAndStatusFalse(Integer attendanceCodeId);
 
+    // 이해도 체크 분모용 출석 인원. 세션 날짜 + 회차에서 실제 출석 완료(status=true)된 인원만 센다.
+    @Query("""
+            SELECT COUNT(a)
+            FROM Attendance a
+            WHERE a.attendanceCode.attendanceDate = :attendanceDate
+              AND a.attendanceCode.attendanceOrder = :attendanceOrder
+              AND a.status = true
+            """)
+    long countAttendedByDateAndOrder(
+            @Param("attendanceDate") LocalDate attendanceDate,
+            @Param("attendanceOrder") String attendanceOrder
+    );
+
     // 2. 특정 유저 ID와 출석 코드의 날짜 조건으로 조회 (엔티티 그래프 참조: attendanceCode.attendanceDate)
     @Query("SELECT a FROM Attendance a WHERE a.user.id = :userId AND a.attendanceCode.attendanceDate = :attendanceDate")
     List<Attendance> findByUserIdAndDate(@Param("userId") Integer userId, @Param("attendanceDate") LocalDate attendanceDate);
@@ -47,5 +60,3 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     // 현재 만료되지 않은(활성화된) 출석 코드 목록을 가져오는 메서드
     //List<AttendanceCode> findByIsExpiredFalse();
 }
-
-

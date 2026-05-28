@@ -122,10 +122,17 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 질문방 이해도 체크 바 응답. 프론트는 이 값들로 "이해했다 (13/29)"와 오른쪽 O/X 숫자를 그린다.
     public record UnderstandingCheckResponse(
             Long checkId,
             String content,
+            // 화면의 "13/29" 중 13: O 응답 수 + X 응답 수
+            Integer respondedCount,
+            // 화면의 "13/29" 중 29: 해당 세션에 대응되는 출석 회차의 출석 인원
+            Integer attendanceCount,
+            // 오른쪽 O 뱃지 숫자
             Integer understoodCount,
+            // 오른쪽 X 뱃지 숫자
             Integer notUnderstoodCount,
             LocalDateTime createdAt
     ) {
@@ -173,18 +180,32 @@ public class QuestionResDTO {
     ) {
     }
 
+    // O/X 클릭 직후 응답. selectedChoice가 null이면 같은 선택지를 다시 눌러 취소된 상태다.
     public record UnderstandingResponseResult(
             Long checkId,
             UnderstandResChoice selectedChoice,
+            // 화면의 "13/29" 중 13: O 응답 수 + X 응답 수
+            Integer respondedCount,
+            // 화면의 "13/29" 중 29: 해당 세션에 대응되는 출석 회차의 출석 인원
+            Integer attendanceCount,
+            // 오른쪽 O 뱃지 숫자
             Integer understoodCount,
+            // 오른쪽 X 뱃지 숫자
             Integer notUnderstoodCount
     ) {
     }
 
+    // 운영진이 이해도 체크를 생성했을 때의 초기 응답. 생성 직후에는 O/X 응답자가 없어서 카운트가 0이다.
     public record UnderstandingCheckCreateResponse(
             Long checkId,
             String content,
+            // 생성 직후에는 0
+            Integer respondedCount,
+            // 생성 응답에서는 질문방 조회 맥락이 아니므로 null로 내려간다.
+            Integer attendanceCount,
+            // 생성 직후에는 0
             Integer understoodCount,
+            // 생성 직후에는 0
             Integer notUnderstoodCount,
             LocalDateTime createdAt
     ) {

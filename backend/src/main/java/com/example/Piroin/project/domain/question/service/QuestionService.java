@@ -1,5 +1,6 @@
 package com.example.Piroin.project.domain.question.service;
 
+import com.example.Piroin.project.domain.attendance.service.AttendanceService;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
@@ -44,6 +45,7 @@ public class QuestionService {
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
     private final QuestionEventService questionEventService;
+    private final AttendanceService attendanceService;
 
     // 질문 방 조회
     @Transactional(readOnly = true)
@@ -331,7 +333,7 @@ public class QuestionService {
                 .build());
 
         return new QuestionResDTO.UnderstandingCheckCreateResponse(
-                check.getId(), check.getTitle(), 0, 0, check.getCreatedAt()
+                check.getId(), check.getTitle(), 0, null, 0, 0, check.getCreatedAt()
         );
     }
 
@@ -349,7 +351,9 @@ public class QuestionService {
         validateCheckBelongsToSession(check, session);
 
         UnderstandResChoice selectedChoice = applyUnderstandingResponse(check, loginUser, request.getChoice());
-        return toUnderstandingResponseResult(check, selectedChoice);
+        // O/X 클릭 직후 프론트가 13/29와 O/X 뱃지를 바로 갱신할 수 있도록 최신 분모도 함께 내려준다.
+        int attendanceCount = attendanceService.countAttendedBySession(session);
+        return toUnderstandingResponseResult(check, selectedChoice, attendanceCount);
     }
 
     // 공통 헬퍼 메서드
@@ -416,6 +420,7 @@ public class QuestionService {
 
         if (response.hasChoice(requestedChoice)) {
             understandingResponseRepository.delete(response);
+            // 같은 O/X 버튼을 다시 누르면 인스타 좋아요 취소처럼 응답을 삭제하고 selectedChoice는 null로 내려간다.
             return null;
         }
 
@@ -424,12 +429,22 @@ public class QuestionService {
     }
 
     private QuestionResDTO.UnderstandingResponseResult toUnderstandingResponseResult(
-            UnderstandingCheck check, UnderstandResChoice selectedChoice
+            UnderstandingCheck check, UnderstandResChoice selectedChoice, Integer attendanceCount
     ) {
+        // respondedCount는 프론트 화면의 "13/29" 중 13에 해당한다.
+        int understoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.UNDERSTOOD
+        );
+        int notUnderstoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.NOT_UNDERSTOOD
+        );
+
         return new QuestionResDTO.UnderstandingResponseResult(
                 check.getId(), selectedChoice,
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD)
+                understoodCount + notUnderstoodCount,
+                attendanceCount,
+                understoodCount,
+                notUnderstoodCount
         );
     }
 
@@ -454,17 +469,35 @@ public class QuestionService {
         }
 
         UnderstandingCheck current = understandingPage.getContent().get(0);
+        // attendanceCount는 프론트 화면의 "13/29" 중 29에 해당한다.
+        int attendanceCount = attendanceService.countAttendedBySession(session);
         return new QuestionResDTO.UnderstandingSliceResponse(
-                toUnderstandingCheckResponse(current), understandingIndex, totalCount,
+                toUnderstandingCheckResponse(current, attendanceCount), understandingIndex, totalCount,
                 understandingIndex < totalCount - 1, understandingIndex > 0
         );
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
+        return toUnderstandingCheckResponse(check, null);
+    }
+
+    private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(
+            UnderstandingCheck check, Integer attendanceCount
+    ) {
+        // understoodCount/notUnderstoodCount는 오른쪽 O/X 뱃지 숫자로 그대로 사용한다.
+        int understoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.UNDERSTOOD
+        );
+        int notUnderstoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.NOT_UNDERSTOOD
+        );
+
         return new QuestionResDTO.UnderstandingCheckResponse(
                 check.getId(), check.getTitle(),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD),
+                understoodCount + notUnderstoodCount,
+                attendanceCount,
+                understoodCount,
+                notUnderstoodCount,
                 check.getCreatedAt()
         );
     }

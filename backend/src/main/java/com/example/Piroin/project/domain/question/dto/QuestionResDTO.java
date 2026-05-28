@@ -70,6 +70,7 @@ public class QuestionResDTO {
             Boolean isPopular,
             Integer likeCount,
             Boolean isLiked,
+            Boolean isMine,
             LocalDateTime createdAt,
             List<CommentResponse> comments
     ) {
@@ -144,6 +145,7 @@ public class QuestionResDTO {
             Boolean isResolved,
             Boolean isPopular,
             Boolean isLiked,
+            Boolean isMine,
             Integer likeCount,
             Integer commentCount,
             // 댓글이 없으면 빈 배열로 내려가며, 프론트는 빈 배열일 때 미리보기 영역을 숨긴다.

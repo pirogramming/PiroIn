@@ -77,6 +77,7 @@ public class QuestionService {
 
     private QuestionResDTO.QuestionDetailResponse toDetailResponse(Question question, User loginUser) {
         boolean isLiked = questionLikeRepository.existsByQuestionAndUser(question, loginUser);
+        boolean isMine = question.getUser().getId().equals(loginUser.getId());
         boolean isPopular = !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD;
 
         List<QuestionComment> topComments =
@@ -89,6 +90,7 @@ public class QuestionService {
         return new QuestionResDTO.QuestionDetailResponse(
                 question.getId(), "작성자", question.getContent(), question.getImageUrl(),
                 question.getIsResolved(), isPopular, question.getLikeCount(), isLiked,
+                isMine,
                 question.getCreatedAt(), commentResponses
         );
     }
@@ -495,11 +497,13 @@ public class QuestionService {
     ) {
         Long questionId = question.getId();
         boolean isLiked = questionLikeRepository.existsByQuestionAndUser(question, loginUser);
+        boolean isMine = question.getUser().getId().equals(loginUser.getId());
         return new QuestionResDTO.QuestionSummaryResponse(
                 questionId, question.getContent(), question.getImageUrl(),
                 question.getIsResolved(),
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 isLiked,
+                isMine,
                 question.getLikeCount(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 // 목록 화면은 최상위 댓글 중 먼저 달린 3개만 미리보기로 보여준다.

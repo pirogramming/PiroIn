@@ -331,7 +331,7 @@ public class QuestionService {
                 .build());
 
         return new QuestionResDTO.UnderstandingCheckCreateResponse(
-                check.getId(), check.getTitle(), 0, 0, check.getCreatedAt()
+                check.getId(), check.getTitle(), 0, null, 0, 0, check.getCreatedAt()
         );
     }
 
@@ -461,10 +461,25 @@ public class QuestionService {
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
+        return toUnderstandingCheckResponse(check, null);
+    }
+
+    private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(
+            UnderstandingCheck check, Integer attendanceCount
+    ) {
+        int understoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.UNDERSTOOD
+        );
+        int notUnderstoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.NOT_UNDERSTOOD
+        );
+
         return new QuestionResDTO.UnderstandingCheckResponse(
                 check.getId(), check.getTitle(),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD),
+                understoodCount + notUnderstoodCount,
+                attendanceCount,
+                understoodCount,
+                notUnderstoodCount,
                 check.getCreatedAt()
         );
     }

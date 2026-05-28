@@ -125,6 +125,8 @@ public class QuestionResDTO {
     public record UnderstandingCheckResponse(
             Long checkId,
             String content,
+            Integer respondedCount,
+            Integer attendanceCount,
             Integer understoodCount,
             Integer notUnderstoodCount,
             LocalDateTime createdAt
@@ -184,6 +186,8 @@ public class QuestionResDTO {
     public record UnderstandingCheckCreateResponse(
             Long checkId,
             String content,
+            Integer respondedCount,
+            Integer attendanceCount,
             Integer understoodCount,
             Integer notUnderstoodCount,
             LocalDateTime createdAt

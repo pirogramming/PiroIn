@@ -351,7 +351,8 @@ public class QuestionService {
         validateCheckBelongsToSession(check, session);
 
         UnderstandResChoice selectedChoice = applyUnderstandingResponse(check, loginUser, request.getChoice());
-        return toUnderstandingResponseResult(check, selectedChoice);
+        int attendanceCount = attendanceService.countAttendedBySession(session);
+        return toUnderstandingResponseResult(check, selectedChoice, attendanceCount);
     }
 
     // 공통 헬퍼 메서드
@@ -426,12 +427,21 @@ public class QuestionService {
     }
 
     private QuestionResDTO.UnderstandingResponseResult toUnderstandingResponseResult(
-            UnderstandingCheck check, UnderstandResChoice selectedChoice
+            UnderstandingCheck check, UnderstandResChoice selectedChoice, Integer attendanceCount
     ) {
+        int understoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.UNDERSTOOD
+        );
+        int notUnderstoodCount = understandingResponseRepository.countByCheckAndChoice(
+                check, UnderstandResChoice.NOT_UNDERSTOOD
+        );
+
         return new QuestionResDTO.UnderstandingResponseResult(
                 check.getId(), selectedChoice,
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.UNDERSTOOD),
-                understandingResponseRepository.countByCheckAndChoice(check, UnderstandResChoice.NOT_UNDERSTOOD)
+                understoodCount + notUnderstoodCount,
+                attendanceCount,
+                understoodCount,
+                notUnderstoodCount
         );
     }
 

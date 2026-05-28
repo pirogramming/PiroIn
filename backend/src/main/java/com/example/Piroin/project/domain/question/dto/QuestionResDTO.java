@@ -178,6 +178,8 @@ public class QuestionResDTO {
     public record UnderstandingResponseResult(
             Long checkId,
             UnderstandResChoice selectedChoice,
+            Integer respondedCount,
+            Integer attendanceCount,
             Integer understoodCount,
             Integer notUnderstoodCount
     ) {

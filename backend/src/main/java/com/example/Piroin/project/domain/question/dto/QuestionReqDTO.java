@@ -11,6 +11,7 @@ public class QuestionReqDTO {
     @NoArgsConstructor
     public static class CreateReq {
         private String content;
+        private String imageUrl;
     }
 
     // 질문 수정 요청
@@ -26,6 +27,7 @@ public class QuestionReqDTO {
     @NoArgsConstructor
     public static class CommentReq {
         private String content;
+        private String imageUrl;
         private Long parentCommentId;  // 대댓글일 때만 값이 있음, 일반 댓글이면 null
     }
 

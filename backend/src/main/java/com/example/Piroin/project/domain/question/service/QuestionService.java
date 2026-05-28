@@ -1,5 +1,6 @@
 package com.example.Piroin.project.domain.question.service;
 
+import com.example.Piroin.project.domain.attendance.service.AttendanceService;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.question.dto.QuestionReqDTO;
@@ -44,6 +45,7 @@ public class QuestionService {
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
     private final QuestionEventService questionEventService;
+    private final AttendanceService attendanceService;
 
     // 질문 방 조회
     @Transactional(readOnly = true)
@@ -454,8 +456,10 @@ public class QuestionService {
         }
 
         UnderstandingCheck current = understandingPage.getContent().get(0);
+        // 이해도 체크 분모는 세션에 대응되는 출석 회차의 실제 출석 인원을 사용한다.
+        int attendanceCount = attendanceService.countAttendedBySession(session);
         return new QuestionResDTO.UnderstandingSliceResponse(
-                toUnderstandingCheckResponse(current), understandingIndex, totalCount,
+                toUnderstandingCheckResponse(current, attendanceCount), understandingIndex, totalCount,
                 understandingIndex < totalCount - 1, understandingIndex > 0
         );
     }

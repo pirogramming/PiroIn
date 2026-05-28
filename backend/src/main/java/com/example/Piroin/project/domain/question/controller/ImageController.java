@@ -2,6 +2,7 @@ package com.example.Piroin.project.domain.question.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +27,7 @@ public class ImageController {
     /* 이미지 업로드
     POST /api/images
     Content-Type: multipart/form-data */
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> uploadImage(
             @RequestParam("file") MultipartFile file
     ) throws IOException {

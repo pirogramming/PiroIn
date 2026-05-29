@@ -531,3 +531,33 @@
     background: var(--gray200);
     cursor: default;
 }
+
+.imagePreviewWrapper {
+    position: relative;
+    display: inline-block;
+    margin: 0 16px 8px;
+}
+
+.imagePreview {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.imageRemoveBtn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--gray600);
+    color: var(--white);
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

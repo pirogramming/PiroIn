@@ -1,166 +1,160 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import styles from './QnAListPage.module.css';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { authFetch } from '../../utils/Api';
+import '../../assets/styles/global.css';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import styles from './QnADetailPage.module.css';
+import { FiMoreVertical, FiCornerDownRight } from 'react-icons/fi';
 import {
-    CommentImoji, MeCuriousToo, SortBtn,
-    OBtn, XBtn, CommentCommentArraw, SumitBtn,
+    CommentImoji,
+    MeCuriousToo,
+    StaffCheck,
+    SumitBtn,
 } from '../../components/qna_svg';
+import profileImg from '../../assets/images/profile.png';
+import { authFetch } from '../../utils/Api';
 
-const MAX_VISIBLE_COMMENTS = 3;
-
-const DAY_PART_KO = { AM: '오전', PM: '오후' };
-const DAY_OF_WEEK_KO = {
-    MONDAY: '월', TUESDAY: '화', WEDNESDAY: '수',
-    THURSDAY: '목', FRIDAY: '금', SATURDAY: '토', SUNDAY: '일',
-};
-
-function QnAListPage() {
-    const { sessionId } = useParams();
+function QnADetailPage() {
+    const { questionId } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-    const isPast = location.state?.status === 'AFTER_SESSION';
     const isStaff = localStorage.getItem('role') === 'ADMIN';
 
-    const [sessionTitle, setSessionTitle] = useState('');
-    const [understanding, setUnderstanding] = useState(null);
-    const [understandingIndex, setUnderstandingIndex] = useState(0);
-    const [myChoices, setMyChoices] = useState({});
-
-    const [popularQuestions, setPopularQuestions] = useState([]);
-    const [unresolvedQuestions, setUnresolvedQuestions] = useState([]);
-    const [resolvedQuestions, setResolvedQuestions] = useState([]);
-
-    const [filterCurious, setFilterCurious] = useState(false);
-    const [filterUnsolved, setFilterUnsolved] = useState(false);
-    const [sortOrder, setSortOrder] = useState('정렬');
-    const [showSortMenu, setShowSortMenu] = useState(false);
-
-    const [commentOpenId, setCommentOpenId] = useState(null);
-    const [commentInputs, setCommentInputs] = useState({});
-    const [newQuestion, setNewQuestion] = useState('');
+    const [question, setQuestion] = useState(null);
+    const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [submitError, setSubmitError] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [showMenu, setShowMenu] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editText, setEditText] = useState('');
 
-    const fetchQuestions = useCallback(async (index) => {
-        try {
-            const res = await authFetch(`/api/sessions/${sessionId}/questions?understandingIndex=${index}`);
-            if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
-            const json = await res.json();
-            if (!json.isSuccess) throw new Error(json.message);
-
-            const { session, understanding, questions } = json.result;
-
-            setSessionTitle(`${session.week}주차 ${DAY_OF_WEEK_KO[session.dayOfWeek]}요일 ${DAY_PART_KO[session.dayPart]} (${session.title})`);
-            setUnderstanding(understanding);
-
-            const allQ = [
-                ...(questions.popularQuestions ?? []),
-                ...(questions.unresolvedQuestions ?? []),
-                ...(questions.resolvedQuestions ?? []),
-            ];
-
-            const withLiked = await Promise.all(
-                allQ.map(async (q) => {
-                    try {
-                        const r = await authFetch(`/api/questions/${q.questionId}`);
-                        const j = await r.json();
-                        return { ...q, iLiked: j.result?.isLiked ?? false };
-                    } catch {
-                        return { ...q, iLiked: false };
-                    }
-                })
-            );
-
-            const idSet = (list) => new Set(list.map(q => q.questionId));
-            const popularIds = idSet(questions.popularQuestions ?? []);
-            const unresolvedIds = idSet(questions.unresolvedQuestions ?? []);
-            const resolvedIds = idSet(questions.resolvedQuestions ?? []);
-
-            setPopularQuestions(withLiked.filter(q => popularIds.has(q.questionId)));
-            setUnresolvedQuestions(withLiked.filter(q => unresolvedIds.has(q.questionId)));
-            setResolvedQuestions(withLiked.filter(q => resolvedIds.has(q.questionId)));
-
-        } catch (err) {
-            console.error('질문 불러오기 실패:', err);
-        }
-    }, [sessionId]);
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        return d.toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+        });
+    };
 
     useEffect(() => {
-        if (sessionId) fetchQuestions(understandingIndex);
-    }, [sessionId, understandingIndex, fetchQuestions]);
+        const fetchQuestion = async () => {
+            try {
+                setLoading(true);
+                const res = await authFetch(`/api/questions/${questionId}`);
+                if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+                const json = await res.json();
+                if (!json.isSuccess) throw new Error(json.message);
 
-    const goPrevUnderstand = () => {
-        if (understanding?.hasOlder) setUnderstandingIndex(prev => prev + 1);
-    };
-    const goNextUnderstand = () => {
-        if (understanding?.hasNewer) setUnderstandingIndex(prev => prev - 1);
-    };
+                const result = json.result;
 
-    const handleUnderstandChoice = async (choice) => {
-        if (!understanding?.current?.checkId) return;
-        const checkId = understanding.current.checkId;
-        const newChoice = myChoices[checkId] === choice ? null : choice;
-        setMyChoices(prev => ({ ...prev, [checkId]: newChoice }));
-        if (!newChoice) return;
-        try {
-            const res = await authFetch(
-                `/api/sessions/${sessionId}/understanding-checks/${checkId}/responses`,
-                { method: 'POST', body: JSON.stringify({ choice: newChoice }) }
-            );
-            if (!res.ok) throw new Error();
-            const json = await res.json();
-            if (json.isSuccess) {
-                setUnderstanding(prev => ({
-                    ...prev,
-                    current: {
-                        ...prev.current,
-                        understoodCount: json.result.understoodCount,
-                        notUnderstoodCount: json.result.notUnderstoodCount,
+                // 질문 이미지 blob 변환
+                if (result.imageUrl) {
+                    try {
+                        const imgRes = await authFetch(result.imageUrl);
+                        const blob = await imgRes.blob();
+                        result.imageUrl = URL.createObjectURL(blob);
+                    } catch {
+                        result.imageUrl = null;
                     }
-                }));
-            }
-        } catch (err) {
-            console.error('이해도 응답 실패:', err);
-        }
-    };
+                }
 
-    const toggleLike = async (e, questionId) => {
-        e.stopPropagation();
+                // 댓글 이미지 blob 변환
+                if (result.comments) {
+                    result.comments = await Promise.all(
+                        result.comments.map(async (comment) => {
+                            if (comment.imageUrl) {
+                                try {
+                                    const imgRes = await authFetch(comment.imageUrl);
+                                    const blob = await imgRes.blob();
+                                    return { ...comment, imageUrl: URL.createObjectURL(blob) };
+                                } catch {
+                                    return { ...comment, imageUrl: null };
+                                }
+                            }
+                            return comment;
+                        })
+                    );
+                }
+
+                console.log(result.displayName);
+                setQuestion(result);
+            } catch (err) {
+                console.error('질문 불러오기 실패:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (questionId) fetchQuestion();
+    }, [questionId]);
+
+    const toggleLike = async () => {
         try {
             const res = await authFetch(`/api/questions/${questionId}/like`, { method: 'POST' });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? { ...q, likeCount: json.result.likeCount, iLiked: json.result.isLiked }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
+                setQuestion(prev => ({
+                    ...prev,
+                    likeCount: json.result.likeCount,
+                    isLiked: json.result.isLiked,
+                }));
             }
         } catch (err) {
             console.error('좋아요 실패:', err);
         }
     };
 
-    const toggleCommentInput = (e, questionId) => {
-        e.stopPropagation();
-        if (isPast) return;
-        setCommentOpenId(prev => prev === questionId ? null : questionId);
+    const handleEditStart = () => {
+        setEditText(question.content);
+        setIsEditing(true);
+        setShowMenu(false);
     };
 
-    const handleCommentChange = (questionId, value) => {
-        setCommentInputs(prev => ({ ...prev, [questionId]: value }));
-    };
-
-    const handleCommentSubmit = async (e, questionId) => {
-        e.stopPropagation();
-        const text = (commentInputs[questionId] || '').trim();
+    const handleEditSubmit = async () => {
+        const text = editText.trim();
         if (!text) return;
+        try {
+            const res = await authFetch(`/api/questions/${questionId}/modify`, {
+                method: 'PATCH',
+                body: JSON.stringify({ content: text }),
+            });
+            if (!res.ok) throw new Error();
+            const json = await res.json();
+            if (json.isSuccess) {
+                setQuestion(prev => ({ ...prev, content: text }));
+                setIsEditing(false);
+            }
+        } catch (err) {
+            console.error('수정 실패:', err);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!window.confirm('질문을 삭제할까요?')) return;
+        try {
+            const res = await authFetch(`/api/questions/${questionId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            navigate(-1);
+        } catch (err) {
+            console.error('삭제 실패:', err);
+        }
+        setShowMenu(false);
+    };
+
+    const handleResolve = async () => {
+        try {
+            const res = await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
+            if (!res.ok) throw new Error();
+            setQuestion(prev => ({ ...prev, isResolved: true }));
+        } catch (err) {
+            console.error('해결됨 처리 실패:', err);
+        }
+        setShowMenu(false);
+    };
+
+    const handleCommentSubmit = async () => {
+        const text = commentText.trim();
+        if (!text) return;
+        setIsSubmitting(true);
         try {
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
@@ -171,279 +165,179 @@ function QnAListPage() {
             if (json.isSuccess) {
                 if (isStaff) {
                     await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
+                    setQuestion(prev => ({ ...prev, isResolved: true }));
                 }
                 const newComment = {
                     commentId: json.result.commentId,
                     displayName: json.result.displayName,
                     content: json.result.content,
+                    createdAt: json.result.createdAt,
+                    imageUrl: null,
                 };
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? {
-                            ...q,
-                            isResolved: isStaff ? true : q.isResolved,
-                            previewComments: [...(q.previewComments ?? []), newComment],
-                            commentCount: (q.commentCount ?? 0) + 1
-                        }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
-                setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
-                setCommentOpenId(null);
+                setQuestion(prev => ({
+                    ...prev,
+                    comments: [...(prev.comments ?? []), newComment],
+                }));
+                setCommentText('');
             }
         } catch (err) {
             console.error('댓글 등록 실패:', err);
-        }
-    };
-
-    const handleNewQuestion = async () => {
-        const text = newQuestion.trim();
-        if (!text) return;
-        setIsSubmitting(true);
-        setSubmitError(null);
-        try {
-            const res = await authFetch(`/api/sessions/${sessionId}/questions`, {
-                method: 'POST',
-                body: JSON.stringify({ content: text }),
-            });
-            if (!res.ok) throw new Error();
-            const json = await res.json();
-            if (json.isSuccess) {
-                setNewQuestion('');
-                fetchQuestions(understandingIndex);
-            }
-        } catch (err) {
-            console.error('질문 등록 실패:', err);
-            setSubmitError('질문 등록에 실패했어요.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleNewUnderstandCheck = async () => {
-        const text = newQuestion.trim();
-        if (!text) return;
-        setIsSubmitting(true);
-        setSubmitError(null);
-        try {
-            const res = await authFetch(`/api/sessions/${sessionId}/understanding-checks`, {
-                method: 'POST',
-                body: JSON.stringify({ content: text }),
-            });
-            if (!res.ok) throw new Error();
-            const json = await res.json();
-            if (json.isSuccess) {
-                setNewQuestion('');
-                setUnderstandingIndex(0);
-                fetchQuestions(0);
-            }
-        } catch (err) {
-            console.error('이해도 등록 실패:', err);
-            setSubmitError('이해도 등록에 실패했어요.');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    if (loading) return <div className={styles.page}>불러오는 중...</div>;
+    if (!question) return <div className={styles.page}>질문을 찾을 수 없어요</div>;
 
-    const allQuestions = [
-        ...popularQuestions,
-        ...unresolvedQuestions.filter(q => !popularQuestions.some(p => p.questionId === q.questionId)),
-        ...resolvedQuestions.filter(q => !popularQuestions.some(p => p.questionId === q.questionId)),
-    ];
-
-    const displayedQuestions = (() => {
-        let list = allQuestions;
-        if (isStaff && filterUnsolved) list = unresolvedQuestions;
-        if (!isStaff && filterCurious) list = allQuestions.filter(q => q.iLiked);
-
-        if (sortOrder === '최신순') {
-            list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        } else if (sortOrder === '저도궁금해요순') {
-            list = [...list].sort((a, b) => b.likeCount - a.likeCount);
-        }
-
-        return list;
-    })();
-
-    const currentChoice = myChoices[understanding?.current?.checkId];
+    const isMyQuestion = question.displayName === '작성자';
 
     return (
         <div className={styles.page}>
-            <h1 className={styles.title}>{sessionTitle}</h1>
-
-            <div className={styles.filterRow}>
-                {isStaff ? (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterUnsolved}
-                            onChange={e => setFilterUnsolved(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        미해결 질문
-                    </label>
+            {/* 상단 바: 해결 여부 */}
+            <div className={styles.topBar}>
+                {question.isResolved ? (
+                    <span className={styles.solvedBadge}>해결 질문</span>
                 ) : (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterCurious}
-                            onChange={e => setFilterCurious(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        저도 궁금해요
-                    </label>
+                    <span className={styles.unsolvedBadge}>미해결 질문</span>
                 )}
-                <div className={styles.sortWrapper}>
-                    <button className={styles.sortBtn} onClick={() => setShowSortMenu(prev => !prev)}>
-                        {sortOrder} <SortBtn />
-                    </button>
-                    {showSortMenu && (
-                        <ul className={styles.sortMenu}>
-                            {['기본', '최신순', '저도궁금해요순'].map(option => (
-                                <li key={option} className={styles.sortOption}
-                                    onClick={() => { setSortOrder(option); setShowSortMenu(false); }}>
-                                    {option}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
             </div>
+
+            {/* 작성자 행 */}
+            <div className={styles.authorRow}>
+                <div className={styles.avatar}>
+                    <img src={profileImg} alt={question.displayName} className={styles.avatarImg} />
+                </div>
+                <div className={styles.authorInfo}>
+                    <span className={styles.authorName}>익명</span>
+                    <span className={styles.authorDate}>{formatDate(question.createdAt)}</span>
+                </div>
+                {(isMyQuestion || isStaff) && (
+                    <div style={{ position: 'relative' }}>
+                        <button className={styles.menuBtn} aria-label="더보기" onClick={() => setShowMenu(prev => !prev)}>
+                            <FiMoreVertical size={20} />
+                        </button>
+                        {showMenu && (
+                            <div className={styles.dropdownMenu}>
+                                {isMyQuestion && (
+                                    <>
+                                        <button className={styles.dropdownItem} onClick={handleEditStart}>수정</button>
+                                        <button className={styles.dropdownItem} onClick={handleDelete}>삭제</button>
+                                    </>
+                                )}
+                                {isStaff && !isMyQuestion && (
+                                    <>
+                                        <button className={styles.dropdownItem} onClick={handleDelete}>삭제</button>
+                                        {!question.isResolved && (
+                                            <button className={styles.dropdownItem} onClick={handleResolve}>해결됨으로</button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+
+
+            {/* 질문 내용 */}
+            <div className={styles.questionTitle}>
+                <span
+                    className={styles.qIcon}
+                    style={{ color: question.isResolved ? 'var(--gray600)' : 'var(--main)' }}
+                >Q.</span>
+                {isEditing ? (
+                    <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                        <textarea
+                            className={styles.editInput}
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            autoFocus
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <button className={styles.editConfirmBtn} onClick={handleEditSubmit}>완료</button>
+                            <button className={styles.editCancelBtn} onClick={() => setIsEditing(false)}>취소</button>
+                        </div>
+                    </div>
+                ) : (
+                    <span className={styles.questionText}>{question.content}</span>
+                )}
+            </div>
+
+            {/* 첨부 이미지 */}
+            {question.imageUrl && (
+                <img src={question.imageUrl} alt="첨부 이미지" className={styles.questionImage} />
+            )}
+
+            {/* 액션 버튼 */}
+            <div className={styles.actionRow}>
+                <button
+                    className={`${styles.likeBtn} ${question.isLiked ? styles.liked : ''}`}
+                    onClick={toggleLike}
+                >
+                    <MeCuriousToo /> 저도 궁금해요&nbsp;{question.likeCount}
+                </button>
+                <button
+                    className={styles.commentBtn}
+                    onClick={() => document.getElementById('commentInput')?.focus()}
+                >
+                    <CommentImoji />&nbsp;댓글달기
+                </button>
+            </div>
+
             <hr className={styles.divider} />
 
-            {/* 이해도 */}
-            <div className={styles.understandBar}>
-                <button className={styles.arrowBtn} onClick={goPrevUnderstand}
-                    disabled={!understanding?.hasOlder}>
-                    <FiChevronLeft size={30} />
-                </button>
-                <span className={styles.understandName}>
-                    {understanding?.current?.content ?? '이해도 없음'}
-                    <span className={styles.understandCount}>
-                        ({understanding?.current?.understoodCount ?? 0}/
-                        {(understanding?.current?.understoodCount ?? 0) + (understanding?.current?.notUnderstoodCount ?? 0)})
-                    </span>
-                </span>
-                <button
-                    className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
-                    onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                    disabled={isStaff}
-                >
-                    <OBtn />
-                    {isStaff && <span className={styles.oxCount}>{understanding?.current?.understoodCount ?? 0}</span>}
-                </button>
-                <button
-                    className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
-                    onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                    disabled={isStaff}
-                >
-                    <XBtn />
-                    {isStaff && <span className={styles.oxCount}>{understanding?.current?.notUnderstoodCount ?? 0}</span>}
-                </button>
-                <button className={styles.arrowBtn} onClick={goNextUnderstand}
-                    disabled={!understanding?.hasNewer}>
-                    <FiChevronRight size={30} />
-                </button>
-            </div>
-
-            {/* 질문 목록 */}
-            <div className={styles.questionList}>
-                {displayedQuestions.map(question => (
-                    <div key={question.questionId} className={styles.questionCard}
-                        onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
-                        <div className={styles.questionHeader}>
-                            <span
-                                className={styles.qIcon}
-                                style={{ color: question.isResolved ? 'var(--gray600)' : '' }}
-                            >Q.</span>
-                            <span className={styles.questionText}>{question.content}</span>
-                            <div className={styles.questionActions}>
-                                <button
-                                    className={`${styles.likeBtn} ${question.iLiked ? styles.liked : ''}`}
-                                    onClick={e => toggleLike(e, question.questionId)}
-                                >
-                                    <MeCuriousToo />{question.likeCount}
-                                </button>
-                                {!isPast && (
-                                    <button className={styles.commentBtn}
-                                        onClick={e => toggleCommentInput(e, question.questionId)}>
-                                        <CommentImoji />&nbsp;댓글달기
-                                    </button>
-                                )}
+            {/* 댓글 목록 */}
+            <div className={styles.commentList}>
+                {question.comments?.map(comment => (
+                    <div key={comment.commentId} className={styles.commentBlock}>
+                        <div className={styles.commentAuthorRow}>
+                            <div className={styles.commentAvatar}>
+                                <img src={profileImg} alt={comment.displayName} className={styles.commentAvatarImg} />
                             </div>
+                            <span className={styles.commentAuthorName}>
+                                {comment.displayName}
+                            </span>
                         </div>
-
-                        {question.imageUrl && (
-                            <img src={question.imageUrl} alt="첨부 이미지"
-                                className={styles.questionImage}
-                                onClick={e => e.stopPropagation()} />
-                        )}
-
-                        {question.previewComments?.length > 0 && (
-                            <div className={styles.commentPreview}>
-                                {question.previewComments.slice(0, MAX_VISIBLE_COMMENTS).map(comment => (
-                                    <div key={comment.commentId} className={styles.commentWrapper}>
-                                        <span className={styles.commentAuthor}>{comment.displayName}</span>
-                                        <div className={styles.commentItem}>
-                                            <div className={styles.commentContent}>
-                                                <CommentCommentArraw /> {comment.content}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {question.commentCount > MAX_VISIBLE_COMMENTS && (
-                                    <span className={styles.commentMore}>
-                                        외 {question.commentCount - MAX_VISIBLE_COMMENTS}개 댓글
-                                    </span>
-                                )}
+                        <div className={styles.commentBubble}>
+                            <div className={styles.commentContent}>
+                                <FiCornerDownRight size={14} className={styles.commentArrow} />
+                                {comment.content}
                             </div>
-                        )}
-
-                        {commentOpenId === question.questionId && (
-                            <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                <input
-                                    className={styles.commentInput}
-                                    placeholder="댓글을 입력해주세요..."
-                                    value={commentInputs[question.questionId] || ''}
-                                    onChange={e => handleCommentChange(question.questionId, e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
-                                    autoFocus
-                                />
-                                <button className={styles.submitBtn}
-                                    onClick={e => handleCommentSubmit(e, question.questionId)}>
-                                    <SumitBtn />
-                                </button>
-                            </div>
-                        )}
+                            {comment.imageUrl && (
+                                <img src={comment.imageUrl} alt="댓글 첨부 이미지" className={styles.commentImage} />
+                            )}
+                        </div>
+                        <p className={styles.commentDate}>{formatDate(comment.createdAt)}</p>
                     </div>
                 ))}
             </div>
 
             <div className={styles.bottomCover} />
 
-            {!isPast && (
-                <div className={styles.newQuestionBar}>
-                    {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                    <div className={styles.newQuestionInputRow}>
-                        <button className={styles.newQuestionPlus}>+</button>
-                        <input
-                            className={styles.newQuestionInput}
-                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
-                            value={newQuestion}
-                            onChange={e => setNewQuestion(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
-                            }}
-                            disabled={isSubmitting}
-                        />
-                        <button
-                            className={styles.newQuestionSubmit}
-                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? '⏳' : <SumitBtn />}
-                        </button>
-                    </div>
-                </div>
-            )}
+            {/* 댓글 입력 바 */}
+            <div className={styles.commentInputBar}>
+                <input
+                    id="commentInput"
+                    className={styles.commentInput}
+                    placeholder="댓글을 입력해주세요..."
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(); }}
+                    disabled={isSubmitting}
+                />
+                <button
+                    className={styles.submitBtn}
+                    onClick={handleCommentSubmit}
+                    disabled={!commentText.trim() || isSubmitting}
+                    aria-label="댓글 제출"
+                >
+                    {isSubmitting ? '⏳' : <SumitBtn />}
+                </button>
+            </div>
         </div>
     );
 }
 
-export default QnAListPage;
+export default QnADetailPage;

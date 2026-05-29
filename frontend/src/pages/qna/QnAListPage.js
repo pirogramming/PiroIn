@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './QnAListPage.module.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
@@ -19,6 +19,8 @@ const DAY_OF_WEEK_KO = {
 function QnAListPage() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isPast = location.state?.status === 'AFTER_SESSION';
     const isStaff = localStorage.getItem('role') === 'ADMIN';
 
     const [sessionTitle, setSessionTitle] = useState('');
@@ -40,6 +42,9 @@ function QnAListPage() {
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
 
     const fetchQuestions = useCallback(async (index) => {
         try {
@@ -64,7 +69,20 @@ function QnAListPage() {
                     try {
                         const r = await authFetch(`/api/questions/${q.questionId}`);
                         const j = await r.json();
-                        return { ...q, iLiked: j.result?.isLiked ?? false };
+
+                        // 이미지 blob URL 변환
+                        let blobImageUrl = null;
+                        if (q.imageUrl) {
+                            try {
+                                const imgRes = await authFetch(q.imageUrl);
+                                const blob = await imgRes.blob();
+                                blobImageUrl = URL.createObjectURL(blob);
+                            } catch {
+                                blobImageUrl = null;
+                            }
+                        }
+
+                        return { ...q, iLiked: j.result?.isLiked ?? false, imageUrl: blobImageUrl };
                     } catch {
                         return { ...q, iLiked: false };
                     }
@@ -147,6 +165,7 @@ function QnAListPage() {
 
     const toggleCommentInput = (e, questionId) => {
         e.stopPropagation();
+        if (isPast) return;
         setCommentOpenId(prev => prev === questionId ? null : questionId);
     };
 
@@ -195,20 +214,46 @@ function QnAListPage() {
         }
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/images', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+        });
+        const json = await res.json();
+        return json.imageUrl;
+    };
+
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
         if (!text) return;
         setIsSubmitting(true);
         setSubmitError(null);
         try {
+            let imageUrl = null;
+            if (selectedImage) {
+                imageUrl = await uploadImage(selectedImage);
+            }
             const res = await authFetch(`/api/sessions/${sessionId}/questions`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text }),
+                body: JSON.stringify({ content: text, imageUrl }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
                 setNewQuestion('');
+                setSelectedImage(null);
+                setImagePreview(null);
                 fetchQuestions(understandingIndex);
             }
         } catch (err) {
@@ -357,10 +402,12 @@ function QnAListPage() {
                                 >
                                     <MeCuriousToo />{question.likeCount}
                                 </button>
-                                <button className={styles.commentBtn}
-                                    onClick={e => toggleCommentInput(e, question.questionId)}>
-                                    <CommentImoji />&nbsp;댓글달기
-                                </button>
+                                {!isPast && (
+                                    <button className={styles.commentBtn}
+                                        onClick={e => toggleCommentInput(e, question.questionId)}>
+                                        <CommentImoji />&nbsp;댓글달기
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -411,29 +458,51 @@ function QnAListPage() {
             </div>
 
             <div className={styles.bottomCover} />
-            <div className={styles.newQuestionBar}>
-                {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                <div className={styles.newQuestionInputRow}>
-                    <button className={styles.newQuestionPlus}>+</button>
-                    <input
-                        className={styles.newQuestionInput}
-                        placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
-                        value={newQuestion}
-                        onChange={e => setNewQuestion(e.target.value)}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
-                        }}
-                        disabled={isSubmitting}
-                    />
-                    <button
-                        className={styles.newQuestionSubmit}
-                        onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳' : <SumitBtn />}
-                    </button>
+
+            {!isPast && (
+                <div className={styles.newQuestionBar}>
+                    {submitError && <p className={styles.errorMsg}>{submitError}</p>}
+                    {imagePreview && (
+                        <div className={styles.imagePreviewWrapper}>
+                            <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
+                            <button
+                                className={styles.imageRemoveBtn}
+                                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
+                            >✕</button>
+                        </div>
+                    )}
+                    <div className={styles.newQuestionInputRow}>
+                        <button
+                            className={styles.newQuestionPlus}
+                            onClick={() => fileInputRef.current?.click()}
+                        >+</button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            style={{ display: 'none' }}
+                            onChange={handleImageSelect}
+                        />
+                        <input
+                            className={styles.newQuestionInput}
+                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
+                            value={newQuestion}
+                            onChange={e => setNewQuestion(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                            }}
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            className={styles.newQuestionSubmit}
+                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? '⏳' : <SumitBtn />}
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

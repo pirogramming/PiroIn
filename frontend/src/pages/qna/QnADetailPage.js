@@ -1,5 +1,5 @@
 import '../../assets/styles/global.css';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './QnADetailPage.module.css';
 import { FiMoreVertical, FiCornerDownRight } from 'react-icons/fi';
@@ -24,6 +24,13 @@ function QnADetailPage() {
     const [showMenu, setShowMenu] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState('');
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
+
+    const [commentMenuId, setCommentMenuId] = useState(null);
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editCommentText, setEditCommentText] = useState('');
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
@@ -34,6 +41,52 @@ function QnADetailPage() {
             hour12: false,
         });
     };
+
+    const handleCommentDelete = async (commentId) => {
+        if (!window.confirm('댓글을 삭제할까요?')) return;
+        try {
+            const res = await authFetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error();
+            setQuestion(prev => ({
+                ...prev,
+                comments: prev.comments.filter(c => c.commentId !== commentId),
+            }));
+        } catch (err) {
+            console.error('댓글 삭제 실패:', err);
+        }
+        setCommentMenuId(null);
+    };
+
+    const handleCommentEditStart = (comment) => {
+        setEditingCommentId(comment.commentId);
+        setEditCommentText(comment.content);
+        setCommentMenuId(null);
+    };
+
+    const handleCommentEditSubmit = async (commentId) => {
+        const text = editCommentText.trim();
+        if (!text) return;
+        try {
+            const res = await authFetch(`/api/comments/${commentId}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ content: text }),
+            });
+            if (!res.ok) throw new Error();
+            const json = await res.json();
+            if (json.isSuccess) {
+                setQuestion(prev => ({
+                    ...prev,
+                    comments: prev.comments.map(c =>
+                        c.commentId === commentId ? { ...c, content: text } : c
+                    ),
+                }));
+                setEditingCommentId(null);
+            }
+        } catch (err) {
+            console.error('댓글 수정 실패:', err);
+        }
+    };
+
 
     useEffect(() => {
         const fetchQuestion = async () => {
@@ -46,7 +99,6 @@ function QnADetailPage() {
 
                 const result = json.result;
 
-                // 질문 이미지 blob 변환
                 if (result.imageUrl) {
                     try {
                         const imgRes = await authFetch(result.imageUrl);
@@ -57,7 +109,6 @@ function QnADetailPage() {
                     }
                 }
 
-                // 댓글 이미지 blob 변환
                 if (result.comments) {
                     result.comments = await Promise.all(
                         result.comments.map(async (comment) => {
@@ -74,8 +125,6 @@ function QnADetailPage() {
                         })
                     );
                 }
-
-                console.log(result.displayName);
                 setQuestion(result);
             } catch (err) {
                 console.error('질문 불러오기 실패:', err);
@@ -85,6 +134,15 @@ function QnADetailPage() {
         };
         if (questionId) fetchQuestion();
     }, [questionId]);
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setShowMenu(false);
+            setCommentMenuId(null);  // ← 추가
+        };
+        if (showMenu || commentMenuId) document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [showMenu, commentMenuId]);
 
     const toggleLike = async () => {
         try {
@@ -151,14 +209,53 @@ function QnADetailPage() {
         setShowMenu(false);
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/images', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+        });
+        const json = await res.json();
+        return json.imageUrl;
+    };
+
+    const handlePaste = (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    setSelectedImage(file);
+                    setImagePreview(URL.createObjectURL(file));
+                }
+                break;
+            }
+        }
+    };
+
     const handleCommentSubmit = async () => {
         const text = commentText.trim();
         if (!text) return;
         setIsSubmitting(true);
         try {
+            let imageUrl = null;
+            if (selectedImage) {
+                imageUrl = await uploadImage(selectedImage);
+            }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
@@ -166,19 +263,25 @@ function QnADetailPage() {
                 if (isStaff) {
                     await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
                     setQuestion(prev => ({ ...prev, isResolved: true }));
+                } else if (question.isResolved) {
+                    await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
+                    setQuestion(prev => ({ ...prev, isResolved: false }));
                 }
+
                 const newComment = {
                     commentId: json.result.commentId,
                     displayName: json.result.displayName,
                     content: json.result.content,
                     createdAt: json.result.createdAt,
-                    imageUrl: null,
+                    imageUrl: imagePreview,
                 };
                 setQuestion(prev => ({
                     ...prev,
                     comments: [...(prev.comments ?? []), newComment],
                 }));
                 setCommentText('');
+                setSelectedImage(null);
+                setImagePreview(null);
             }
         } catch (err) {
             console.error('댓글 등록 실패:', err);
@@ -190,18 +293,10 @@ function QnADetailPage() {
     if (loading) return <div className={styles.page}>불러오는 중...</div>;
     if (!question) return <div className={styles.page}>질문을 찾을 수 없어요</div>;
 
-    const isMyQuestion = question.displayName === '작성자';
+    const isMyQuestion = question.isMine;
 
     return (
         <div className={styles.page}>
-            {/* 상단 바: 해결 여부 */}
-            <div className={styles.topBar}>
-                {question.isResolved ? (
-                    <span className={styles.solvedBadge}>해결 질문</span>
-                ) : (
-                    <span className={styles.unsolvedBadge}>미해결 질문</span>
-                )}
-            </div>
 
             {/* 작성자 행 */}
             <div className={styles.authorRow}>
@@ -214,7 +309,7 @@ function QnADetailPage() {
                 </div>
                 {(isMyQuestion || isStaff) && (
                     <div style={{ position: 'relative' }}>
-                        <button className={styles.menuBtn} aria-label="더보기" onClick={() => setShowMenu(prev => !prev)}>
+                        <button className={styles.menuBtn} aria-label="더보기" onClick={(e) => { e.stopPropagation(); setShowMenu(prev => !prev); }}>
                             <FiMoreVertical size={20} />
                         </button>
                         {showMenu && (
@@ -239,7 +334,14 @@ function QnADetailPage() {
                 )}
             </div>
 
-
+            {/* 상단 바: 해결 여부 */}
+            <div className={styles.topBar}>
+                {question.isResolved ? (
+                    <span className={styles.solvedBadge}>해결 질문</span>
+                ) : (
+                    <span className={styles.unsolvedBadge}>미해결 질문</span>
+                )}
+            </div>
 
             {/* 질문 내용 */}
             <div className={styles.questionTitle}>
@@ -298,13 +400,48 @@ function QnADetailPage() {
                             </div>
                             <span className={styles.commentAuthorName}>
                                 {comment.displayName}
+                                {comment.displayName?.startsWith('운영진') && (
+                                    <span className={styles.staffBadge}><StaffCheck /></span>
+                                )}
                             </span>
+                            {/* 본인 댓글이면 메뉴 버튼 표시 */}
+                            {comment.displayName === '작성자' && (
+                                <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                                    <button
+                                        className={styles.menuBtn}
+                                        onClick={(e) => { e.stopPropagation(); setCommentMenuId(prev => prev === comment.commentId ? null : comment.commentId); }}
+                                    >
+                                        <FiMoreVertical size={16} />
+                                    </button>
+                                    {commentMenuId === comment.commentId && (
+                                        <div className={styles.dropdownMenu}>
+                                            <button className={styles.dropdownItem} onClick={() => handleCommentEditStart(comment)}>수정</button>
+                                            <button className={styles.dropdownItem} onClick={() => handleCommentDelete(comment.commentId)}>삭제</button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className={styles.commentBubble}>
-                            <div className={styles.commentContent}>
-                                <FiCornerDownRight size={14} className={styles.commentArrow} />
-                                {comment.content}
-                            </div>
+                            {editingCommentId === comment.commentId ? (
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                    <textarea
+                                        className={styles.editInput}
+                                        value={editCommentText}
+                                        onChange={e => setEditCommentText(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <button className={styles.editConfirmBtn} onClick={() => handleCommentEditSubmit(comment.commentId)}>완료</button>
+                                        <button className={styles.editCancelBtn} onClick={() => setEditingCommentId(null)}>취소</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className={styles.commentContent}>
+                                    <FiCornerDownRight size={14} className={styles.commentArrow} />
+                                    {comment.content}
+                                </div>
+                            )}
                             {comment.imageUrl && (
                                 <img src={comment.imageUrl} alt="댓글 첨부 이미지" className={styles.commentImage} />
                             )}
@@ -318,23 +455,46 @@ function QnADetailPage() {
 
             {/* 댓글 입력 바 */}
             <div className={styles.commentInputBar}>
-                <input
-                    id="commentInput"
-                    className={styles.commentInput}
-                    placeholder="댓글을 입력해주세요..."
-                    value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(); }}
-                    disabled={isSubmitting}
-                />
-                <button
-                    className={styles.submitBtn}
-                    onClick={handleCommentSubmit}
-                    disabled={!commentText.trim() || isSubmitting}
-                    aria-label="댓글 제출"
-                >
-                    {isSubmitting ? '⏳' : <SumitBtn />}
-                </button>
+                {imagePreview && (
+                    <div className={styles.imagePreviewWrapper}>
+                        <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
+                        <button
+                            className={styles.imageRemoveBtn}
+                            onClick={() => { setSelectedImage(null); setImagePreview(null); }}
+                        >✕</button>
+                    </div>
+                )}
+                <div className={styles.commentInputRow}>
+                    <button
+                        className={styles.commentPlusBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                    >+</button>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleImageSelect}
+                    />
+                    <input
+                        id="commentInput"
+                        className={styles.commentInput}
+                        placeholder="댓글을 입력해주세요..."
+                        value={commentText}
+                        onChange={e => setCommentText(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(); }}
+                        onPaste={handlePaste}
+                        disabled={isSubmitting}
+                    />
+                    <button
+                        className={styles.submitBtn}
+                        onClick={handleCommentSubmit}
+                        disabled={!commentText.trim() || isSubmitting}
+                        aria-label="댓글 제출"
+                    >
+                        {isSubmitting ? '⏳' : <SumitBtn />}
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -141,7 +141,8 @@ public class QuestionService {
                 .build();
         questionCommentRepository.save(comment);
 
-        // 3. 해결된 질문에 댓글이 달리면 미해결로 자동 전환
+        // 수동 해결/미해결 변경은 운영진 권한이 필요하지만,
+        // 댓글 작성으로 인한 미해결 전환은 권한 API가 아니라 서버 내부 도메인 규칙이다.
         if (question.getIsResolved()) {
             question.markUnresolved();
         }
@@ -338,7 +339,8 @@ public class QuestionService {
     @Transactional
     public QuestionResDTO.StatusUpdateRes updateQuestionStatus(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        validateAdmin(loginUser);   // 관리자만 호출 가능
+        // 사용자가 직접 상태를 바꾸는 수동 해결 처리는 운영진만 가능하다.
+        validateAdmin(loginUser);
 
         Question question = findQuestion(questionId);
         question.markResolved();

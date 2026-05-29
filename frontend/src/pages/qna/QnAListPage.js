@@ -5,7 +5,7 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
-    OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck,
+    OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
 } from '../../components/qna_svg';
 
 const MAX_VISIBLE_COMMENTS = 3;
@@ -456,9 +456,16 @@ function QnAListPage() {
                                             <div className={styles.commentContent}>
                                                 <CommentCommentArraw /> {comment.content}
                                             </div>
-                                            {comment.imageUrl && (
-                                                <div className={styles.commentImagePreview}>
-                                                    <span>🖼 사진 보기</span>
+                                            {comment.hasImage && (
+                                                <div
+                                                    className={styles.commentImagePreview}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        navigate(`/sessions/${sessionId}/questions/${question.questionId}`);
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <span><ImgPreview /> 사진 보기</span>
                                                 </div>
                                             )}
                                         </div>

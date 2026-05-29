@@ -86,7 +86,7 @@ public class QuestionService {
                 questionCommentRepository.findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(question);
 
         List<QuestionResDTO.CommentResponse> commentResponses = topComments.stream()
-                .map(comment -> toCommentResponse(question, comment))
+                .map(comment -> toCommentResponse(question, comment, loginUser))
                 .toList();
 
         return new QuestionResDTO.QuestionDetailResponse(
@@ -97,21 +97,27 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment) {
+    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment, User loginUser) {
         List<QuestionComment> replies =
                 questionCommentRepository.findByParentCommentAndDeletedAtIsNullOrderByCreatedAtAsc(comment);
 
         List<QuestionResDTO.CommentResponse> replyResponses = replies.stream()
                 .map(reply -> new QuestionResDTO.CommentResponse(
                         reply.getId(), getDisplayName(question, reply.getUser()),
-                        reply.getContent(), reply.getImageUrl(), reply.getCreatedAt(), List.of()
+                        reply.getContent(), reply.getImageUrl(), isCommentMine(reply, loginUser),
+                        reply.getCreatedAt(), List.of()
                 ))
                 .toList();
 
         return new QuestionResDTO.CommentResponse(
                 comment.getId(), getDisplayName(question, comment.getUser()),
-                comment.getContent(), comment.getImageUrl(), comment.getCreatedAt(), replyResponses
+                comment.getContent(), comment.getImageUrl(), isCommentMine(comment, loginUser),
+                comment.getCreatedAt(), replyResponses
         );
+    }
+
+    private boolean isCommentMine(QuestionComment comment, User loginUser) {
+        return comment.getUser().getId().equals(loginUser.getId());
     }
 
     // 댓글 등록
@@ -141,7 +147,8 @@ public class QuestionService {
                 .build();
         questionCommentRepository.save(comment);
 
-        // 3. 해결된 질문에 댓글이 달리면 미해결로 자동 전환
+        // 수동 해결/미해결 변경은 운영진 권한이 필요하지만,
+        // 댓글 작성으로 인한 미해결 전환은 권한 API가 아니라 서버 내부 도메인 규칙이다.
         if (question.getIsResolved()) {
             question.markUnresolved();
         }
@@ -150,7 +157,8 @@ public class QuestionService {
         String displayName = assignAnonymousIdentity(question, loginUser);
 
         QuestionResDTO.CommentCreateRes response = new QuestionResDTO.CommentCreateRes(
-                comment.getId(), question.getId(), displayName, comment.getContent(), comment.getCreatedAt()
+                comment.getId(), question.getId(), displayName,
+                comment.getContent(), question.getIsResolved(), comment.getCreatedAt()
         );
 
         // DB 반영이 끝난 뒤 같은 질문방 구독자들이 목록 댓글 미리보기를 갱신하도록 알린다.
@@ -337,7 +345,8 @@ public class QuestionService {
     @Transactional
     public QuestionResDTO.StatusUpdateRes updateQuestionStatus(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        validateAdmin(loginUser);   // 관리자만 호출 가능
+        // 사용자가 직접 상태를 바꾸는 수동 해결 처리는 운영진만 가능하다.
+        validateAdmin(loginUser);
 
         Question question = findQuestion(questionId);
         question.markResolved();
@@ -660,6 +669,7 @@ public class QuestionService {
                 "COMMENT_CREATED",
                 sessionId,
                 questionId,
+                question.getIsResolved(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 summaryContext.previewComments().getOrDefault(questionId, List.of())
         );

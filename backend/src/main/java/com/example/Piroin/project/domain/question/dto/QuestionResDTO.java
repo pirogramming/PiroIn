@@ -37,6 +37,7 @@ public class QuestionResDTO {
             Long questionId,
             String displayName,
             String content,
+            Boolean isResolved,
             LocalDateTime createdAt
     ) {
     }
@@ -91,6 +92,7 @@ public class QuestionResDTO {
             String displayName,
             String content,
             String imageUrl,
+            Boolean isMine,
             LocalDateTime createdAt,
             List<CommentResponse> replies
     ) {
@@ -186,6 +188,8 @@ public class QuestionResDTO {
             String type,
             Long sessionId,
             Long questionId,
+            // 댓글 작성 후 서버 내부 규칙까지 반영된 최신 해결 상태
+            Boolean isResolved,
             Integer commentCount,
             List<PreviewCommentResponse> previewComments
     ) {

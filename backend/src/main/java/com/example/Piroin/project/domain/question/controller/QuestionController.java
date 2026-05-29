@@ -109,6 +109,7 @@ public class QuestionController {
     }
 
     // 질문 상태 완료 전환 (관리자 전용)
+    // 부원이 댓글을 달아 미해결로 자동 전환되는 흐름은 댓글 등록 서비스 내부에서만 처리한다.
     // PATCH /api/questions/{questionId}/status
     @PatchMapping("/api/questions/{questionId}/status")
     public ResponseEntity<ApiResponse<QuestionResDTO.StatusUpdateRes>> updateQuestionStatus(

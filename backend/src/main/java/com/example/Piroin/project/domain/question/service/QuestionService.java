@@ -298,6 +298,40 @@ public class QuestionService {
         );
     }
 
+    // 댓글 수정
+    @Transactional
+    public QuestionResDTO.CommentUpdateDeleteRes updateComment(
+            Long commentId,
+            QuestionReqDTO.CommentUpdateReq request,
+            Long userId
+    ) {
+        User loginUser = findLoginUser(userId);
+        QuestionComment comment = findComment(commentId);
+        validateCommentOwner(comment, loginUser);
+
+        comment.updateContent(request.getContent());
+
+        return new QuestionResDTO.CommentUpdateDeleteRes(
+                comment.getId(), comment.getContent(),
+                comment.getUpdatedAt(), comment.getDeletedAt()
+        );
+    }
+
+    // 댓글 삭제
+    @Transactional
+    public QuestionResDTO.CommentUpdateDeleteRes deleteComment(Long commentId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        QuestionComment comment = findComment(commentId);
+        validateCommentOwner(comment, loginUser);
+
+        comment.softDelete();
+
+        return new QuestionResDTO.CommentUpdateDeleteRes(
+                comment.getId(), comment.getContent(),
+                comment.getUpdatedAt(), comment.getDeletedAt()
+        );
+    }
+
     // 질문 상태 완료 전환
     // PATCH /api/questions/{questionId}/status
     @Transactional
@@ -402,6 +436,18 @@ public class QuestionService {
         if (!question.getUser().getId().equals(loginUser.getId())) {
             throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정/삭제할 수 있습니다.");
         }
+    }
+
+    private void validateCommentOwner(QuestionComment comment, User loginUser) {
+        if (!comment.getUser().getId().equals(loginUser.getId())) {
+            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 댓글만 수정/삭제할 수 있습니다.");
+        }
+    }
+
+    private QuestionComment findComment(Long commentId) {
+        return questionCommentRepository.findById(commentId)
+                .filter(c -> c.getDeletedAt() == null)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."));
     }
 
     private UnderstandResChoice applyUnderstandingResponse(

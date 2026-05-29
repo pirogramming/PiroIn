@@ -41,6 +41,15 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 댓글 수정/삭제 응답
+    public record CommentUpdateDeleteRes(
+            Long commentId,
+            String content,
+            LocalDateTime updatedAt,
+            LocalDateTime deletedAt
+    ) {
+    }
+
     // 좋아요 토글 응답
     // isLiked: true면 좋아요 추가된 상태, false면 취소된 상태
     public record LikeRes(

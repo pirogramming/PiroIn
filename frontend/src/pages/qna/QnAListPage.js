@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './QnAListPage.module.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
-    OBtn, XBtn, CommentCommentArraw, SumitBtn,
+    OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
 } from '../../components/qna_svg';
 
 const MAX_VISIBLE_COMMENTS = 3;
@@ -19,6 +19,8 @@ const DAY_OF_WEEK_KO = {
 function QnAListPage() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isPast = location.state?.status === 'AFTER_SESSION';
     const isStaff = localStorage.getItem('role') === 'ADMIN';
 
     const [sessionTitle, setSessionTitle] = useState('');
@@ -40,6 +42,14 @@ function QnAListPage() {
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [commentImages, setCommentImages] = useState({});
+    const [commentImagePreviews, setCommentImagePreviews] = useState({});
+    const commentFileRefs = useRef({});
+
+    const fileInputRef = useRef(null);
+
 
     const fetchQuestions = useCallback(async (index) => {
         try {
@@ -59,15 +69,20 @@ function QnAListPage() {
                 ...(questions.resolvedQuestions ?? []),
             ];
 
-            const withLiked = await Promise.all(
+            // 이미지 blob URL 변환만 처리 (개별 API 호출 제거)
+            const withBlob = await Promise.all(
                 allQ.map(async (q) => {
-                    try {
-                        const r = await authFetch(`/api/questions/${q.questionId}`);
-                        const j = await r.json();
-                        return { ...q, iLiked: j.result?.isLiked ?? false };
-                    } catch {
-                        return { ...q, iLiked: false };
+                    let blobImageUrl = null;
+                    if (q.imageUrl) {
+                        try {
+                            const imgRes = await authFetch(q.imageUrl);
+                            const blob = await imgRes.blob();
+                            blobImageUrl = URL.createObjectURL(blob);
+                        } catch {
+                            blobImageUrl = null;
+                        }
                     }
+                    return { ...q, iLiked: q.isLiked, imageUrl: blobImageUrl };
                 })
             );
 
@@ -76,9 +91,9 @@ function QnAListPage() {
             const unresolvedIds = idSet(questions.unresolvedQuestions ?? []);
             const resolvedIds = idSet(questions.resolvedQuestions ?? []);
 
-            setPopularQuestions(withLiked.filter(q => popularIds.has(q.questionId)));
-            setUnresolvedQuestions(withLiked.filter(q => unresolvedIds.has(q.questionId)));
-            setResolvedQuestions(withLiked.filter(q => resolvedIds.has(q.questionId)));
+            setPopularQuestions(withBlob.filter(q => popularIds.has(q.questionId)));
+            setUnresolvedQuestions(withBlob.filter(q => unresolvedIds.has(q.questionId)));
+            setResolvedQuestions(withBlob.filter(q => resolvedIds.has(q.questionId)));
 
         } catch (err) {
             console.error('질문 불러오기 실패:', err);
@@ -116,6 +131,7 @@ function QnAListPage() {
                         ...prev.current,
                         understoodCount: json.result.understoodCount,
                         notUnderstoodCount: json.result.notUnderstoodCount,
+                        attendanceCount: json.result.attendanceCount,
                     }
                 }));
             }
@@ -126,6 +142,7 @@ function QnAListPage() {
 
     const toggleLike = async (e, questionId) => {
         e.stopPropagation();
+        if (isPast) return;
         try {
             const res = await authFetch(`/api/questions/${questionId}/like`, { method: 'POST' });
             if (!res.ok) throw new Error();
@@ -147,6 +164,7 @@ function QnAListPage() {
 
     const toggleCommentInput = (e, questionId) => {
         e.stopPropagation();
+        if (isPast) return;
         setCommentOpenId(prev => prev === questionId ? null : questionId);
     };
 
@@ -159,9 +177,13 @@ function QnAListPage() {
         const text = (commentInputs[questionId] || '').trim();
         if (!text) return;
         try {
+            let imageUrl = null;
+            if (commentImages[questionId]) {
+                imageUrl = await uploadImage(commentImages[questionId]);
+            }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
@@ -188,6 +210,8 @@ function QnAListPage() {
                 setUnresolvedQuestions(update);
                 setResolvedQuestions(update);
                 setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
+                setCommentImages(prev => ({ ...prev, [questionId]: null }));
+                setCommentImagePreviews(prev => ({ ...prev, [questionId]: null }));
                 setCommentOpenId(null);
             }
         } catch (err) {
@@ -195,20 +219,66 @@ function QnAListPage() {
         }
     };
 
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    const uploadImage = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/images', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData,
+        });
+        const json = await res.json();
+        return json.imageUrl;
+    };
+    const handleCommentImageSelect = (e, questionId) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setCommentImages(prev => ({ ...prev, [questionId]: file }));
+        setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+    };
+
+    const handleCommentPaste = (e, questionId) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    setCommentImages(prev => ({ ...prev, [questionId]: file }));
+                    setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+                }
+                break;
+            }
+        }
+    };
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
         if (!text) return;
         setIsSubmitting(true);
         setSubmitError(null);
         try {
+            let imageUrl = null;
+            if (selectedImage) {
+                imageUrl = await uploadImage(selectedImage);
+            }
             const res = await authFetch(`/api/sessions/${sessionId}/questions`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text }),
+                body: JSON.stringify({ content: text, imageUrl }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
                 setNewQuestion('');
+                setSelectedImage(null);
+                setImagePreview(null);
                 fetchQuestions(understandingIndex);
             }
         } catch (err) {
@@ -313,14 +383,14 @@ function QnAListPage() {
                 <span className={styles.understandName}>
                     {understanding?.current?.content ?? '이해도 없음'}
                     <span className={styles.understandCount}>
-                        ({understanding?.current?.understoodCount ?? 0}/
-                        {(understanding?.current?.understoodCount ?? 0) + (understanding?.current?.notUnderstoodCount ?? 0)})
+                        ({understanding?.current?.respondedCount ?? 0}/
+                        {understanding?.current?.attendanceCount ?? 0})
                     </span>
                 </span>
                 <button
                     className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
                     onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                    disabled={isStaff}
+                    disabled={isStaff || isPast}  // ← isPast 추가
                 >
                     <OBtn />
                     {isStaff && <span className={styles.oxCount}>{understanding?.current?.understoodCount ?? 0}</span>}
@@ -328,7 +398,7 @@ function QnAListPage() {
                 <button
                     className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
                     onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                    disabled={isStaff}
+                    disabled={isStaff || isPast}  // ← isPast 추가
                 >
                     <XBtn />
                     {isStaff && <span className={styles.oxCount}>{understanding?.current?.notUnderstoodCount ?? 0}</span>}
@@ -357,10 +427,12 @@ function QnAListPage() {
                                 >
                                     <MeCuriousToo />{question.likeCount}
                                 </button>
-                                <button className={styles.commentBtn}
-                                    onClick={e => toggleCommentInput(e, question.questionId)}>
-                                    <CommentImoji />&nbsp;댓글달기
-                                </button>
+                                {!isPast && (
+                                    <button className={styles.commentBtn}
+                                        onClick={e => toggleCommentInput(e, question.questionId)}>
+                                        <CommentImoji />&nbsp;댓글달기
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -374,11 +446,28 @@ function QnAListPage() {
                             <div className={styles.commentPreview}>
                                 {question.previewComments.slice(0, MAX_VISIBLE_COMMENTS).map(comment => (
                                     <div key={comment.commentId} className={styles.commentWrapper}>
-                                        <span className={styles.commentAuthor}>{comment.displayName}</span>
+                                        <span className={styles.commentAuthorName}>
+                                            {comment.displayName}
+                                            {comment.displayName?.startsWith('운영진') && (
+                                                <span className={styles.staffBadge}><StaffCheck /></span>
+                                            )}
+                                        </span>
                                         <div className={styles.commentItem}>
                                             <div className={styles.commentContent}>
                                                 <CommentCommentArraw /> {comment.content}
                                             </div>
+                                            {comment.hasImage && (
+                                                <div
+                                                    className={styles.commentImagePreview}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        navigate(`/sessions/${sessionId}/questions/${question.questionId}`);
+                                                    }}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <span><ImgPreview /> 사진 보기</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -392,18 +481,47 @@ function QnAListPage() {
 
                         {commentOpenId === question.questionId && (
                             <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                <input
-                                    className={styles.commentInput}
-                                    placeholder="댓글을 입력해주세요..."
-                                    value={commentInputs[question.questionId] || ''}
-                                    onChange={e => handleCommentChange(question.questionId, e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
-                                    autoFocus
-                                />
-                                <button className={styles.submitBtn}
-                                    onClick={e => handleCommentSubmit(e, question.questionId)}>
-                                    <SumitBtn />
-                                </button>
+                                {commentImagePreviews[question.questionId] && (
+                                    <div className={styles.imagePreviewWrapper}>
+                                        <img src={commentImagePreviews[question.questionId]} alt="미리보기" className={styles.imagePreview} />
+                                        <button
+                                            className={styles.imageRemoveBtn}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                setCommentImages(prev => ({ ...prev, [question.questionId]: null }));
+                                                setCommentImagePreviews(prev => ({ ...prev, [question.questionId]: null }));
+                                            }}
+                                        >✕</button>
+                                    </div>
+                                )}
+                                <div className={styles.commentInputInner}>
+                                    <button
+                                        className={styles.commentPlusBtn}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            if (!commentFileRefs.current[question.questionId]) {
+                                                commentFileRefs.current[question.questionId] = document.createElement('input');
+                                                commentFileRefs.current[question.questionId].type = 'file';
+                                                commentFileRefs.current[question.questionId].accept = 'image/*';
+                                                commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
+                                            }
+                                            commentFileRefs.current[question.questionId].click();
+                                        }}
+                                    >+</button>
+                                    <input
+                                        className={styles.commentInput}
+                                        placeholder="댓글을 입력해주세요..."
+                                        value={commentInputs[question.questionId] || ''}
+                                        onChange={e => handleCommentChange(question.questionId, e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
+                                        onPaste={e => handleCommentPaste(e, question.questionId)}
+                                        autoFocus
+                                    />
+                                    <button className={styles.submitBtn}
+                                        onClick={e => handleCommentSubmit(e, question.questionId)}>
+                                        <SumitBtn />
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -411,29 +529,55 @@ function QnAListPage() {
             </div>
 
             <div className={styles.bottomCover} />
-            <div className={styles.newQuestionBar}>
-                {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                <div className={styles.newQuestionInputRow}>
-                    <button className={styles.newQuestionPlus}>+</button>
-                    <input
-                        className={styles.newQuestionInput}
-                        placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
-                        value={newQuestion}
-                        onChange={e => setNewQuestion(e.target.value)}
-                        onKeyDown={e => {
-                            if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
-                        }}
-                        disabled={isSubmitting}
-                    />
-                    <button
-                        className={styles.newQuestionSubmit}
-                        onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? '⏳' : <SumitBtn />}
-                    </button>
+
+            {!isPast && (
+                <div className={styles.newQuestionBar}>
+                    {submitError && <p className={styles.errorMsg}>{submitError}</p>}
+                    {imagePreview && (
+                        <div className={styles.imagePreviewWrapper}>
+                            <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
+                            <button
+                                className={styles.imageRemoveBtn}
+                                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
+                            >✕</button>
+                        </div>
+                    )}
+                    <div className={styles.newQuestionInputRow}>
+                        {!isStaff && (  // ← 스태프일 때 + 버튼 숨김
+                            <>
+                                <button
+                                    className={styles.newQuestionPlus}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >+</button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleImageSelect}
+                                />
+                            </>
+                        )}
+                        <input
+                            className={styles.newQuestionInput}
+                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
+                            value={newQuestion}
+                            onChange={e => setNewQuestion(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                            }}
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            className={styles.newQuestionSubmit}
+                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? '⏳' : <SumitBtn />}
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

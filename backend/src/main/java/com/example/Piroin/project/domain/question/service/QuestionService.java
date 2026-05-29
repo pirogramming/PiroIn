@@ -661,6 +661,7 @@ public class QuestionService {
                 "COMMENT_CREATED",
                 sessionId,
                 questionId,
+                question.getIsResolved(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 summaryContext.previewComments().getOrDefault(questionId, List.of())
         );

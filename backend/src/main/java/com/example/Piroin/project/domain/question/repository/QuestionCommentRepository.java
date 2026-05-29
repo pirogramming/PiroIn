@@ -27,6 +27,7 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
                    ranked.user_id AS "userId",
                    u.role AS "userRole",
                    ranked.content AS "content",
+                   ranked.image_url AS "imageUrl",
                    ranked.created_at AS "createdAt",
                    qai.anonymous_no AS "anonymousNo"
             FROM (
@@ -79,6 +80,8 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
         String getUserRole();
 
         String getContent();
+
+        String getImageUrl();
 
         LocalDateTime getCreatedAt();
 

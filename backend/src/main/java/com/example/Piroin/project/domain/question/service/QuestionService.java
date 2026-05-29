@@ -584,8 +584,13 @@ public class QuestionService {
                 row.getCommentId(),
                 getPreviewDisplayName(question, row),
                 row.getContent(),
+                hasPreviewImage(row),
                 row.getCreatedAt()
         );
+    }
+
+    private boolean hasPreviewImage(QuestionCommentRepository.PreviewCommentRow row) {
+        return row.getImageUrl() != null && !row.getImageUrl().isBlank();
     }
 
     private String getPreviewDisplayName(Question question, QuestionCommentRepository.PreviewCommentRow row) {

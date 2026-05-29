@@ -175,6 +175,8 @@ public class QuestionResDTO {
             Long commentId,
             String displayName,
             String content,
+            // true면 프론트는 미리보기 댓글에 "사진 보기" 버튼을 노출하고 질문 상세 페이지로 이동시킨다.
+            Boolean hasImage,
             LocalDateTime createdAt
     ) {
     }

@@ -86,7 +86,7 @@ public class QuestionService {
                 questionCommentRepository.findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(question);
 
         List<QuestionResDTO.CommentResponse> commentResponses = topComments.stream()
-                .map(comment -> toCommentResponse(question, comment))
+                .map(comment -> toCommentResponse(question, comment, loginUser))
                 .toList();
 
         return new QuestionResDTO.QuestionDetailResponse(
@@ -97,21 +97,27 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment) {
+    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment, User loginUser) {
         List<QuestionComment> replies =
                 questionCommentRepository.findByParentCommentAndDeletedAtIsNullOrderByCreatedAtAsc(comment);
 
         List<QuestionResDTO.CommentResponse> replyResponses = replies.stream()
                 .map(reply -> new QuestionResDTO.CommentResponse(
                         reply.getId(), getDisplayName(question, reply.getUser()),
-                        reply.getContent(), reply.getImageUrl(), reply.getCreatedAt(), List.of()
+                        reply.getContent(), reply.getImageUrl(), isCommentMine(reply, loginUser),
+                        reply.getCreatedAt(), List.of()
                 ))
                 .toList();
 
         return new QuestionResDTO.CommentResponse(
                 comment.getId(), getDisplayName(question, comment.getUser()),
-                comment.getContent(), comment.getImageUrl(), comment.getCreatedAt(), replyResponses
+                comment.getContent(), comment.getImageUrl(), isCommentMine(comment, loginUser),
+                comment.getCreatedAt(), replyResponses
         );
+    }
+
+    private boolean isCommentMine(QuestionComment comment, User loginUser) {
+        return comment.getUser().getId().equals(loginUser.getId());
     }
 
     // 댓글 등록

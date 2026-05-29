@@ -92,6 +92,7 @@ public class QuestionResDTO {
             String displayName,
             String content,
             String imageUrl,
+            Boolean isMine,
             LocalDateTime createdAt,
             List<CommentResponse> replies
     ) {

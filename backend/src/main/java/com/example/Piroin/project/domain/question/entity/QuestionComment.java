@@ -50,4 +50,16 @@ public class QuestionComment {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 댓글 내용 수정
+    public void updateContent(String content) {
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 댓글 소프트 삭제
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

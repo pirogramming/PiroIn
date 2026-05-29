@@ -119,6 +119,29 @@ public class QuestionController {
                 questionService.updateQuestionStatus(questionId, userId));
     }
 
+    // 댓글 수정
+    // PATCH /api/comments/{commentId}
+    @PatchMapping("/api/comments/{commentId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.CommentUpdateDeleteRes>> updateComment(
+            @PathVariable Long commentId,
+            @RequestBody QuestionReqDTO.CommentUpdateReq request,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.COMMENT_UPDATED,
+                questionService.updateComment(commentId, request, userId));
+    }
+
+    // 댓글 삭제
+    // DELETE /api/comments/{commentId}
+    @DeleteMapping("/api/comments/{commentId}")
+    public ResponseEntity<ApiResponse<QuestionResDTO.CommentUpdateDeleteRes>> deleteComment(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.COMMENT_DELETED,
+                questionService.deleteComment(commentId, userId));
+    }
+
     // 이해도 체크 생성
     // POST /api/sessions/{sessionId}/understanding-checks
     @PostMapping("/api/sessions/{sessionId}/understanding-checks")

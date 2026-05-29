@@ -150,7 +150,8 @@ public class QuestionService {
         String displayName = assignAnonymousIdentity(question, loginUser);
 
         QuestionResDTO.CommentCreateRes response = new QuestionResDTO.CommentCreateRes(
-                comment.getId(), question.getId(), displayName, comment.getContent(), comment.getCreatedAt()
+                comment.getId(), question.getId(), displayName,
+                comment.getContent(), question.getIsResolved(), comment.getCreatedAt()
         );
 
         // DB 반영이 끝난 뒤 같은 질문방 구독자들이 목록 댓글 미리보기를 갱신하도록 알린다.

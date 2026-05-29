@@ -37,6 +37,7 @@ public class QuestionResDTO {
             Long questionId,
             String displayName,
             String content,
+            Boolean isResolved,
             LocalDateTime createdAt
     ) {
     }

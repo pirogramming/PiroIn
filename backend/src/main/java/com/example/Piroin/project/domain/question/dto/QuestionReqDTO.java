@@ -31,6 +31,13 @@ public class QuestionReqDTO {
         private Long parentCommentId;  // 대댓글일 때만 값이 있음, 일반 댓글이면 null
     }
 
+    // 댓글 수정 요청
+    @Getter
+    @NoArgsConstructor
+    public static class CommentUpdateReq {
+        private String content;
+    }
+
     // 이해도 체크 응답 요청
     @Getter
     @NoArgsConstructor

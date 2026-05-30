@@ -6,15 +6,10 @@ import { authFetch } from '../../utils/Api';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
     OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
-} from '../../components/qna_svg';
+    DAY_PART_KO, DAY_OF_WEEK_KO, uploadImage,
+} from '../../utils/qnaUtils';
 
 const MAX_VISIBLE_COMMENTS = 3;
-
-const DAY_PART_KO = { AM: '오전', PM: '오후' };
-const DAY_OF_WEEK_KO = {
-    MONDAY: '월', TUESDAY: '화', WEDNESDAY: '수',
-    THURSDAY: '목', FRIDAY: '금', SATURDAY: '토', SUNDAY: '일',
-};
 
 function QnAListPage() {
     const { sessionId } = useParams();
@@ -23,34 +18,39 @@ function QnAListPage() {
     const isPast = location.state?.status === 'AFTER_SESSION';
     const isStaff = localStorage.getItem('role') === 'ADMIN';
 
+    // ── 세션 / 이해도 상태 ──────────────────────────
     const [sessionTitle, setSessionTitle] = useState('');
     const [understanding, setUnderstanding] = useState(null);
     const [understandingIndex, setUnderstandingIndex] = useState(0);
     const [myChoices, setMyChoices] = useState({});
 
+    // ── 질문 목록 상태 ───────────────────────────────
     const [popularQuestions, setPopularQuestions] = useState([]);
     const [unresolvedQuestions, setUnresolvedQuestions] = useState([]);
     const [resolvedQuestions, setResolvedQuestions] = useState([]);
 
+    // ── 필터 / 정렬 상태 ─────────────────────────────
     const [filterCurious, setFilterCurious] = useState(false);
     const [filterUnsolved, setFilterUnsolved] = useState(false);
     const [sortOrder, setSortOrder] = useState('정렬');
     const [showSortMenu, setShowSortMenu] = useState(false);
 
+    // ── 댓글 입력 상태 ───────────────────────────────
     const [commentOpenId, setCommentOpenId] = useState(null);
     const [commentInputs, setCommentInputs] = useState({});
+    const [commentImages, setCommentImages] = useState({});
+    const [commentImagePreviews, setCommentImagePreviews] = useState({});
+    const commentFileRefs = useRef({});
+
+    // ── 새 질문 / 이해도 입력 상태 ──────────────────
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
-    const [commentImages, setCommentImages] = useState({});
-    const [commentImagePreviews, setCommentImagePreviews] = useState({});
-    const commentFileRefs = useRef({});
-
     const fileInputRef = useRef(null);
 
-
+    // ── 질문 목록 불러오기 ───────────────────────────
     const fetchQuestions = useCallback(async (index) => {
         try {
             const res = await authFetch(`/api/sessions/${sessionId}/questions?understandingIndex=${index}`);
@@ -69,7 +69,7 @@ function QnAListPage() {
                 ...(questions.resolvedQuestions ?? []),
             ];
 
-            // 이미지 blob URL 변환만 처리 (개별 API 호출 제거)
+            // 질문 이미지 blob URL 변환
             const withBlob = await Promise.all(
                 allQ.map(async (q) => {
                     let blobImageUrl = null;
@@ -104,6 +104,7 @@ function QnAListPage() {
         if (sessionId) fetchQuestions(understandingIndex);
     }, [sessionId, understandingIndex, fetchQuestions]);
 
+    // ── 이해도 네비게이션 ────────────────────────────
     const goPrevUnderstand = () => {
         if (understanding?.hasOlder) setUnderstandingIndex(prev => prev + 1);
     };
@@ -111,6 +112,7 @@ function QnAListPage() {
         if (understanding?.hasNewer) setUnderstandingIndex(prev => prev - 1);
     };
 
+    // ── 이해도 O/X 선택 ──────────────────────────────
     const handleUnderstandChoice = async (choice) => {
         if (!understanding?.current?.checkId) return;
         const checkId = understanding.current.checkId;
@@ -141,6 +143,7 @@ function QnAListPage() {
         }
     };
 
+    // ── 좋아요 토글 ──────────────────────────────────
     const toggleLike = async (e, questionId) => {
         e.stopPropagation();
         if (isPast) return;
@@ -163,6 +166,7 @@ function QnAListPage() {
         }
     };
 
+    // ── 댓글 입력창 토글 ─────────────────────────────
     const toggleCommentInput = (e, questionId) => {
         e.stopPropagation();
         if (isPast) return;
@@ -173,6 +177,7 @@ function QnAListPage() {
         setCommentInputs(prev => ({ ...prev, [questionId]: value }));
     };
 
+    // ── 댓글 등록 ────────────────────────────────────
     const handleCommentSubmit = async (e, questionId) => {
         e.stopPropagation();
         const text = (commentInputs[questionId] || '').trim();
@@ -220,25 +225,7 @@ function QnAListPage() {
         }
     };
 
-    const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setSelectedImage(file);
-        setImagePreview(URL.createObjectURL(file));
-    };
-
-    const uploadImage = async (file) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        const token = localStorage.getItem('token');
-        const res = await fetch('/api/images', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData,
-        });
-        const json = await res.json();
-        return json.imageUrl;
-    };
+    // ── 댓글 이미지 선택 / 붙여넣기 ─────────────────
     const handleCommentImageSelect = (e, questionId) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -260,6 +247,16 @@ function QnAListPage() {
             }
         }
     };
+
+    // ── 질문 이미지 선택 ─────────────────────────────
+    const handleImageSelect = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setSelectedImage(file);
+        setImagePreview(URL.createObjectURL(file));
+    };
+
+    // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
         if (!text) return;
@@ -290,6 +287,7 @@ function QnAListPage() {
         }
     };
 
+    // ── 이해도 체크 등록 (운영진 전용) ──────────────
     const handleNewUnderstandCheck = async () => {
         const text = newQuestion.trim();
         if (!text) return;
@@ -315,6 +313,7 @@ function QnAListPage() {
         }
     };
 
+    // ── 질문 목록 필터 / 정렬 ────────────────────────
     const allQuestions = [
         ...popularQuestions,
         ...unresolvedQuestions.filter(q => !popularQuestions.some(p => p.questionId === q.questionId)),
@@ -341,6 +340,7 @@ function QnAListPage() {
         <div className={styles.page}>
             <h1 className={styles.title}>{sessionTitle}</h1>
 
+            {/* ── 필터 / 정렬 행 ── */}
             <div className={styles.filterRow}>
                 {isStaff ? (
                     <label className={styles.curiousLabel}>
@@ -375,7 +375,7 @@ function QnAListPage() {
             </div>
             <hr className={styles.divider} />
 
-            {/* 이해도 */}
+            {/* ── 이해도 바 ── */}
             <div className={styles.understandBar}>
                 <button className={styles.arrowBtn} onClick={goPrevUnderstand}
                     disabled={!understanding?.hasOlder}>
@@ -391,7 +391,7 @@ function QnAListPage() {
                 <button
                     className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
                     onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                    disabled={isStaff || isPast}  // ← isPast 추가
+                    disabled={isStaff || isPast}
                 >
                     <OBtn />
                     {isStaff && <span className={styles.oxCount}>{understanding?.current?.understoodCount ?? 0}</span>}
@@ -399,7 +399,7 @@ function QnAListPage() {
                 <button
                     className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
                     onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                    disabled={isStaff || isPast}  // ← isPast 추가
+                    disabled={isStaff || isPast}
                 >
                     <XBtn />
                     {isStaff && <span className={styles.oxCount}>{understanding?.current?.notUnderstoodCount ?? 0}</span>}
@@ -410,11 +410,13 @@ function QnAListPage() {
                 </button>
             </div>
 
-            {/* 질문 목록 */}
+            {/* ── 질문 목록 ── */}
             <div className={styles.questionList}>
                 {displayedQuestions.map(question => (
                     <div key={question.questionId} className={styles.questionCard}
                         onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
+
+                        {/* 질문 헤더 */}
                         <div className={styles.questionHeader}>
                             <span
                                 className={styles.qIcon}
@@ -437,12 +439,14 @@ function QnAListPage() {
                             </div>
                         </div>
 
+                        {/* 질문 첨부 이미지 */}
                         {question.imageUrl && (
                             <img src={question.imageUrl} alt="첨부 이미지"
                                 className={styles.questionImage}
                                 onClick={e => e.stopPropagation()} />
                         )}
 
+                        {/* 댓글 미리보기 */}
                         {question.previewComments?.length > 0 && (
                             <div className={styles.commentPreview}>
                                 {question.previewComments.slice(0, MAX_VISIBLE_COMMENTS).map(comment => (
@@ -479,6 +483,7 @@ function QnAListPage() {
                             </div>
                         )}
 
+                        {/* 댓글 입력창 */}
                         {commentOpenId === question.questionId && (
                             <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
                                 {commentImagePreviews[question.questionId] && (
@@ -530,6 +535,7 @@ function QnAListPage() {
 
             <div className={styles.bottomCover} />
 
+            {/* ── 하단 입력바 (지난 세션이면 숨김) ── */}
             {!isPast && (
                 <div className={styles.newQuestionBar}>
                     {submitError && <p className={styles.errorMsg}>{submitError}</p>}
@@ -543,7 +549,8 @@ function QnAListPage() {
                         </div>
                     )}
                     <div className={styles.newQuestionInputRow}>
-                        {!isStaff && (  // ← 스태프일 때 + 버튼 숨김
+                        {/* 운영진일 때 + 버튼 숨김 */}
+                        {!isStaff && (
                             <>
                                 <button
                                     className={styles.newQuestionPlus}
@@ -559,8 +566,7 @@ function QnAListPage() {
                             </>
                         )}
                         <input
-                            className={styles.newQuestionInput}
-                            style={isStaff ? { paddingLeft: '10px' } : {}}
+                            className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
                             placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
                             value={newQuestion}
                             onChange={e => setNewQuestion(e.target.value)}

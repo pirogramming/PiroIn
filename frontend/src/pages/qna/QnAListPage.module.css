@@ -442,9 +442,16 @@
     outline: none;
 }
 
+.commentImagePreview svg {
+    display: block;
+}
+
 .commentImagePreview {
     display: flex;
+    flex-direction: row;
     align-items: center;
+    justify-content: center;
+
     gap: 4px;
     font-family: var(--font-main);
     font-size: 0.78rem;
@@ -454,6 +461,8 @@
     padding: 3px 8px;
     width: fit-content;
     margin-top: 4px;
+    cursor: pointer;
+    line-height: 1;
 }
 
 .commentInput::placeholder {

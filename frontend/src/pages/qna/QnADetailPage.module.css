@@ -479,3 +479,57 @@
     display: inline-flex;
     align-items: center;
 }
+
+
+.editCommentInput {
+    flex: 1;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--black);
+    border: 1px solid var(--gray200);
+    border-radius: 8px;
+    padding: 4px 8px;
+    resize: none;
+    outline: none;
+    line-height: 1.5;
+    width: 100%;
+}
+
+.commentEditWrapper {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.commentEditButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.menuWrapper {
+    position: relative;
+}
+
+.commentMenuWrapper {
+    position: relative;
+    margin-left: auto;
+}
+
+.qIconResolved {
+    color: var(--gray600);
+}
+
+.editWrapper {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.editButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}

@@ -87,7 +87,6 @@ function QnADetailPage() {
         }
     };
 
-
     useEffect(() => {
         const fetchQuestion = async () => {
             try {
@@ -138,7 +137,7 @@ function QnADetailPage() {
     useEffect(() => {
         const handleClickOutside = () => {
             setShowMenu(false);
-            setCommentMenuId(null);  // ← 추가
+            setCommentMenuId(null);
         };
         if (showMenu || commentMenuId) document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
@@ -260,13 +259,8 @@ function QnADetailPage() {
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                if (isStaff) {
-                    await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
-                    setQuestion(prev => ({ ...prev, isResolved: true }));
-                } else if (question.isResolved) {
-                    await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
-                    setQuestion(prev => ({ ...prev, isResolved: false }));
-                }
+                // isResolved를 응답값으로 직접 반영
+                setQuestion(prev => ({ ...prev, isResolved: json.result.isResolved }));
 
                 const newComment = {
                     commentId: json.result.commentId,
@@ -274,6 +268,7 @@ function QnADetailPage() {
                     content: json.result.content,
                     createdAt: json.result.createdAt,
                     imageUrl: imagePreview,
+                    isMine: true,
                 };
                 setQuestion(prev => ({
                     ...prev,
@@ -308,7 +303,7 @@ function QnADetailPage() {
                     <span className={styles.authorDate}>{formatDate(question.createdAt)}</span>
                 </div>
                 {(isMyQuestion || isStaff) && (
-                    <div style={{ position: 'relative' }}>
+                    <div className={styles.menuWrapper}>
                         <button className={styles.menuBtn} aria-label="더보기" onClick={(e) => { e.stopPropagation(); setShowMenu(prev => !prev); }}>
                             <FiMoreVertical size={20} />
                         </button>
@@ -345,19 +340,16 @@ function QnADetailPage() {
 
             {/* 질문 내용 */}
             <div className={styles.questionTitle}>
-                <span
-                    className={styles.qIcon}
-                    style={{ color: question.isResolved ? 'var(--gray600)' : 'var(--main)' }}
-                >Q.</span>
+                <span className={`${styles.qIcon} ${question.isResolved ? styles.qIconResolved : ''}`}>Q.</span>
                 {isEditing ? (
-                    <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                    <div className={styles.editWrapper}>
                         <textarea
                             className={styles.editInput}
                             value={editText}
                             onChange={e => setEditText(e.target.value)}
                             autoFocus
                         />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div className={styles.editButtons}>
                             <button className={styles.editConfirmBtn} onClick={handleEditSubmit}>완료</button>
                             <button className={styles.editCancelBtn} onClick={() => setIsEditing(false)}>취소</button>
                         </div>
@@ -404,9 +396,8 @@ function QnADetailPage() {
                                     <span className={styles.staffBadge}><StaffCheck /></span>
                                 )}
                             </span>
-                            {/* 본인 댓글이면 메뉴 버튼 표시 */}
-                            {comment.displayName === '작성자' && (
-                                <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                            {comment.isMine && (
+                                <div className={styles.commentMenuWrapper}>
                                     <button
                                         className={styles.menuBtn}
                                         onClick={(e) => { e.stopPropagation(); setCommentMenuId(prev => prev === comment.commentId ? null : comment.commentId); }}
@@ -415,8 +406,8 @@ function QnADetailPage() {
                                     </button>
                                     {commentMenuId === comment.commentId && (
                                         <div className={styles.dropdownMenu}>
-                                            <button className={styles.dropdownItem} onClick={() => handleCommentEditStart(comment)}>수정</button>
-                                            <button className={styles.dropdownItem} onClick={() => handleCommentDelete(comment.commentId)}>삭제</button>
+                                            <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentEditStart(comment); }}>수정</button>
+                                            <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentDelete(comment.commentId); }}>삭제</button>
                                         </div>
                                     )}
                                 </div>
@@ -424,14 +415,14 @@ function QnADetailPage() {
                         </div>
                         <div className={styles.commentBubble}>
                             {editingCommentId === comment.commentId ? (
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                <div className={styles.commentEditWrapper}>
                                     <textarea
-                                        className={styles.editInput}
+                                        className={styles.editCommentInput}
                                         value={editCommentText}
                                         onChange={e => setEditCommentText(e.target.value)}
                                         autoFocus
                                     />
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div className={styles.commentEditButtons}>
                                         <button className={styles.editConfirmBtn} onClick={() => handleCommentEditSubmit(comment.commentId)}>완료</button>
                                         <button className={styles.editCancelBtn} onClick={() => setEditingCommentId(null)}>취소</button>
                                     </div>

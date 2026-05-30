@@ -132,6 +132,7 @@ function QnAListPage() {
                         understoodCount: json.result.understoodCount,
                         notUnderstoodCount: json.result.notUnderstoodCount,
                         attendanceCount: json.result.attendanceCount,
+                        respondedCount: json.result.respondedCount,
                     }
                 }));
             }
@@ -463,9 +464,8 @@ function QnAListPage() {
                                                         e.stopPropagation();
                                                         navigate(`/sessions/${sessionId}/questions/${question.questionId}`);
                                                     }}
-                                                    style={{ cursor: 'pointer' }}
                                                 >
-                                                    <span><ImgPreview /> 사진 보기</span>
+                                                    <ImgPreview /><span>사진보기</span>
                                                 </div>
                                             )}
                                         </div>
@@ -560,6 +560,7 @@ function QnAListPage() {
                         )}
                         <input
                             className={styles.newQuestionInput}
+                            style={isStaff ? { paddingLeft: '10px' } : {}}
                             placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
                             value={newQuestion}
                             onChange={e => setNewQuestion(e.target.value)}

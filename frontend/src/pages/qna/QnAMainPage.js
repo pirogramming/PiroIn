@@ -3,25 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import styles from './QnAMainPage.module.css';
 import { FiLogIn } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
+import { getIcon, getTime, formatDate, DAY_OF_WEEK_KO, DAY_PART_KO } from '../../utils/qnaUtils';
 
-const DAY_PART_KO = { AM: '오전', PM: '오후' };
-
-const DAY_OF_WEEK_KO = {
-    MONDAY: '월요일', TUESDAY: '화요일', WEDNESDAY: '수요일',
-    THURSDAY: '목요일', FRIDAY: '금요일', SATURDAY: '토요일', SUNDAY: '일요일',
-};
-
-const formatDate = (dateStr) => dateStr?.replace(/-/g, '.') ?? '';
-const getIcon = (dayPart) => dayPart === 'AM' ? '☀' : '☾';
-const getTime = (dayPart) => dayPart === 'AM' ? '10:00 ~ 13:00' : '14:00 ~ 17:00';
 
 function QNAMainPage() {
     const navigate = useNavigate();
+
+    // ── 세션 목록 상태 ──────────────────────────────
     const [activeSessions, setActiveSessions] = useState([]);
     const [pastSessions, setPastSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // ── 세션 목록 불러오기 ──────────────────────────
     useEffect(() => {
         const fetchSessions = async () => {
             try {
@@ -50,7 +44,7 @@ function QNAMainPage() {
     return (
         <div className={styles.page}>
 
-            {/* 진행 중인 세션 */}
+            {/* ── 진행 중인 세션 ── */}
             {activeSessions.length > 0 && (
                 <>
                     <section className={styles.section}>
@@ -60,7 +54,6 @@ function QNAMainPage() {
                                 key={session.sessionId}
                                 className={styles.card}
                                 onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'IN_SESSION' } })}
-                                style={{ cursor: 'pointer' }}
                             >
                                 <p className={styles.cardTitle}>
                                     <span className={styles.icon}>{getIcon(session.dayPart)}</span>
@@ -78,28 +71,34 @@ function QNAMainPage() {
                 </>
             )}
 
-            {/* 지난 세션 */}
-            {pastSessions.map(session => (
-                <div key={session.sessionId} className={styles.listItem}
-                    onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'AFTER_SESSION' } })}
-                >
-                    <span>
-                        <span className={styles.icon}>{getIcon(session.dayPart)}</span>
-                        <span className={styles.listTitle}>{session.title}</span>
-                        <span className={styles.listWeek}>
-                            &nbsp;• {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
-                        </span>
-                    </span>
-                    <button
-                        className={styles.enterBtn}
-                        onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'AFTER_SESSION' } })}
-                    >
-                        <FiLogIn size={25} />
-                    </button>
-                </div>
-            ))}
+            {/* ── 지난 세션 ── */}
+            {pastSessions.length > 0 && (
+                <section className={styles.section}>
+                    <h2 className={styles.sectionTitle}>지난 세션</h2>
+                    <div className={styles.list}>
+                        {pastSessions.map(session => (
+                            <div
+                                key={session.sessionId}
+                                className={styles.listItem}
+                                onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'AFTER_SESSION' } })}
+                            >
+                                <span>
+                                    <span className={styles.icon}>{getIcon(session.dayPart)}</span>
+                                    <span className={styles.listTitle}>{session.title}</span>
+                                    <span className={styles.listWeek}>
+                                        &nbsp;• {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
+                                    </span>
+                                </span>
+                                <button className={styles.enterBtn}>
+                                    <FiLogIn size={25} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
-            {/* 둘 다 없을 때 */}
+            {/* ── 세션 없을 때 ── */}
             {activeSessions.length === 0 && pastSessions.length === 0 && (
                 <section className={styles.section}>
                     <p className={styles.empty}>아직 생성된 Q&A가 없어요</p>

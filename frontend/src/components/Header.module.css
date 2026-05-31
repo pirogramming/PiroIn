@@ -1,0 +1,77 @@
+/* 라이트 헤더 */
+.light {
+    --header-bg: var(--white);
+    --header-color: var(--gray600);
+    --logo-color: var(--dark);
+}
+
+/* 다크 헤더 */
+.dark {
+    --header-bg: var(--black);
+    --header-color: var(--white);
+    --logo-color: var(--main);
+    border-bottom: none;  /* 추가 */
+}
+
+.header {
+    width: 100%;
+    height: 70px;
+    background: var(--header-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 80px;
+    box-sizing: border-box;
+    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    color: var(--logo-color);
+    font-family: var(--font-title);
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.nav {
+    display: flex;
+    gap: 6rem;
+    align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.nav a {
+    color: var(--header-color);
+    text-align: center;
+    font-family: var(--font-main);
+    font-size: 1.4rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.nav a:hover {
+    color: var(--logo-color);
+}
+
+.active {
+    color: var(--logo-color) !important;
+    font-weight: 700;
+}
+
+.logoutBtn {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--header-color);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.logoutBtn:hover { opacity: 1; transition: all ease-in-out 0.2s; }

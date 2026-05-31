@@ -1,0 +1,133 @@
+/* ── 페이지 레이아웃 ── */
+.page {
+    min-height: 100vh;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+/* ── 섹션 공통 ── */
+.section {
+    margin-bottom: 32px;
+}
+
+.sectionTitle {
+    text-align: center;
+    font-family: var(--font-main);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--black);
+    padding: 16px 160px;
+    margin-bottom: 32px;
+}
+
+/* ── 진행 중인 세션 카드 ── */
+.card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    width: 356px;
+    height: 148px;
+    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    margin: 0 auto;
+}
+
+.card:hover {
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.card:hover .cardTitle {
+    color: var(--dark);
+}
+
+.cardTitle {
+    font-family: var(--font-main);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--black);
+    margin: 16px 0;
+}
+
+.cardWeek {
+    font-family: var(--font-main);
+    font-size: 18px;
+    color: var(--gray600);
+    margin: 8px 0;
+}
+
+.cardDate,
+.cardTime {
+    font-family: var(--font-main);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gray600);
+    margin: 0;
+}
+
+/* ── 구분선 ── */
+.divider {
+    border: none;
+    border-top: 1px solid var(--gray200);
+    margin: 32px 0;
+}
+
+/* ── 지난 세션 목록 ── */
+.icon {
+    margin-right: 20px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.listItem {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 2px 2px 5px 0 rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+}
+
+.listItem:hover {
+    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.listTitle {
+    font-family: var(--font-main);
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--black);
+}
+
+.listWeek {
+    font-family: var(--font-main);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gray600);
+}
+
+.enterBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--black);
+}
+
+.listItem:hover .enterBtn {
+    color: var(--dark);
+}
+
+/* ── 빈 상태 ── */
+.empty {
+    text-align: center;
+    color: var(--gray400);
+    margin-top: 40px;
+}

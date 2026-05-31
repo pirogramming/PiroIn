@@ -1,0 +1,287 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 60px 20px;
+    min-height: calc(100vh - 100px);
+    background: var(--black);
+}
+
+.mockBanner {
+    background: #5a3e00;
+    color: #ffd166;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    padding: 10px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    width: 600px;
+    box-sizing: border-box;
+}
+
+.title {
+    font-family: var(--font-title);
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--main);
+    margin-bottom: 40px;
+    letter-spacing: 0;
+}
+
+/* 주차 블록 */
+.weekBlock {
+    width: 600px;
+    background: #3a3a3a;
+    border-radius: 16px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.weekHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    cursor: pointer;
+    color: var(--white);
+}
+
+.weekLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logoIcon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.weekLabel {
+    font-family: var(--font-main);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+}
+
+.arrow {
+    color: var(--white);
+    font-size: 0.9rem;
+}
+
+.weekBody {
+    padding: 0 24px 20px;
+}
+
+.empty {
+    color: #aaa;
+    font-family: var(--font-main);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 16px 0;
+}
+
+/* 세션 */
+.session {
+    margin-top: 12px;
+}
+
+.sessionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.sessionLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dayLabel {
+    color: var(--dark);
+    font-family: var(--font-main);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.sessionTitle {
+    color: var(--light);
+    font-family: var(--font-main);
+    font-size: 1rem;
+}
+
+.sessionActions {
+    display: flex;
+    gap: 8px;
+}
+
+.iconBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.actionIcon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+}
+
+.actionIcon:hover { opacity: 1; }
+
+/* 과제 항목 */
+.assignmentRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+}
+
+.assignmentTitle {
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 0.95rem;
+}
+
+.statusIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #555;
+    margin: 12px 0;
+}
+
+/* + 추가 버튼 */
+.addBtn {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #3a3a3a;
+    color: var(--main);
+    font-size: 2rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transition: background 0.2s;
+}
+
+.addBtn:hover { background: #4a4a4a; }
+
+/* 모달 */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal {
+    background: #3a3a3a;
+    border-radius: 20px;
+    padding: 40px 60px;
+    width: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px; 
+}
+
+.modalLogo {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+}
+
+.modalTitle {
+    font-family: var(--font-main);
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--main);
+    letter-spacing: 0;
+}
+
+.modalRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 85%;
+    margin-top: 10px;
+}
+
+.select {
+    padding: 10px 36px 10px 20px; 
+    background-color: var(--pale);
+
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    cursor: pointer;
+    flex: 1;
+}
+
+.select::-ms-expand {
+    display: none;
+}
+.modalInput {
+    width: 85%; 
+    padding: 12px 20px; 
+    background: var(--pale);
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.modalLabel {
+    color: var(--white);
+    font-family: var(--font-main);
+    font-size: 1.2rem;
+}
+
+.saveBtn {
+    margin-top: 15px;
+    padding: 10px 45px;
+    background: transparent;
+    border: 2px solid var(--main);
+    border-radius: 10px;
+    color: var(--main);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.saveBtn:hover {
+    background: var(--main);
+    color: var(--black);
+}

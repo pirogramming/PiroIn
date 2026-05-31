@@ -323,6 +323,10 @@ function CurriculumPage() {
         return acc;
     }, {});
 
+    useEffect(() => {
+        document.title = "커리큘럼 | PIROIN";
+    }, []);
+
     return (
         <div className={styles.container}>
             {role === 'ADMIN' && (

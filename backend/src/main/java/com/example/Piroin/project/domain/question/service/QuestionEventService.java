@@ -42,13 +42,34 @@ public class QuestionEventService {
 
     // 댓글 생성 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
     public void publishCommentCreated(Long sessionId, QuestionResDTO.CommentCreatedEvent event) {
+        broadcast(sessionId, "comment-created", event);
+    }
+
+    // 질문 등록 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishQuestionCreated(Long sessionId, QuestionResDTO.QuestionCreatedEvent event) {
+        broadcast(sessionId, "question-created", event);
+    }
+
+    // 이해도 체크 생성 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishUnderstandingCheckCreated(Long sessionId, QuestionResDTO.UnderstandingCheckCreatedEvent event) {
+        broadcast(sessionId, "understanding-check-created", event);
+    }
+
+    // 이해도 응답(O/X) 업데이트 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishUnderstandingResponseUpdated(Long sessionId, QuestionResDTO.UnderstandingResponseUpdatedEvent event) {
+        broadcast(sessionId, "understanding-response-updated", event);
+    }
+
+    // 지정한 이벤트 이름과 데이터를 해당 세션의 모든 구독자에게 전송한다.
+    // 전송 실패한 연결은 즉시 제거한다.
+    private void broadcast(Long sessionId, String eventName, Object data) {
         List<SseEmitter> emitters = sessionEmitters.getOrDefault(sessionId, List.of());
 
         for (SseEmitter emitter : emitters) {
             try {
                 emitter.send(SseEmitter.event()
-                        .name("comment-created")
-                        .data(event));
+                        .name(eventName)
+                        .data(data));
             } catch (IOException | IllegalStateException e) {
                 removeEmitter(sessionId, emitter);
                 emitter.completeWithError(e);

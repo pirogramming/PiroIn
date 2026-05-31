@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './OnboardingPage.module.css';
 import logo from '../assets/images/logo.png';
@@ -7,6 +7,8 @@ function OnboardingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+      document.title = "PIROIN";
+
       const timer = setTimeout(() => {
           const token = localStorage.getItem('token');
           if (token) {

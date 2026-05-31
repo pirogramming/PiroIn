@@ -10,6 +10,13 @@ function Header({ type }) {
                 <NavLink to="/sessions" className={({ isActive }) => isActive ? styles.active : ''}>Q&A</NavLink>
                 <NavLink to="/curriculum" className={({ isActive }) => isActive ? styles.active : ''}>커리큘럼</NavLink>
             </nav>
+            <button className={styles.logoutBtn} onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('role');
+                window.location.href = '/login';
+            }}>
+                로그아웃
+            </button>            
         </header>
     );
 }

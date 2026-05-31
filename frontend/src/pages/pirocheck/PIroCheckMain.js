@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './PIroCheckMain.module.css';
+import { useState, useEffect } from 'react';
 
 function PIroCheckMain() {
     const navigate = useNavigate();
@@ -18,6 +19,10 @@ function PIroCheckMain() {
     ];
 
     const menus = role === 'ADMIN' ? adminMenus : memberMenus;
+
+    useEffect(() => {
+        document.title = "피로체크 | PIROIN";
+      }, []);
 
     return (
         <div className={styles.container}>

@@ -52,6 +52,8 @@ function QnADetailPage() {
 
     // ── 질문 불러오기 ────────────────────────────────
     useEffect(() => {
+        document.title = "Q&A | PIROIN";
+        
         const fetchQuestion = async () => {
             try {
                 setLoading(true);

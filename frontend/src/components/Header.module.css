@@ -61,3 +61,17 @@
     color: var(--logo-color) !important;
     font-weight: 700;
 }
+
+.logoutBtn {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--header-color);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.logoutBtn:hover { opacity: 1; transition: all ease-in-out 0.2s; }

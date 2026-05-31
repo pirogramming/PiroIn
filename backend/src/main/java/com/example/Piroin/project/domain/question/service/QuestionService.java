@@ -196,7 +196,7 @@ public class QuestionService {
                 .orElseGet(() -> {
                     // 처음 댓글 다는 유저 → 역할별 카운트 기반으로 새 번호 부여
                     int nextNo = anonymousIdentityRepository
-                            .countByQuestionAndUser_Role(question, commenter.getRole()) + 1;
+                            .findMaxAnonymousNoByQuestionAndRole(question, commenter.getRole()) + 1;
 
                     anonymousIdentityRepository.save(QuestionAnonymousIdentity.builder()
                             .question(question)

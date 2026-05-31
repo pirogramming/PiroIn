@@ -225,4 +225,55 @@ public class QuestionResDTO {
             LocalDateTime createdAt
     ) {
     }
+
+    // 질문 등록 시 SSE로 내려가는 이벤트. 같은 세션 질문방을 보고 있는 모든 클라이언트에게 전파된다.
+    public record QuestionCreatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            String content,
+            String imageUrl,
+            // 좋아요 수 (생성 직후에는 0)
+            Integer likeCount,
+            // 댓글 수 (생성 직후에는 0)
+            Integer commentCount,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 운영진이 이해도 체크를 생성했을 때 SSE로 내려가는 이벤트.
+    // 같은 세션 질문방을 보고 있는 모든 클라이언트에게 전파된다.
+    public record UnderstandingCheckCreatedEvent(
+            String type,
+            Long sessionId,
+            Long checkId,
+            String content,
+            // 생성 직후에는 0
+            Integer respondedCount,
+            // 해당 세션의 출석 인원 (이해도 분모)
+            Integer attendanceCount,
+            // 생성 직후에는 0
+            Integer understoodCount,
+            // 생성 직후에는 0
+            Integer notUnderstoodCount,
+            LocalDateTime createdAt
+    ) {
+    }
+
+    // 누군가 이해도 O/X를 누를 때 SSE로 내려가는 이벤트.
+    // 같은 세션 질문방을 보고 있는 모든 클라이언트의 이해도 카운트를 실시간으로 갱신한다.
+    public record UnderstandingResponseUpdatedEvent(
+            String type,
+            Long sessionId,
+            Long checkId,
+            // 화면의 \"13/29\" 중 13: O 응답 수 + X 응답 수
+            Integer respondedCount,
+            // 화면의 \"13/29\" 중 29: 해당 세션에 대응되는 출석 회차의 출석 인원
+            Integer attendanceCount,
+            // 오른쪽 O 뱃지 숫자
+            Integer understoodCount,
+            // 오른쪽 X 뱃지 숫자
+            Integer notUnderstoodCount
+    ) {
+    }
 }

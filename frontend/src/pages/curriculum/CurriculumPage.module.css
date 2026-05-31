@@ -58,10 +58,12 @@
 
 /* 카드 행 */
 .cardsRow {
+    margin: 0 auto;
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
     align-items: flex-start;
+    justify-content: flex-start; 
 }
 
 /* 세션 카드 */
@@ -70,8 +72,8 @@
     border: 1px solid #eee;
     border-radius: 20px;
     padding: 30px;
-    max-width: 335px;
-    flex: 1;
+    min-width: 200px;
+    width: calc(28% - 14px);
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 

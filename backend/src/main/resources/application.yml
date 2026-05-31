@@ -19,6 +19,11 @@ spring:
       hibernate:
         format_sql: true
         packagesToScan: com.example.Piroin.project.domain
+        jdbc:
+          time_zone: Asia/Seoul
+  
+  jackson:
+    time-zone: Asia/Seoul
 
 jwt:
   secret: ${JWT_SECRET}

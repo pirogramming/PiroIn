@@ -5,6 +5,8 @@ import com.example.Piroin.project.domain.question.entity.QuestionAnonymousIdenti
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.user.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -18,4 +20,10 @@ public interface QuestionAnonymousIdentityRepository extends JpaRepository<Quest
     // 용도: 새 익명 번호 발급 시 역할별로 따로 카운트
     // MEMBER → 익명1, 익명2... / ADMIN → 운영진1, 운영진2...
     int countByQuestionAndUser_Role(Question question, Role role);
+
+    @Query("SELECT COALESCE(MAX(a.anonymousNo), 0) FROM QuestionAnonymousIdentity a " + "WHERE a.question = :question AND a.user.role = :role")
+    int findMaxAnonymousNoByQuestionAndRole(
+            @Param("question") Question question,
+            @Param("role") Role role
+    );
 }

@@ -336,6 +336,10 @@ function QnAListPage() {
 
     const currentChoice = myChoices[understanding?.current?.checkId];
 
+    useEffect(() => {
+        document.title = "Q&A | PIROIN";
+    }, []);
+
     return (
         <div className={styles.page}>
             <h1 className={styles.title}>{sessionTitle}</h1>

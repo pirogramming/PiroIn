@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../../utils/Api';
 import styles from './LoginPage.module.css';
@@ -36,6 +36,10 @@ function LoginPage() {
       alert('서버 오류가 발생했습니다.');
     }
   };
+
+    useEffect(() => {
+    document.title = "로그인 | PIROIN";
+  }, []);
 
   return (
     <div className={styles.container}>

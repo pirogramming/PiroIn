@@ -196,7 +196,7 @@ public class QuestionService {
                 .orElseGet(() -> {
                     // 처음 댓글 다는 유저 → 역할별 카운트 기반으로 새 번호 부여
                     int nextNo = anonymousIdentityRepository
-                            .countByQuestionAndUser_Role(question, commenter.getRole()) + 1;
+                            .findMaxAnonymousNoByQuestionAndRole(question, commenter.getRole()) + 1;
 
                     anonymousIdentityRepository.save(QuestionAnonymousIdentity.builder()
                             .question(question)
@@ -242,7 +242,12 @@ public class QuestionService {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return QuestionResDTO.CreateRes.from(questionRepository.save(question));
+        Question saved = questionRepository.save(question);
+
+        // DB 반영 후 같은 세션을 보고 있는 모든 클라이언트에게 새 질문을 알림
+        publishQuestionCreatedEventAfterCommit(saved);
+
+        return QuestionResDTO.CreateRes.from(saved);
     }
 
     // 좋아요 토글
@@ -375,6 +380,11 @@ public class QuestionService {
                 .updatedAt(now)
                 .build());
 
+        int attendanceCount = attendanceService.countAttendedBySession(session);
+
+        // DB 반영 후 같은 세션을 보고 있는 모든 클라이언트에게 새 이해도 체크를 알림
+        publishUnderstandingCheckCreatedEventAfterCommit(session.getId(), check, attendanceCount);
+
         return new QuestionResDTO.UnderstandingCheckCreateResponse(
                 check.getId(), check.getTitle(), 0, null, 0, 0, check.getCreatedAt()
         );
@@ -396,7 +406,12 @@ public class QuestionService {
         UnderstandResChoice selectedChoice = applyUnderstandingResponse(check, loginUser, request.getChoice());
         // O/X 클릭 직후 프론트가 13/29와 O/X 뱃지를 바로 갱신할 수 있도록 최신 분모도 함께 내려준다.
         int attendanceCount = attendanceService.countAttendedBySession(session);
-        return toUnderstandingResponseResult(check, selectedChoice, attendanceCount);
+        QuestionResDTO.UnderstandingResponseResult result = toUnderstandingResponseResult(check, selectedChoice, attendanceCount);
+
+        // DB 반영 후 같은 세션을 보고 있는 모든 클라이언트의 이해도 카운트를 갱신
+        publishUnderstandingResponseUpdatedEventAfterCommit(sessionId, result);
+
+        return result;
     }
 
     // 공통 헬퍼 메서드
@@ -675,6 +690,57 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
+    }
+
+    private void publishQuestionCreatedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+
+        QuestionResDTO.QuestionCreatedEvent event = new QuestionResDTO.QuestionCreatedEvent(
+                "QUESTION_CREATED",
+                sessionId,
+                question.getId(),
+                question.getContent(),
+                question.getImageUrl(),
+                question.getLikeCount(),
+                0,  // 방금 만들어진 질문이므로 댓글 수는 0
+                question.getCreatedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishQuestionCreated(sessionId, event));
+    }
+
+    private void publishUnderstandingCheckCreatedEventAfterCommit(
+            Long sessionId, UnderstandingCheck check, int attendanceCount
+    ) {
+        QuestionResDTO.UnderstandingCheckCreatedEvent event = new QuestionResDTO.UnderstandingCheckCreatedEvent(
+                "UNDERSTANDING_CHECK_CREATED",
+                sessionId,
+                check.getId(),
+                check.getTitle(),
+                0,               // 생성 직후 응답 수 0
+                attendanceCount,
+                0,               // 생성 직후 O 0
+                0,               // 생성 직후 X 0
+                check.getCreatedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishUnderstandingCheckCreated(sessionId, event));
+    }
+
+    private void publishUnderstandingResponseUpdatedEventAfterCommit(
+            Long sessionId, QuestionResDTO.UnderstandingResponseResult result
+    ) {
+        QuestionResDTO.UnderstandingResponseUpdatedEvent event = new QuestionResDTO.UnderstandingResponseUpdatedEvent(
+                "UNDERSTANDING_RESPONSE_UPDATED",
+                sessionId,
+                result.checkId(),
+                result.respondedCount(),
+                result.attendanceCount(),
+                result.understoodCount(),
+                result.notUnderstoodCount()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishUnderstandingResponseUpdated(sessionId, event));
     }
 
     // 롤백된 댓글이 실시간 화면에 먼저 보이지 않도록, 활성화된 트랜잭션 동기화 안에서만 커밋 이후 이벤트를 발행한다.

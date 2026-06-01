@@ -47,4 +47,34 @@
   font-size: 18px;
   margin: 4px 0;
   font-weight: 550;
+  text-align: center;
+}
+
+/* ── 모바일 ── */
+@media (max-width: 480px) {
+  .title {
+    font-size: 60px;
+    margin-bottom: 32px;
+  }
+
+  .logoWrap {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 32px;
+  }
+
+  .logoWrap img {
+    width: 200px;
+    height: 200px;
+  }
+
+  .circle {
+    width: 86px;
+    height: 86px;
+  }
+
+  .sub {
+    font-size: 14px;
+    padding: 0 24px;
+  }
 }

@@ -31,21 +31,14 @@ public class SecurityConfig {
                 // 이 설정이 없으면 preflight(OPTIONS) 요청이 Security 단에서 차단되어 405 반환
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // 로그인 페이지는 로그인 안 된 상태에서 접근 가능
+                        // 로그인
                         .requestMatchers("/api/auth/login").permitAll()
-
-                        // curriculum: GET은 로그인한 누구나, POST/PATCH/DELETE는 ADMIN만 -> 이중 보안 느낌
-                        .requestMatchers(HttpMethod.GET, "/api/curriculums").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/curriculums").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
-
-                        // understanding check: 생성은 ADMIN만 가능
-                        .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")
 
                         // Swagger
                         .requestMatchers(
@@ -57,10 +50,25 @@ public class SecurityConfig {
                         // Actuator health check
                         .requestMatchers("/actuator/health").permitAll()
 
-                        // 다른 도메인 권한 설정 필요 시 위 패턴 참고해서 추가
-                        // 단, 추가하지 않아도 무방함
-                        // 이유 1. anyRequest().authenticated()로 비로그인 접근 차단
-                        // 이유 2. 프론트에서 ADMIN 전용 버튼/기능을 UI 단에서 숨김 처리
+                        // ADMIN 전용 엔드포인트
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/curriculums").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/assignments/create").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/assignments/modify/{assignmentId}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/assignments/{assignmentId}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/assignments/{week}/view").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.GET, "/api/deposit/{userId}/deposit/view").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/deposit/{userId}/deposit/defence").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/questions/{questionId}/status").hasRole("ADMIN")
+
+                        // 나머지는 로그인한 사용자면 접근 가능
                         .anyRequest().authenticated()
 
                 )

@@ -27,6 +27,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // CorsConfig에서 등록한 CORS 설정을 Spring Security 필터 체인에 적용
+                // 이 설정이 없으면 preflight(OPTIONS) 요청이 Security 단에서 차단되어 405 반환
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session ->

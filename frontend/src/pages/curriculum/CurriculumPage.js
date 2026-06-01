@@ -12,6 +12,15 @@ const DAY_LABEL = { TUESDAY: '화요일', THURSDAY: '목요일', SATURDAY: '토�
 const STATUS_OPTIONS = ['BEFORE', 'ONGOING', 'AFTER'];
 const STATUS_LABEL = { BEFORE: '세션 전', ONGOING: '세션 중', AFTER: '세션 후' };
 
+// sessionDate(yyyy-mm-dd)에서 요일 계산
+function getWeekDayFromDate(dateStr) {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const map = { 2: '화요일', 4: '목요일', 6: '토요일' };
+    return map[date.getDay()] || '';
+}
+
 // ── 세션 정보 렌더 (공통) ─────────────────────────────
 function SessionInfo({ session, isAdmin }) {
     const icon = session.dayPart === 'AM' ? AmImg : PmImg;
@@ -47,7 +56,7 @@ function MemberSessionCard({ day }) {
     const [isOpen, setIsOpen] = useState(false);
     const amSession = day.sessions?.find(s => s.dayPart === 'AM');
     const pmSession = day.sessions?.find(s => s.dayPart === 'PM');
-    const weekDay = DAY_LABEL[day.dayOfWeek] || '';
+    const weekDay = getWeekDayFromDate(day.sessionDate) || DAY_LABEL[day.dayOfWeek] || '';
 
     return (
         <div className={styles.sessionCard}>
@@ -56,7 +65,7 @@ function MemberSessionCard({ day }) {
                     <span className={styles.cardTitle}>{day.week}주차 {weekDay} 세션</span>
                     <span className={styles.cardDate}>{day.sessionDate}</span>
                 </div>
-                <img src={Toggle1}  className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />                
+                <img src={Toggle1} className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />
             </div>
             <hr className={styles.divider}/>
 
@@ -81,10 +90,10 @@ function MemberSessionCard({ day }) {
 
 // ── 운영진용 세션 카드 ────────────────────────────────
 function AdminSessionCard({ day, onEdit, onDelete }) {
-    const [isOpen, setIsOpen] = useState(true);
+    const [isOpen, setIsOpen] = useState(false);
     const amSession = day.sessions?.find(s => s.dayPart === 'AM');
     const pmSession = day.sessions?.find(s => s.dayPart === 'PM');
-    const weekDay = DAY_LABEL[day.dayOfWeek] || '';
+    const weekDay = getWeekDayFromDate(day.sessionDate) || DAY_LABEL[day.dayOfWeek] || '';
 
     return (
         <div className={styles.sessionCard}>

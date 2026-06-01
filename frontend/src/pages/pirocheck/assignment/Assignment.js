@@ -56,13 +56,14 @@ function AssignmentModal({ item, onClose, onSave }) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title: form.title, week: form.week, day: form.day }),
         });
-        onSave();
+        onSave(form.title);
         onClose();
     };
 
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modal}>
+                <button className={styles.modalCloseBtn} onClick={onClose}>✕</button>
                 <img src={LogoImg} className={styles.modalLogo} alt="logo" />
                 <div className={styles.modalTitle}>ASSIGNMENT</div>
                 <div className={styles.modalRow}>
@@ -113,21 +114,21 @@ function WeekBlock({ weekData, role, onEdit, onDelete }) {
                                     <span className={styles.dayLabel}>{dayMap[session.day]}</span>
                                     {session.sessionDate && <span className={styles.sessionTitle}>{session.sessionDate}</span>}
                                 </div>
-                                {role === 'ADMIN' && (
-                                    <div className={styles.sessionActions}>
-                                        <button className={styles.iconBtn} onClick={() => onEdit(session.items[0])}>
-                                            <img src={EditIcon} className={styles.actionIcon} alt="수정" />
-                                        </button>
-                                        <button className={styles.iconBtn} onClick={() => onDelete(session.items[0].assignmentId)}>
-                                            <img src={DeleteIcon} className={styles.actionIcon} alt="삭제" />
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                             {session.items.map((item, k) => (
                                 <div key={k} className={styles.assignmentRow}>
                                     <span className={styles.assignmentTitle}>{item.title}</span>
                                     {role === 'MEMBER' && <StatusIcon status={item.submitted} />}
+                                    {role === 'ADMIN' && (
+                                        <div className={styles.sessionActions}>
+                                            <button className={styles.iconBtn} onClick={() => onEdit(item)}>
+                                                <img src={EditIcon} className={styles.actionIcon} alt="수정" />
+                                            </button>
+                                            <button className={styles.iconBtn} onClick={() => onDelete(item.assignmentId)}>
+                                                <img src={DeleteIcon} className={styles.actionIcon} alt="삭제" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {j < grouped.length - 1 && <hr className={styles.divider} />}
@@ -154,6 +155,18 @@ function Assignment() {
             )
         );
         setWeeks(results);
+    };
+
+    // 수정 시 로컬 state만 업데이트 (순서 유지)
+    const handleEditSave = (updatedItem) => {
+        setWeeks(prev => prev.map(w => ({
+            ...w,
+            assignments: w.assignments.map(a =>
+                a.assignmentId === updatedItem.assignmentId
+                    ? { ...a, ...updatedItem }
+                    : a
+            )
+        })));
     };
 
     useEffect(() => { fetchAll(); }, []);
@@ -186,7 +199,7 @@ function Assignment() {
                 <AssignmentModal
                     item={modalItem}
                     onClose={() => setModalItem(undefined)}
-                    onSave={fetchAll}
+                    onSave={modalItem ? (updated) => handleEditSave({ ...modalItem, title: updated }) : fetchAll}
                 />
             )}
         </div>

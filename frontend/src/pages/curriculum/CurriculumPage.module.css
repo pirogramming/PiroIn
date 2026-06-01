@@ -74,12 +74,13 @@
     padding: 30px 30px 24px 30px;
     min-width: 200px;
     width: calc(28% - 14px);
-    height: 380px;
+    max-height: 380px;
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     box-sizing: border-box;
     overflow: hidden;
+    transition: max-height 0.3s ease;
 }
 
 .cardHeader {

@@ -37,10 +37,10 @@ function WeekBlock({ weekData, onChange }) {
 
             {isOpen && (
                 <div className={styles.weekBody}>
-                    {weekData.days.length === 0 && (
+                    {(!weekData.days || weekData.days.length === 0) && (
                         <div className={styles.empty}>데이터가 없습니다.</div>
                     )}
-                    {weekData.days.map((day, i) => (
+                    {(weekData.days || []).map((day, i) => (
                         <div key={i} className={styles.dayBlock}>
                             <div className={styles.dayHeader} onClick={() => toggleDay(day.day)}>
                                 <div className={styles.dayLeft}>

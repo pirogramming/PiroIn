@@ -1,6 +1,8 @@
 package com.example.Piroin.project.domain.attendance.service;
 
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
+import com.example.Piroin.project.domain.curriculum.exception.code.CurriculumErrorCode;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.deposit.entity.Deposit;
 import com.example.Piroin.project.domain.deposit.repository.DepositRepository;
@@ -41,7 +43,6 @@ public class AttendanceService {
     private final AttendanceCodeRepository attendanceCodeRepository;
     private final UserRepository userRepository;
     private final DepositService depositService;
-
     private final CurriculumRepository curriculumRepository;
 
     private final AssignmentItemRepository assignmentItemRepository;
@@ -52,16 +53,21 @@ public class AttendanceService {
     @Transactional
     public AttendanceCode generateCodeAndCreateAttendances(LocalDate date) { // [수정] 세션 ID 대신 날짜를 직접 받음
 
-        // 1. [삭제] 더 이상 세션을 조회해서 날짜를 파싱할 필요가 없습니다. (curriculumRepository 조회 제거)
+        // 1-1) 해당 날짜에 커리큘럼이 있는지 확인
+        if (!curriculumRepository.existsBySessionDate(date)) {
+            throw new CurriculumException(
+                    CurriculumErrorCode.ATTENDANCE_DATE_NOT_AVAILABLE
+            );
+        }
 
-        // 2. 해당 날짜에 생성된 출석 코드 개수 조회
+        // 1-2) 해당 날짜에 생성된 출석 코드 개수 조회.
         long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(date);
 
         if (codeCountOfDay >= 3) {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
         }
 
-        // 3. 기존 활성화된 코드들 만료 처리
+        // 1-3) 기존 활성화된 코드들 만료 처리
         List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
         for (AttendanceCode activeCode : activeCodes) {
             activeCode.expire();
@@ -79,11 +85,11 @@ public class AttendanceService {
         }
 
 
-        // 4. 4자리 랜덤 코드 생성 및 차수(Order) 계산
+        // 1-4) 4자리 랜덤 코드 생성 및 차수(Order) 계산
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000));
         String attendanceOrder = String.valueOf(codeCountOfDay + 1); // 1회차, 2회차, 3회차
 
-        // 5. 새로운 AttendanceCode 생성 및 저장
+        // 1-5) 새로운 AttendanceCode 생성 및 저장
         AttendanceCode attendanceCode = AttendanceCode.builder()
                 .attendanceDate(date) // [수정] 파라미터로 받은 날짜 주입
                 .attendanceOrder(attendanceOrder)
@@ -93,11 +99,10 @@ public class AttendanceService {
 
         attendanceCodeRepository.save(attendanceCode);
 
-        // 6. 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
+        // 1-6) 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
         List<User> users = userRepository.findByRole(Role.MEMBER);
 
         for (User user : users) {
-            // [확인] 이미 완벽하게 studySession 대신 attendanceCode를 주입하도록 잘 짜두셨습니다!
             Attendance attendance = Attendance.builder()
                     .user(user)
                     .attendanceCode(attendanceCode)

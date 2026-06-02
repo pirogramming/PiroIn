@@ -37,6 +37,7 @@ function weekCoinIcon(slots) {
 function AdminView() {
     const [code, setCode] = useState(null);
     const [hasCode, setHasCode] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const fetchActiveCode = async () => {
@@ -58,7 +59,13 @@ function AdminView() {
         const res = await authFetch('/api/admin/attendance/start', { method: 'POST' });
         const data = await res.json();
         setCode(data.code);
-        setHasCode(true);
+        if (data.isSuccess) {
+            setCode(data.result.code);
+            setHasCode(true);
+            setMessage('');
+        } else {
+            setMessage(data.message);
+        }
     };
 
     const handleExpire = async () => {
@@ -77,6 +84,13 @@ function AdminView() {
                     </div>
                 ))}
             </div>
+
+            {message && (
+                <div className={styles.adminMsg}>
+                    {message}
+                </div>
+            )}
+
             <div className={styles.manage}>
                 <button className={styles.createBtn} onClick={handleGenerate}>
                     {hasCode ? '재생성' : '출석코드 생성'}

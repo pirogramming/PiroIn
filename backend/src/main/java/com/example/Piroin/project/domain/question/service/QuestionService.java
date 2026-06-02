@@ -27,7 +27,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 @Service
@@ -589,7 +591,7 @@ public class QuestionService {
 
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session, User loginUser) {
         List<Question> questions = questionRepository.findBySessionAndDeletedAtIsNull(session);
-        QuestionSummaryContext summaryContext = getQuestionSummaryContext(questions);
+        QuestionSummaryContext summaryContext = getQuestionSummaryContext(questions, loginUser);
 
         List<QuestionResDTO.QuestionSummaryResponse> popularQuestions = questions.stream()
                 .filter(q -> !q.getIsResolved() && q.getLikeCount() >= POPULAR_LIKE_THRESHOLD)
@@ -616,7 +618,7 @@ public class QuestionService {
             User loginUser
     ) {
         Long questionId = question.getId();
-        boolean isLiked = questionLikeRepository.existsByQuestionAndUser(question, loginUser);
+        boolean isLiked = summaryContext.likedQuestionIds().contains(questionId);
         boolean isMine = question.getUser().getId().equals(loginUser.getId());
         return new QuestionResDTO.QuestionSummaryResponse(
                 questionId, question.getContent(), question.getImageUrl(),
@@ -632,9 +634,9 @@ public class QuestionService {
         );
     }
 
-    private QuestionSummaryContext getQuestionSummaryContext(List<Question> questions) {
+    private QuestionSummaryContext getQuestionSummaryContext(List<Question> questions, User loginUser) {
         if (questions.isEmpty()) {
-            return new QuestionSummaryContext(Map.of(), Map.of());
+            return new QuestionSummaryContext(Map.of(), Map.of(), Set.of());
         }
 
         List<Long> questionIds = questions.stream()
@@ -651,14 +653,17 @@ public class QuestionService {
         questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
                 .forEach(row -> {
                     Question question = questionsById.get(row.getQuestionId());
-                    if (question == null) {
-                        return;
-                    }
+                    if (question == null) return;
                     previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
                             .add(toPreviewCommentResponse(question, row));
                 });
 
-        return new QuestionSummaryContext(commentCounts, previewComments);
+        // 좋아요 여부를 질문마다 조회하는 대신 한 번에 배치 조회한다.
+        Set<Long> likedQuestionIds = new HashSet<>(
+                questionLikeRepository.findLikedQuestionIdsByQuestionIdsAndUser(questionIds, loginUser)
+        );
+
+        return new QuestionSummaryContext(commentCounts, previewComments, likedQuestionIds);
     }
 
     private QuestionResDTO.PreviewCommentResponse toPreviewCommentResponse(
@@ -692,16 +697,26 @@ public class QuestionService {
     private void publishCommentCreatedEventAfterCommit(Question question) {
         Long sessionId = question.getSession().getId();
         Long questionId = question.getId();
-        QuestionSummaryContext summaryContext = getQuestionSummaryContext(List.of(question));
 
-        // 프론트가 전체 목록을 다시 조회하지 않고 해당 질문만 갱신할 수 있는 최소 데이터만 보낸다.
+        // 이벤트 발행용이라 좋아요 여부가 필요 없으므로 댓글 수/미리보기만 직접 조회
+        List<Long> questionIds = List.of(questionId);
+
+        Map<Long, Integer> commentCounts = new HashMap<>();
+        questionCommentRepository.countByQuestionIds(questionIds)
+                .forEach(row -> commentCounts.put(row.getQuestionId(), Math.toIntExact(row.getCommentCount())));
+
+        Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments = new HashMap<>();
+        questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
+                .forEach(row -> previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
+                        .add(toPreviewCommentResponse(question, row)));
+
         QuestionResDTO.CommentCreatedEvent event = new QuestionResDTO.CommentCreatedEvent(
                 "COMMENT_CREATED",
                 sessionId,
                 questionId,
                 question.getIsResolved(),
-                summaryContext.commentCounts().getOrDefault(questionId, 0),
-                summaryContext.previewComments().getOrDefault(questionId, List.of())
+                commentCounts.getOrDefault(questionId, 0),
+                previewComments.getOrDefault(questionId, List.of())
         );
 
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
@@ -774,7 +789,8 @@ public class QuestionService {
 
     private record QuestionSummaryContext(
             Map<Long, Integer> commentCounts,
-            Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments
+            Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments,
+            Set<Long> likedQuestionIds
     ) {
     }
 }

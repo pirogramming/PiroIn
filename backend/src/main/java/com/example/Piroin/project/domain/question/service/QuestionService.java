@@ -132,7 +132,7 @@ public class QuestionService {
         Question question = findQuestion(questionId);
 
         // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
-        QuestionComment parentComment = resolveParentComment(request.getParentCommentId());
+        QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
 
         // 2. 댓글 엔티티 생성 및 저장
         LocalDateTime now = LocalDateTime.now();
@@ -168,12 +168,27 @@ public class QuestionService {
     }
 
     // parentCommentId가 있으면 해당 댓글 조회, 없으면 null 반환
-    private QuestionComment resolveParentComment(Long parentCommentId) {
+    private QuestionComment resolveParentComment(Long parentCommentId, Question question) {
         if (parentCommentId == null) {
             return null;
         }
-        return questionCommentRepository.findById(parentCommentId)
+        QuestionComment parent = questionCommentRepository.findById(parentCommentId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "부모 댓글을 찾을 수 없습니다."));
+
+        // 삭제된 댓글에는 대댓글을 달 수 없음
+        if (parent.getDeletedAt() != null) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "삭제된 댓글에는 대댓글을 달 수 없습니다.");
+        }
+        // 다른 질문의 댓글을 부모로 붙이는 것 방지
+        if (!parent.getQuestion().getId().equals(question.getId())) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "다른 질문의 댓글에는 대댓글을 달 수 없습니다.");
+        }
+        // 대댓글에 또 대댓글을 다는 것 방지 (2depth 제한)
+        if (parent.getParentComment() != null) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "대댓글에는 대댓글을 달 수 없습니다.");
+        }
+
+        return parent;
     }
 
     /*

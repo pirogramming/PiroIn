@@ -15,19 +15,9 @@ function cloverForSlot(status) {
     return <img src={CloverEmpty} className={styles.cloverSvg} alt="미정" />;
 }
 
-// 세션 1회 출석 결과 → 코인/화남 아이콘
-// status: true(출석성공) / false(결석) / null(미정)
-// successCount: 해당 세션에서 출석 성공한 횟수 (AM/PM 등 슬롯 수)
-function sessionIcon(slot) {
-    if (slot.status === true)  return <img src={Coin1} className={styles.histSvg} alt="출석" />;
-    if (slot.status === false) return <img src={AngryIcon} className={styles.histSvg} alt="결석" />;
-    return <img src={AngryIcon} className={styles.histSvg} alt="미정" />;
-}
-
-// 주차 전체 슬롯(3개) → 코인 합산
-function weekCoinIcon(slots) {
+function historyIcon(slots) {
     const successCount = slots.filter(s => s.status === true).length;
-    if (successCount >= 3) return <img src={Coin3} className={styles.histSvg} alt="3회 출석" />;
+    if (successCount === 3) return <img src={Coin3} className={styles.histSvg} alt="3회 출석" />;
     if (successCount === 2) return <img src={Coin2} className={styles.histSvg} alt="2회 출석" />;
     if (successCount === 1) return <img src={Coin1} className={styles.histSvg} alt="1회 출석" />;
     return <img src={AngryIcon} className={styles.histSvg} alt="결석" />;
@@ -114,34 +104,54 @@ function MemberView() {
     const [history, setHistory] = useState([]);
 
     useEffect(() => {
-        const defaultHistory = [1, 2, 3, 4, 5].map(week => ({
-            week,
-            slots: [
-                { status: null },
-                { status: null },
-                { status: null },
-            ]
-        }));
+    const today = new Date().toISOString().split('T')[0];
 
-        // 오늘 출석 현황 초기 fetch (새로고침 시 유지)
-        const today = new Date().toISOString().split('T')[0];
-        authFetch(`/api/attendance/user/date?date=${today}`)
-            .then(r => r.json())
-            .then(d => setTodaySlots(d.data || []))
-            .catch(() => {});
+    authFetch(`/api/attendance/user/date?date=${today}`)
+        .then(r => r.json())
+        .then(d => setTodaySlots(d.data || []))
+        .catch(() => setTodaySlots([]));
 
-        authFetch('/api/attendance/user')
-            .then(r => r.json())
-            .then(data => {
-                const apiData = data.data || [];
-                const merged = defaultHistory.map(def => {
-                    const found = apiData.find(d => d.week === def.week);
-                    return found || def;
-                });
-                setHistory(merged);
-            })
-            .catch(() => setHistory(defaultHistory));
-    }, []);
+    const dayOrder = ['TUESDAY', 'THURSDAY', 'SATURDAY'];
+
+    const defaultHistory = [1, 2, 3, 4, 5].map(week => ({
+        week,
+        days: dayOrder.map(day => ({
+            day,
+            slots: []
+        }))
+    }));
+
+    authFetch('/api/attendance/user')
+        .then(r => r.json())
+        .then(data => {
+            const apiData = data.data || [];
+
+            const merged = defaultHistory.map(def => {
+                const foundWeek = apiData.find(
+                    item => Number(item.week) === Number(def.week)
+                );
+
+                if (!foundWeek) return def;
+
+                return {
+                    week: def.week,
+                    days: dayOrder.map(dayName => {
+                        const foundDay = foundWeek.days?.find(
+                            day => day.day === dayName
+                        );
+
+                        return {
+                            day: dayName,
+                            slots: foundDay?.slots || []
+                        };
+                    })
+                };
+            });
+
+            setHistory(merged);
+        })
+        .catch(() => setHistory(defaultHistory));
+}, []);
 
     const handleSubmit = async () => {
         if (!inputCode.trim()) return;
@@ -162,7 +172,7 @@ function MemberView() {
         } else if (result.statusCode === 'INVALID_CODE') {
             setMessage('출석 코드를 확인해주세요.');
         } else {
-            setMessage(result.message);
+            setMessage(result.message); 
         }
 
         setInputCode('');
@@ -188,22 +198,21 @@ function MemberView() {
 
             {message && <div className={styles.msg}>{message}</div>}
 
-            {/* 오늘 출석 현황 클로버 */}
             <div className={styles.cloverRow}>
                 {displaySlots.map((slot, i) => (
                     <div key={i}>{cloverForSlot(slot.status)}</div>
                 ))}
             </div>
 
-            {/* 주차별 출석 히스토리 */}
             <div className={styles.historyBox}>
                 {history.map((row, i) => (
                     <div key={i} className={styles.historyRow}>
                         <span className={styles.weekLabel}>{row.week}주차</span>
                         <div className={styles.historySlots}>
-                            {/* 슬롯 3개 각각 코인/화남으로 표시 */}
-                            {row.slots.map((slot, j) => (
-                                <div key={j}>{sessionIcon(slot)}</div>
+                            {row.days.map((day) => (
+                                <div key={day.day}>
+                                    {historyIcon(day.slots)}
+                                </div>
                             ))}
                         </div>
                     </div>

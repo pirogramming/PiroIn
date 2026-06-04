@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /*
 StudySession(세션) DB 접근 인터페이스
@@ -24,6 +25,11 @@ public interface CurriculumRepository extends JpaRepository<StudySession, Long> 
     List<StudySession> findAllByOrderBySessionDateAscDayPartAsc();
 
     List<StudySession> findByWeekOrderBySessionDateAsc(Long week);
+
+    boolean existsBySessionDate(LocalDate sessionDate);
+
+    Optional<StudySession> findFirstBySessionDate(LocalDate sessionDate);
+
 
 //    @Query("""
 //        SELECT s

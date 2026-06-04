@@ -9,14 +9,12 @@ import java.util.List;
 
 @Getter
 @Setter
-@Schema(description = "사용자 출석 상태")
+@Schema(description = "사용자 주차별 출석 상태")
 public class AttendanceStatusRes {
-    @Schema(description = "출석 날짜", example = "2025-06-24")
-    private LocalDate date;
 
     @Schema(description = "주차", example = "1")
     private int week;
 
-    @Schema(description = "출석 차시별 상태 목록")
-    private List<AttendanceSlotRes> slots;
+    @Schema(description = "요일별 출석 상태 목록")
+    private List<AttendanceDayStatusRes> days;
 }

@@ -27,6 +27,7 @@ function historyIcon(slots) {
 function AdminView() {
     const [code, setCode] = useState(null);
     const [hasCode, setHasCode] = useState(false);
+    const [message, setMessage] = useState('');
 
     useEffect(() => {
         const fetchActiveCode = async () => {
@@ -48,7 +49,13 @@ function AdminView() {
         const res = await authFetch('/api/admin/attendance/start', { method: 'POST' });
         const data = await res.json();
         setCode(data.code);
-        setHasCode(true);
+        if (data.isSuccess) {
+            setCode(data.result.code);
+            setHasCode(true);
+            setMessage('');
+        } else {
+            setMessage(data.message);
+        }
     };
 
     const handleExpire = async () => {
@@ -67,6 +74,13 @@ function AdminView() {
                     </div>
                 ))}
             </div>
+
+            {message && (
+                <div className={styles.adminMsg}>
+                    {message}
+                </div>
+            )}
+
             <div className={styles.manage}>
                 <button className={styles.createBtn} onClick={handleGenerate}>
                     {hasCode ? '재생성' : '출석코드 생성'}
@@ -90,28 +104,53 @@ function MemberView() {
     const [history, setHistory] = useState([]);
 
     useEffect(() => {
-    // 1~5주차 기본값 세팅
+    const today = new Date().toISOString().split('T')[0];
+
+    authFetch(`/api/attendance/user/date?date=${today}`)
+        .then(r => r.json())
+        .then(d => setTodaySlots(d.data || []))
+        .catch(() => setTodaySlots([]));
+
+    const dayOrder = ['TUESDAY', 'THURSDAY', 'SATURDAY'];
+
     const defaultHistory = [1, 2, 3, 4, 5].map(week => ({
         week,
-        slots: [
-            { status: false },
-            { status: false },
-            { status: false },
-        ]
+        days: dayOrder.map(day => ({
+            day,
+            slots: []
+        }))
     }));
 
     authFetch('/api/attendance/user')
         .then(r => r.json())
         .then(data => {
             const apiData = data.data || [];
-            // API 데이터로 해당 주차 덮어씌우기
+
             const merged = defaultHistory.map(def => {
-                const found = apiData.find(d => d.week === def.week);
-                return found || def;
+                const foundWeek = apiData.find(
+                    item => Number(item.week) === Number(def.week)
+                );
+
+                if (!foundWeek) return def;
+
+                return {
+                    week: def.week,
+                    days: dayOrder.map(dayName => {
+                        const foundDay = foundWeek.days?.find(
+                            day => day.day === dayName
+                        );
+
+                        return {
+                            day: dayName,
+                            slots: foundDay?.slots || []
+                        };
+                    })
+                };
             });
+
             setHistory(merged);
         })
-        .catch(() => setHistory(defaultHistory)); 
+        .catch(() => setHistory(defaultHistory));
 }, []);
 
     const handleSubmit = async () => {
@@ -170,7 +209,11 @@ function MemberView() {
                     <div key={i} className={styles.historyRow}>
                         <span className={styles.weekLabel}>{row.week}주차</span>
                         <div className={styles.historySlots}>
-                            {historyIcon(row.slots)}
+                            {row.days.map((day) => (
+                                <div key={day.day}>
+                                    {historyIcon(day.slots)}
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}

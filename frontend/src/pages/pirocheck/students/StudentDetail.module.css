@@ -7,27 +7,16 @@
     background: var(--black);
 }
 
-.mockBanner {
-    background: #5a3e00;
-    color: #ffd166;
-    font-family: var(--font-main);
-    font-size: 0.85rem;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    width: 480px;
-    box-sizing: border-box;
-    text-align: center;
-}
-
 .card {
     width: 480px;
+    max-width: calc(100vw - 56px);
     background: var(--gray600);
     border-radius: 20px;
-    padding: 40px 40px;
+    padding: 40px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+    box-sizing: border-box;
 }
 
 /* 프로필 */
@@ -66,6 +55,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
 }
 
 .depositBoxGray {
@@ -76,6 +66,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0;
 }
 
 .depositLabel {
@@ -99,7 +90,8 @@
 }
 
 .defenceInput {
-    width: 80px;
+    flex: 1;
+    min-width: 0;
     border: none;
     background: transparent;
     font-family: var(--font-main);
@@ -126,7 +118,7 @@
     font-size: 0.75rem;
     font-weight: 550;
     cursor: pointer;
-    margin-left: 30px;
+    flex-shrink: 0;
 }
 
 .saveBtn:hover { background: var(--gray600); color: var(--white); transition: all ease-in-out 0.2s; }
@@ -167,7 +159,6 @@
     margin-left: 5px;
 }
 
-/* 토글 애니메이션 */
 .toggleIcon {
     width: 15px;
     height: 15px;
@@ -200,7 +191,6 @@
 }
 
 /* 요일 블록 */
-
 .dayHeader {
     display: flex;
     align-items: center;
@@ -236,7 +226,6 @@
     gap: 8px;
 }
 
-/* 출석/과제 그룹 - 레이블 옆에 아이템들 */
 .statusGroup {
     display: flex;
     align-items: flex-start;
@@ -274,34 +263,29 @@
 }
 
 .select {
-    padding: 3px 28px 3px 12px; 
-    width: 80px; 
+    padding: 3px 28px 3px 12px;
+    width: 80px;
     box-sizing: border-box;
-
     background: var(--gray600);
     border: 1px solid var(--white);
     border-radius: 6px;
     color: var(--white);
     font-family: var(--font-main);
     font-size: 0.85rem;
-    cursor: pointer;    
-
+    cursor: pointer;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
     background-repeat: no-repeat;
-    
-    background-position: right 10px center; 
+    background-position: right 10px center;
+    flex-shrink: 0;
 }
 
-.select::-ms-expand {
-    display: none;
-}
+.select::-ms-expand { display: none; }
 
 .saveWeekBtn {
-    margin: 20px 0;
+    margin: 20px auto;
     padding: 5px 30px;
     background: transparent;
     border: 1.5px solid var(--main);
@@ -312,8 +296,6 @@
     font-weight: 600;
     cursor: pointer;
     display: block;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .saveWeekBtn:hover { background: var(--main); color: var(--white); transition: all ease-in-out 0.2s; }
@@ -324,7 +306,6 @@
     margin: 10px 0;
 }
 
-/* 전체 저장 */
 .saveAllBtn {
     width: 60%;
     margin: 0 auto;
@@ -341,3 +322,77 @@
 }
 
 .saveAllBtn:hover { background: var(--main); transition: all ease-in-out 0.2s; }
+
+/* ── 태블릿 ── */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .depositEditRow {
+        flex-wrap: wrap;
+    }
+
+    .saveBtn {
+        margin-left: 0;
+        align-self: flex-start;
+    }
+}
+
+/* ── 모바일 ── */
+@media (max-width: 480px) {
+    .container {
+        padding: 48px 28px;
+    }
+
+    .card {
+        padding: 28px 20px;
+    }
+
+    .profileName {
+        font-size: 1.5rem;
+    }
+
+    .depositLabel {
+        font-size: 0.9rem;
+    }
+
+    .depositValue {
+        font-size: 1rem;
+    }
+
+    .defenceInput {
+        font-size: 1rem;
+    }
+
+    .won {
+        font-size: 1rem;
+    }
+
+    .depositEditRow {
+        flex-wrap: wrap;
+    }
+
+    .saveBtn {
+        width: 100%;
+        margin-left: 0;
+        font-size: 0.7rem;
+        padding: 6px 8px;
+        text-align: center;
+    }
+
+    .toggleIcon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .toggleIcon2 {
+        width: 16px;
+        height: 16px;
+    }
+
+    .weekBody {
+        margin-left: 24px;
+        margin-right: 12px;
+    }
+
+    .saveAllBtn {
+        width: 100%;
+    }
+}

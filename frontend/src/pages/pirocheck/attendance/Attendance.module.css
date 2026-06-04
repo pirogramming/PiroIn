@@ -3,7 +3,7 @@
     flex-direction: column;
     align-items: center;
     padding: 60px 20px;
-    min-height: calc(80vh - 100px); 
+    min-height: calc(80vh - 100px);
     background: var(--black);
     justify-content: center;
 }
@@ -14,7 +14,7 @@
     font-weight: 800;
     color: var(--main);
     margin-bottom: 50px;
-    letter-spacing: 0.05em;
+    text-align: center;
 }
 
 /* ── ADMIN ── */
@@ -39,6 +39,14 @@
     color: var(--white);
 }
 
+.adminMsg {
+    margin-top: 16px;
+    margin-bottom: 20px;
+    color: #ff4d4f;
+    font-size: 16px;
+    text-align: center;
+}
+
 .manage {
     display: flex;
     flex-direction: column;
@@ -60,7 +68,7 @@
     transition: opacity 0.2s;
 }
 
-.createBtn:hover { background: var(--main); transition: all ease-in-out 0.2s;}
+.createBtn:hover { background: var(--main); transition: all ease-in-out 0.2s; }
 
 .manageLink {
     color: var(--white);
@@ -78,11 +86,13 @@
     display: flex;
     align-items: center;
     background: var(--gray600);
-    border-radius: 10px;     
+    border-radius: 10px;
     overflow: hidden;
     width: 480px;
+    max-width: calc(100vw - 56px);
     margin-bottom: 16px;
     padding: 3px 3px 3px 20px;
+    box-sizing: border-box;
 }
 
 .codeInput {
@@ -101,7 +111,7 @@
     padding: 10px 20px;
     background: var(--dark);
     border: none;
-    border-radius: 10px;    
+    border-radius: 10px;
     color: var(--white);
     font-family: var(--font-main);
     font-size: 1rem;
@@ -164,4 +174,52 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+/* ── 모바일 ── */
+@media (max-width: 480px) {
+    .container {
+        padding: 48px 28px;
+    }
+
+    .title {
+        font-size: 2.8rem;
+        margin-bottom: 36px;
+        word-break: keep-all;
+        line-height: 1.2;
+    }
+
+    /* ADMIN */
+    .code {
+        width: 68px;
+        height: 84px;
+        font-size: 2.2rem;
+    }
+
+    .codebox {
+        gap: 10px;
+    }
+
+    .createBtn {
+        width: calc(100vw - 56px);
+        max-width: 320px;
+    }
+
+    /* MEMBER */
+    .cloverSvg {
+        width: 63px;
+        height: 63px;
+    }
+
+    .cloverRow {
+        gap: 28px;
+        margin-top: 28px;
+        margin-bottom: 28px;
+    }
+
+    .historyBox {
+        width: calc(100vw - 56px);
+        padding: 24px 28px;
+        box-sizing: border-box;
+    }
 }

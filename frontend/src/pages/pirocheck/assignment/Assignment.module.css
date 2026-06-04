@@ -36,6 +36,7 @@
     border-radius: 16px;
     margin-bottom: 20px;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .weekHeader {
@@ -153,6 +154,7 @@
 .statusIcon {
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
 }
 
 .divider {
@@ -195,25 +197,44 @@
 }
 
 .modal {
+    position: relative;
     background: #3a3a3a;
     border-radius: 20px;
     padding: 40px 60px;
-    width: 420px;
+    width: clamp(360px, 40vw, 520px);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px; 
+    gap: 16px;
+    box-sizing: border-box;
 }
 
+/* X 닫기 버튼 */
+.modalCloseBtn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s;
+}
+
+.modalCloseBtn:hover { color: var(--white); }
+
 .modalLogo {
-    width: 200px;
-    height: 200px;
+    width: 160px;
+    height: 160px;
     object-fit: contain;
 }
 
 .modalTitle {
-    font-family: var(--font-main);
-    font-size: 3rem;
+    font-family: var(--font-title);
+    font-size: 2.6rem;
     font-weight: 800;
     color: var(--main);
     letter-spacing: 0;
@@ -223,36 +244,33 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    width: 85%;
+    width: 100%;
     margin-top: 10px;
 }
 
 .select {
-    padding: 10px 36px 10px 20px; 
+    padding: 10px 36px 10px 20px;
     background-color: var(--pale);
-
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
     background-repeat: no-repeat;
     background-position: right 16px center;
-    
     border: none;
     border-radius: 8px;
     font-family: var(--font-main);
     font-size: 1rem;
     cursor: pointer;
     flex: 1;
+    min-width: 0;
 }
 
-.select::-ms-expand {
-    display: none;
-}
+.select::-ms-expand { display: none; }
+
 .modalInput {
-    width: 85%; 
-    padding: 12px 20px; 
+    width: 100%;
+    padding: 12px 20px;
     background: var(--pale);
     border: none;
     border-radius: 8px;
@@ -265,6 +283,7 @@
     color: var(--white);
     font-family: var(--font-main);
     font-size: 1.2rem;
+    white-space: nowrap;
 }
 
 .saveBtn {
@@ -284,4 +303,109 @@
 .saveBtn:hover {
     background: var(--main);
     color: var(--black);
+}
+
+/* ── 모바일 ── */
+@media (max-width: 640px) {
+    .container {
+        padding: 40px 24px;
+    }
+
+    .title {
+        font-size: 3rem;
+        margin-bottom: 28px;
+        text-align: center;
+        word-break: keep-all;
+        line-height: 1.2;
+    }
+
+    .mockBanner {
+        width: 100%;
+    }
+
+    .weekBlock {
+        width: 100%;
+    }
+
+    .weekHeader {
+        padding: 20px;
+    }
+
+    .weekBody {
+        padding: 0 20px 20px;
+    }
+
+    /* 모달 */
+    .modalOverlay {
+        align-items: center;
+        padding: 24px;
+        box-sizing: border-box;
+    }
+
+    .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px;
+        padding: 40px 24px 40px;
+    }
+
+    .modalLogo {
+        width: 120px;
+        height: 120px;
+    }
+
+    .modalTitle {
+        font-size: 2rem;
+    }
+
+    .modalRow {
+        width: 100%;
+    }
+
+    .modalInput {
+        width: 100%;
+    }
+
+    .addBtn {
+        bottom: 24px;
+        right: 20px;
+    }
+
+    .assignmentTitle {
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 8px;
+    }
+
+    .sessionTitle {
+        font-size: 0.85rem;
+    }
+
+    .dayLabel {
+        font-size: 1.1rem;
+    }
+}
+/* ── 태블릿 ── */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .container {
+        padding: 48px 32px;
+    }
+
+    .weekBlock {
+        width: 100%;
+        max-width: 720px;
+    }
+
+    .mockBanner {
+        width: 100%;
+        max-width: 720px;
+    }
+
+    .modal {
+        width: clamp(400px, 70vw, 560px);
+    }
 }

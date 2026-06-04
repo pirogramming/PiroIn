@@ -1,6 +1,9 @@
 package com.example.Piroin.project.domain.attendance.service;
 
+import com.example.Piroin.project.domain.assignment.repository.AssignmentRepository;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
+import com.example.Piroin.project.domain.curriculum.exception.code.CurriculumErrorCode;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
 import com.example.Piroin.project.domain.deposit.entity.Deposit;
 import com.example.Piroin.project.domain.deposit.repository.DepositRepository;
@@ -23,13 +26,11 @@ import com.example.Piroin.project.domain.assignment.entity.AssignmentItem;
 import com.example.Piroin.project.domain.assignment.repository.AssignmentItemRepository;
 import com.example.Piroin.project.domain.attendance.dto.UpdateUserStatusReq;
 import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
+import com.example.Piroin.project.domain.attendance.dto.AttendanceDayStatusRes;
 
 
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -41,10 +42,7 @@ public class AttendanceService {
     private final AttendanceCodeRepository attendanceCodeRepository;
     private final UserRepository userRepository;
     private final DepositService depositService;
-
     private final CurriculumRepository curriculumRepository;
-
-    private final AssignmentItemRepository assignmentItemRepository;
 
 
 
@@ -52,16 +50,21 @@ public class AttendanceService {
     @Transactional
     public AttendanceCode generateCodeAndCreateAttendances(LocalDate date) { // [수정] 세션 ID 대신 날짜를 직접 받음
 
-        // 1. [삭제] 더 이상 세션을 조회해서 날짜를 파싱할 필요가 없습니다. (curriculumRepository 조회 제거)
+        // 1-1) 해당 날짜에 커리큘럼이 있는지 확인
+        if (!curriculumRepository.existsBySessionDate(date)) {
+            throw new CurriculumException(
+                    CurriculumErrorCode.ATTENDANCE_DATE_NOT_AVAILABLE
+            );
+        }
 
-        // 2. 해당 날짜에 생성된 출석 코드 개수 조회
+        // 1-2) 해당 날짜에 생성된 출석 코드 개수 조회.
         long codeCountOfDay = attendanceCodeRepository.countByAttendanceDate(date);
 
         if (codeCountOfDay >= 3) {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
         }
 
-        // 3. 기존 활성화된 코드들 만료 처리
+        // 1-3) 기존 활성화된 코드들 만료 처리
         List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
         for (AttendanceCode activeCode : activeCodes) {
             activeCode.expire();
@@ -79,11 +82,11 @@ public class AttendanceService {
         }
 
 
-        // 4. 4자리 랜덤 코드 생성 및 차수(Order) 계산
+        // 1-4) 4자리 랜덤 코드 생성 및 차수(Order) 계산
         String code = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000));
         String attendanceOrder = String.valueOf(codeCountOfDay + 1); // 1회차, 2회차, 3회차
 
-        // 5. 새로운 AttendanceCode 생성 및 저장
+        // 1-5) 새로운 AttendanceCode 생성 및 저장
         AttendanceCode attendanceCode = AttendanceCode.builder()
                 .attendanceDate(date) // [수정] 파라미터로 받은 날짜 주입
                 .attendanceOrder(attendanceOrder)
@@ -93,11 +96,10 @@ public class AttendanceService {
 
         attendanceCodeRepository.save(attendanceCode);
 
-        // 6. 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
+        // 1-6) 모든 MEMBER 유저에 대해 '현재 생성된 출석 코드' 기준 초기 출석 데이터 생성
         List<User> users = userRepository.findByRole(Role.MEMBER);
 
         for (User user : users) {
-            // [확인] 이미 완벽하게 studySession 대신 attendanceCode를 주입하도록 잘 짜두셨습니다!
             Attendance attendance = Attendance.builder()
                     .user(user)
                     .attendanceCode(attendanceCode)
@@ -233,103 +235,92 @@ public class AttendanceService {
                 .toList();
     }
 
-    // 6. 유저의 전체 출석 현황을 날짜별로 묶어서 조회하는 함수
+    // 6. 나의 전체 출석 현황 조회 서비스
     public List<AttendanceStatusRes> findByUserId(Integer userId) {
 
         List<Attendance> attendances =
                 attendanceRepository.findByUserId(Long.valueOf(userId));
 
-        // LocalDate 기준으로 그룹화
-        Map<LocalDate, List<Attendance>> grouped = attendances.stream()
-                .collect(Collectors.groupingBy(
-                        attendance -> attendance.getAttendanceCode().getAttendanceDate()
-                ));
+        // 날짜별 그룹화
+        Map<LocalDate, List<Attendance>> dateGrouped =
+                attendances.stream()
+                        .collect(Collectors.groupingBy(
+                                attendance ->
+                                        attendance.getAttendanceCode().getAttendanceDate()
+                        ));
 
-        return grouped.entrySet().stream()
-                .map(entry -> {
+        // 주차별 그룹화
+        Map<Integer, List<AttendanceDayStatusRes>> weekGrouped =
+                new HashMap<>();
 
-                    LocalDate date = entry.getKey();
+        for (Map.Entry<LocalDate, List<Attendance>> entry : dateGrouped.entrySet()) {
 
-                    List<AttendanceSlotRes> slots = entry.getValue().stream()
-                            .map(attendance -> new AttendanceSlotRes(
-                                    attendance.getAttendanceCode().getId(),
-                                    attendance.getStatus()
-                            ))
-                            .sorted(Comparator.comparing(AttendanceSlotRes::getAttendanceCodeId))
+            LocalDate date = entry.getKey();
+
+            StudySession studySession =
+                    curriculumRepository
+                            .findFirstBySessionDate(date)
+                            .orElseThrow(() ->
+                                    new RuntimeException("세션이 존재하지 않습니다.")
+                            );
+
+            int week = studySession.getWeek().intValue();
+
+            List<AttendanceSlotRes> slots =
+                    entry.getValue().stream()
+                            .map(attendance ->
+                                    new AttendanceSlotRes(
+                                            attendance.getAttendanceCode().getId(),
+                                            attendance.getStatus()
+                                    )
+                            )
+                            .sorted(
+                                    Comparator.comparing(
+                                            AttendanceSlotRes::getAttendanceCodeId
+                                    )
+                            )
                             .toList();
 
-                    AttendanceStatusRes dto = new AttendanceStatusRes();
-                    dto.setDate(date);
-                    dto.setSlots(slots);
+            AttendanceDayStatusRes dayRes = new AttendanceDayStatusRes();
+            dayRes.setDate(date);
+            dayRes.setDay(date.getDayOfWeek().toString());
+            dayRes.setSlots(slots);
+
+
+            weekGrouped
+                    .computeIfAbsent(week, k -> new ArrayList<>())
+                    .add(dayRes);
+        }
+
+        return weekGrouped.entrySet().stream()
+                .map(entry -> {
+
+                    AttendanceStatusRes dto =
+                            new AttendanceStatusRes();
+
+                    dto.setWeek(entry.getKey());
+
+                    dto.setDays(
+                            entry.getValue().stream()
+                                    .sorted(
+                                            Comparator.comparing(
+                                                    AttendanceDayStatusRes::getDate
+                                            )
+                                    )
+                                    .toList()
+                    );
 
                     return dto;
                 })
-                .sorted(Comparator.comparing(AttendanceStatusRes::getDate).reversed())
+                .sorted(
+                        Comparator.comparing(
+                                AttendanceStatusRes::getWeek
+                        )
+                )
                 .toList();
     }
-//
-//    // 6. 유저 상태 변경 (관리자)
-//    // 컨트롤러 부분은 출석만 받는데 여기는 출석&과제 둘 다 받아서 추후에 수정 예정
-//    @Transactional
-//    public boolean updateUserStatus(Integer userId, UpdateUserStatusReq req) {
-//        boolean updated = false;
-//
-//        // 출석 상태 변경 코드
-//        if (req.getAttendanceId() != null && req.getAttendanceStatus() != null) {
-//            Attendance attendance = attendanceRepository.findById(req.getAttendanceId())
-//                    .orElseThrow(() -> new IllegalArgumentException("출석 기록을 찾을 수 없습니다."));
-//
-//            if (!attendance.getUser().getId().equals(userId)) {
-//                throw new IllegalArgumentException("요청된 사용자와 출석 기록의 사용자가 일치하지 않습니다.");
-//            }
-//
-//            attendance.updateStatus(req.getAttendanceStatus());
-//            updated = true;
-//        }
-//
-//        // 과제 상태 변경 코드
-//        if (req.getAssignmentItemId() != null && req.getAssignmentStatus() != null) {
-//            AssignmentItem assignmentItem = assignmentItemRepository.findById(Math.toIntExact(req.getAssignmentItemId()))
-//                    .orElseThrow(() -> new IllegalArgumentException("과제 기록을 찾을 수 없습니다."));
-//
-//            if (!assignmentItem.getUser().getId().equals(userId)) {
-//                throw new IllegalArgumentException("요청된 사용자와 과제 기록의 사용자가 일치하지 않습니다.");
-//            }
-//
-//            assignmentItem.updateSubmitted(req.getAssignmentStatus());
-//            updated = true;
-//        }
-//
-//        // 출석 변경 → 보증금 재계산 (과제 변경도 포함이 되어 있나..?)
-//        if (updated) {
-//            depositService.recalculateDeposit(Long.valueOf(userId));
-//        }
-//
-//        return updated;
-//    }
+
 
 
 }
 
-/*
-    // 관리자가 유저의 출석 상태를 변경하는 함수(나중에 과제까지 같이 변경되도록 수정할 것)
-    @Transactional
-    public boolean updateAttendanceStatus(Long attendanceId, boolean status) {
-        Optional<Attendance> attendanceOpt = attendanceRepository.findById(attendanceId);
-
-        if (attendanceOpt.isEmpty()) {
-            return false;
-        }
-
-        // 출석 상태 변경
-        Attendance attendance = attendanceOpt.get();
-        attendance.setStatus(status);
-        attendanceRepository.save(attendance);
-
-        // 출석 변경 → 보증금 재계산
-        depositService.recalculateDeposit(attendance.getUser().getId());
-
-        return true;
-    }
-
- */

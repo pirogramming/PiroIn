@@ -7,19 +7,6 @@
     background: var(--black);
 }
 
-.mockBanner {
-    background: #5a3e00;
-    color: #ffd166;
-    font-family: var(--font-main);
-    font-size: 0.85rem;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    text-align: center;
-    width: 400px;
-    box-sizing: border-box;
-}
-
 .title {
     font-family: var(--font-title);
     font-size: 3rem;
@@ -32,6 +19,7 @@
 /* 잔여 보증금 박스 */
 .amountBox {
     width: 400px;
+    max-width: calc(100vw - 56px);
     background: #e8f5e9;
     border-radius: 16px;
     padding: 36px 20px;
@@ -40,6 +28,7 @@
     align-items: center;
     gap: 12px;
     margin-bottom: 24px;
+    box-sizing: border-box;
 }
 
 .amountLabel {
@@ -59,9 +48,11 @@
 /* 차감 목록 */
 .itemList {
     width: 400px;
+    max-width: calc(100vw - 56px);
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-sizing: border-box;
 }
 
 .item {
@@ -85,4 +76,36 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--white);
+}
+
+/* ── 모바일 ── */
+@media (max-width: 480px) {
+    .container {
+        padding: 48px 28px;
+        margin: 0 30px;
+    }
+
+    .title {
+        font-size: 2.8rem;
+        margin-bottom: 28px;
+        word-break: keep-all;
+        line-height: 1.2;
+        text-align: center;
+    }
+
+    .amountLabel {
+        font-size: 1.2rem;
+    }
+
+    .amountValue {
+        font-size: 2rem;
+    }
+
+    .item {
+        padding: 16px 20px;
+    }
+
+    .itemLabel, .itemValue {
+        font-size: 1rem;
+    }
 }

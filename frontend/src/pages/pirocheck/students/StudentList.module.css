@@ -7,19 +7,6 @@
     background: var(--black);
 }
 
-.mockBanner {
-    background: #5a3e00;
-    color: #ffd166;
-    font-family: var(--font-main);
-    font-size: 0.85rem;
-    padding: 10px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    width: 480px;
-    box-sizing: border-box;
-    text-align: center;
-}
-
 .title {
     font-family: var(--font-title);
     font-size: 3rem;
@@ -36,8 +23,10 @@
     border-radius: 10px;
     overflow: hidden;
     width: 480px;
+    max-width: calc(100vw - 56px);
     margin-bottom: 30px;
     padding: 6px 6px 6px 20px;
+    box-sizing: border-box;
 }
 
 .searchInput {
@@ -62,6 +51,7 @@
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .searchBtn:hover {
@@ -71,9 +61,11 @@
 
 .list {
     width: 450px;
+    max-width: calc(100vw - 56px);
     display: flex;
     flex-direction: column;
     gap: 12px;
+    box-sizing: border-box;
 }
 
 .studentItem {
@@ -87,6 +79,7 @@
     cursor: pointer;
     transition: background 0.2s;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .studentItem:hover { background: #4a4a4a; }
@@ -99,5 +92,22 @@
 }
 
 .arrow {
-    width: 25px; height: 25px;
+    width: 25px;
+    height: 25px;
+    flex-shrink: 0;
+}
+
+/* ── 모바일 ── */
+@media (max-width: 480px) {
+    .container {
+        padding: 48px 28px;
+    }
+
+    .title {
+        font-size: 2.4rem;
+        margin-bottom: 28px;
+        text-align: center;
+        word-break: keep-all;
+        line-height: 1.2;
+    }
 }

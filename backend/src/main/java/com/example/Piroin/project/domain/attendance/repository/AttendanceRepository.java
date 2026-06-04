@@ -1,6 +1,7 @@
 package com.example.Piroin.project.domain.attendance.repository;
 
 import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
+import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.attendance.entity.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,7 +21,6 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     // 연관관계 필드명이 attendanceCode 라면 내부 ID인 Id를 조합하여 명명
     Optional<Attendance> findByUserIdAndAttendanceCodeId(Long userId, Long attendanceCodeId);
 
-    //List<Attendance> findByUserIdAndStudySessionSessionDate(Integer userId, LocalDate date);
 
     int countByUserAndStatusFalse(User user);
 
@@ -53,6 +53,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     );
 
     List<Attendance> findByAttendanceCodeId(Integer id);
+
 
     // 특정 날짜에 발급된 출석 코드의 개수를 세는 메서드
     //long countByAttendanceDate(String attendanceDate);

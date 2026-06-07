@@ -1,4 +1,18 @@
 const DEFAULT_RETRY_DELAY = 3000;
+const PRODUCTION_API_ORIGIN = 'https://api.piroin.com';
+
+function getSseUrl(path) {
+    const configuredApiOrigin = process.env.REACT_APP_API_BASE_URL;
+    if (configuredApiOrigin) {
+        return `${configuredApiOrigin.replace(/\/$/, '')}${path}`;
+    }
+
+    if (typeof window !== 'undefined' && window.location.hostname.endsWith('vercel.app')) {
+        return `${PRODUCTION_API_ORIGIN}${path}`;
+    }
+
+    return path;
+}
 
 function buildSseHeaders(headers = {}) {
     const token = localStorage.getItem('token');
@@ -186,5 +200,5 @@ export function subscribeQuestionEvents(sessionId, handlers = {}) {
         return () => {};
     }
 
-    return subscribeToSse(`/api/sessions/${sessionId}/questions/events`, handlers);
+    return subscribeToSse(getSseUrl(`/api/sessions/${sessionId}/questions/events`), handlers);
 }

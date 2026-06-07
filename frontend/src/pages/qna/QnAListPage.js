@@ -419,6 +419,9 @@ function QnAListPage() {
         }
 
         return subscribeQuestionEvents(sessionId, {
+            onOpen: () => {
+                console.debug('질문방 SSE 연결 열림');
+            },
             onEvent: handleQuestionEvent,
             onError: (error) => {
                 console.error('질문방 SSE 연결 실패:', error);

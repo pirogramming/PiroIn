@@ -168,6 +168,9 @@ function QnADetailPage() {
         }
 
         return subscribeQuestionEvents(sessionId, {
+            onOpen: () => {
+                console.debug('질문 상세 SSE 연결 열림');
+            },
             onEvent: handleQuestionEvent,
             onError: (error) => {
                 console.error('질문 상세 SSE 연결 실패:', error);

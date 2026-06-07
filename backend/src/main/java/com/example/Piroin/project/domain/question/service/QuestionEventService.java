@@ -45,6 +45,11 @@ public class QuestionEventService {
         broadcast(sessionId, "comment-created", event);
     }
 
+    // 댓글 수정/삭제 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishCommentUpdated(Long sessionId, QuestionResDTO.CommentUpdatedEvent event) {
+        broadcast(sessionId, "comment-updated", event);
+    }
+
     // 질문 등록 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
     public void publishQuestionCreated(Long sessionId, QuestionResDTO.QuestionCreatedEvent event) {
         broadcast(sessionId, "question-created", event);

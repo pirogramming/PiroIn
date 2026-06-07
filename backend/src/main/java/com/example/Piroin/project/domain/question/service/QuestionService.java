@@ -354,6 +354,8 @@ public class QuestionService {
 
         comment.updateContent(request.getContent());
 
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
+
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
                 comment.getUpdatedAt(), comment.getDeletedAt()
@@ -368,6 +370,8 @@ public class QuestionService {
         validateCommentOwner(comment, loginUser);
 
         comment.softDelete();
+
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
 
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
@@ -749,6 +753,32 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
+    }
+
+    private void publishCommentUpdatedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+        Long questionId = question.getId();
+        List<Long> questionIds = List.of(questionId);
+
+        Map<Long, Integer> commentCounts = new HashMap<>();
+        questionCommentRepository.countByQuestionIds(questionIds)
+                .forEach(row -> commentCounts.put(row.getQuestionId(), Math.toIntExact(row.getCommentCount())));
+
+        Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments = new HashMap<>();
+        questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
+                .forEach(row -> previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
+                        .add(toPreviewCommentResponse(question, row)));
+
+        QuestionResDTO.CommentUpdatedEvent event = new QuestionResDTO.CommentUpdatedEvent(
+                "COMMENT_UPDATED",
+                sessionId,
+                questionId,
+                question.getIsResolved(),
+                commentCounts.getOrDefault(questionId, 0),
+                previewComments.getOrDefault(questionId, List.of())
+        );
+
+        publishAfterCommit(() -> questionEventService.publishCommentUpdated(sessionId, event));
     }
 
     private void publishQuestionCreatedEventAfterCommit(Question question) {

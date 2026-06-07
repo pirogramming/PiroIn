@@ -135,7 +135,7 @@ function QnADetailPage() {
             return;
         }
 
-        if (message.event === 'comment-created') {
+        if (message.event === 'comment-created' || message.event === 'comment-updated') {
             void fetchQuestion();
             return;
         }

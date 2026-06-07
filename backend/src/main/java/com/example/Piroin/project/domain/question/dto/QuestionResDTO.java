@@ -197,6 +197,17 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 댓글 수정/삭제 시 SSE로 내려가는 목록 갱신 이벤트 응답
+    public record CommentUpdatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            Boolean isResolved,
+            Integer commentCount,
+            List<PreviewCommentResponse> previewComments
+    ) {
+    }
+
     // O/X 클릭 직후 응답. selectedChoice가 null이면 같은 선택지를 다시 눌러 취소된 상태다.
     public record UnderstandingResponseResult(
             Long checkId,

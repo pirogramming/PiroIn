@@ -386,6 +386,9 @@ function QnAListPage() {
             case 'comment-created':
                 handleCommentCreatedEvent(data);
                 break;
+            case 'comment-updated':
+                handleCommentCreatedEvent(data);
+                break;
             case 'question-created':
                 void handleQuestionCreatedEvent(data);
                 break;

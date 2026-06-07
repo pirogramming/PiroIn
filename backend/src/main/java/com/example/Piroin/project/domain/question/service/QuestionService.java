@@ -59,7 +59,7 @@ public class QuestionService {
         User loginUser = findLoginUser(userId);
         return new QuestionResDTO.QuestionRoomResponse(
                 toSessionResponse(session),
-                getUnderstandingSlice(session, understandingIndex),
+                getUnderstandingSlice(session, understandingIndex, loginUser),
                 getQuestionGroups(session, loginUser)
         );
     }
@@ -543,7 +543,11 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(StudySession session, int understandingIndex) {
+    private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(
+            StudySession session,
+            int understandingIndex,
+            User loginUser
+    ) {
         Page<UnderstandingCheck> understandingPage = understandingCheckRepository
                 .findBySessionOrderByCreatedAtDesc(session, PageRequest.of(understandingIndex, UNDERSTANDING_PAGE_SIZE));
 
@@ -559,17 +563,17 @@ public class QuestionService {
         // attendanceCount는 프론트 화면의 "13/29" 중 29에 해당한다.
         int attendanceCount = attendanceService.countAttendedBySession(session);
         return new QuestionResDTO.UnderstandingSliceResponse(
-                toUnderstandingCheckResponse(current, attendanceCount), understandingIndex, totalCount,
+                toUnderstandingCheckResponse(current, attendanceCount, loginUser), understandingIndex, totalCount,
                 understandingIndex < totalCount - 1, understandingIndex > 0
         );
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
-        return toUnderstandingCheckResponse(check, null);
+        return toUnderstandingCheckResponse(check, null, null);
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(
-            UnderstandingCheck check, Integer attendanceCount
+            UnderstandingCheck check, Integer attendanceCount, User loginUser
     ) {
         // understoodCount/notUnderstoodCount는 오른쪽 O/X 뱃지 숫자로 그대로 사용한다.
         int understoodCount = understandingResponseRepository.countByCheckAndChoice(
@@ -585,8 +589,18 @@ public class QuestionService {
                 attendanceCount,
                 understoodCount,
                 notUnderstoodCount,
+                getSelectedChoice(check, loginUser),
                 check.getCreatedAt()
         );
+    }
+
+    private UnderstandResChoice getSelectedChoice(UnderstandingCheck check, User loginUser) {
+        if (loginUser == null) {
+            return null;
+        }
+        return understandingResponseRepository.findByCheckAndUser(check, loginUser)
+                .map(UnderstandingResponse::getChoice)
+                .orElse(null);
     }
 
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session, User loginUser) {

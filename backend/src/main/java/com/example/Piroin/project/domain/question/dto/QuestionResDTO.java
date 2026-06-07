@@ -145,6 +145,8 @@ public class QuestionResDTO {
             Integer understoodCount,
             // 오른쪽 X 뱃지 숫자
             Integer notUnderstoodCount,
+            // 현재 로그인 유저가 누른 선택지. 누르지 않았거나 취소한 상태면 null
+            UnderstandResChoice selectedChoice,
             LocalDateTime createdAt
     ) {
     }

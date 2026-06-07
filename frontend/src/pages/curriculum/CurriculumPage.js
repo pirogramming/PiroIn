@@ -6,8 +6,6 @@ import AmImg from '../../assets/images/am.png';
 import PmImg from '../../assets/images/pm.png';
 import Toggle1 from '../../assets/images/icon_togle1.svg';
 
-const role = localStorage.getItem('role') || 'MEMBER';
-
 const DAY_LABEL = { SUNDAY: '일요일', MONDAY: '월요일', TUESDAY: '화요일', WEDNESDAY: '수요일', THURSDAY: '목요일', FRIDAY: '금요일', SATURDAY: '토요일' };
 const STATUS_OPTIONS = ['BEFORE_SESSION', 'IN_SESSION', 'AFTER_SESSION'];
 const STATUS_LABEL = { BEFORE_SESSION: '세션 전', IN_SESSION: '세션 중', AFTER_SESSION: '세션 후' };
@@ -320,6 +318,7 @@ function SessionForm({ day, week, onClose, onSave }) {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────
 function CurriculumPage() {
+    const role = localStorage.getItem('role') || 'MEMBER';
     const [days, setDays] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editDay, setEditDay] = useState(null);

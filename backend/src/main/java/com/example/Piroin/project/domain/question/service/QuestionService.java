@@ -136,6 +136,9 @@ public class QuestionService {
         // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
         QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
 
+        // builder 전에 검증 추가
+        validateCommentContent(request.getContent(), request.getImageUrl());
+
         // 2. 댓글 엔티티 생성 및 저장
         LocalDateTime now = LocalDateTime.now();
         QuestionComment comment = QuestionComment.builder()
@@ -247,6 +250,9 @@ public class QuestionService {
     public QuestionResDTO.CreateRes createQuestion(Long sessionId, QuestionReqDTO.CreateReq request, Long userId) {
         User loginUser = findLoginUser(userId);
         StudySession session = findSession(sessionId);
+
+        // builder 전에 검증 추가
+        validateQuestionContent(request.getContent(), request.getImageUrl());
 
         Question question = Question.builder()
                 .session(session)
@@ -806,5 +812,23 @@ public class QuestionService {
             Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments,
             Set<Long> likedQuestionIds
     ) {
+    }
+
+    // 질문은 내용 또는 이미지 중 하나는 반드시 있어야 함
+    private void validateQuestionContent(String content, String imageUrl) {
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        if (!hasContent && !hasImage) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "질문 내용 또는 이미지 중 하나는 필수입니다.");
+        }
+    }
+
+    // 댓글은 내용 또는 이미지 중 하나는 반드시 있어야 함
+    private void validateCommentContent(String content, String imageUrl) {
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        if (!hasContent && !hasImage) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "댓글 내용 또는 이미지 중 하나는 필수입니다.");
+        }
     }
 }

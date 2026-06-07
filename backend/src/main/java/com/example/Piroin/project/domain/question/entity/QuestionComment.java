@@ -36,7 +36,7 @@ public class QuestionComment {
     @JoinColumn(name = "parent_comment_id")
     private QuestionComment parentComment;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "image_url", columnDefinition = "TEXT")

@@ -222,7 +222,7 @@ function SessionForm({ day, week, onClose, onSave }) {
         onClose();
     };
 
-    const weeks = [1, 2, 3, 4, 5];
+    const weeks = [0, 1, 2, 3, 4, 5];
 
     return (
         <div className={styles.formOverlay}>

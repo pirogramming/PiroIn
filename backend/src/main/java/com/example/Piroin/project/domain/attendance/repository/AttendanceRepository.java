@@ -55,6 +55,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByAttendanceCodeId(Integer id);
 
 
+    @Query("SELECT a.user.id, COUNT(a) FROM Attendance a WHERE a.user.id IN :userIds AND a.status = false GROUP BY a.user.id")
+    List<Object[]> countFailedAttendanceByUserIds(@Param("userIds") List<Long> userIds);
+
     // 특정 날짜에 발급된 출석 코드의 개수를 세는 메서드
     //long countByAttendanceDate(String attendanceDate);
 

@@ -15,6 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class DepositService {
@@ -38,6 +42,25 @@ public class DepositService {
         int descentAttendance = failAttendanceCount * ATTENDANCE_PENALTY;
 
         deposit.updateAttendanceAmount(descentAttendance);
+    }
+
+    // 1-1. 여러 유저 보증금 일괄 재계산 (N*3 쿼리 → 3 쿼리)
+    @Transactional
+    public void recalculateDepositBatch(List<Long> userIds) {
+        if (userIds.isEmpty()) return;
+
+        List<Deposit> deposits = depositRepository.findByUserIdIn(userIds);
+        Map<Long, Integer> failCountMap = attendanceRepository.countFailedAttendanceByUserIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Long) row[1]).intValue()
+                ));
+
+        for (Deposit deposit : deposits) {
+            int failCount = failCountMap.getOrDefault(deposit.getUser().getId(), 0);
+            deposit.updateAttendanceAmount(failCount * ATTENDANCE_PENALTY);
+        }
     }
 
     // 2. 보증금 조회 로직

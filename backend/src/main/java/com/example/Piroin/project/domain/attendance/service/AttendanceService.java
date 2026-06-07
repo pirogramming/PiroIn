@@ -64,22 +64,18 @@ public class AttendanceService {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
         }
 
-        // 1-3) 기존 활성화된 코드들 만료 처리
+        // 1-3) 기존 활성화된 코드들 만료 처리 + 보증금 일괄 재계산
         List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
         for (AttendanceCode activeCode : activeCodes) {
             activeCode.expire();
         }
 
-        for (AttendanceCode activeCode : activeCodes) {
-            activeCode.expire();
-
-            List<Attendance> attendances =
-                    attendanceRepository.findByAttendanceCodeId(activeCode.getId());
-
-            for (Attendance attendance : attendances) {
-                depositService.recalculateDeposit(attendance.getUser().getId());
-            }
-        }
+        List<Long> userIdsToRecalculate = activeCodes.stream()
+                .flatMap(activeCode -> attendanceRepository.findByAttendanceCodeId(activeCode.getId()).stream())
+                .map(attendance -> attendance.getUser().getId())
+                .distinct()
+                .toList();
+        depositService.recalculateDepositBatch(userIdsToRecalculate);
 
 
         // 1-4) 4자리 랜덤 코드 생성 및 차수(Order) 계산
@@ -208,10 +204,12 @@ public class AttendanceService {
         List<Attendance> absents =
                 attendanceRepository.findByAttendanceCodeIdAndStatusFalse(attendanceCodeId);
 
-        // 4. 결석자 대상 보증금 재계산 (User ID 타입 Integer 반영)
-        for (Attendance attendance : absents) {
-            depositService.recalculateDeposit(attendance.getUser().getId());
-        }
+        // 4. 결석자 대상 보증금 일괄 재계산
+        List<Long> absentUserIds = absents.stream()
+                .map(attendance -> attendance.getUser().getId())
+                .distinct()
+                .toList();
+        depositService.recalculateDepositBatch(absentUserIds);
 
         return "출석 코드가 성공적으로 만료되었습니다.";
     }

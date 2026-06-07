@@ -8,7 +8,7 @@ import Toggle1 from '../../assets/images/icon_togle1.svg';
 
 const role = localStorage.getItem('role') || 'MEMBER';
 
-const DAY_LABEL = { TUESDAY: '화요일', THURSDAY: '목요일', SATURDAY: '토요일' };
+const DAY_LABEL = { SUNDAY: '일요일', MONDAY: '월요일', TUESDAY: '화요일', WEDNESDAY: '수요일', THURSDAY: '목요일', FRIDAY: '금요일', SATURDAY: '토요일' };
 const STATUS_OPTIONS = ['BEFORE', 'ONGOING', 'AFTER'];
 const STATUS_LABEL = { BEFORE: '세션 전', ONGOING: '세션 중', AFTER: '세션 후' };
 
@@ -160,7 +160,7 @@ function SessionForm({ day, week, onClose, onSave }) {
         if (!dateStr) return '';
         const [year, month, day] = dateStr.split('-').map(Number);
         const date = new Date(year, month - 1, day);
-        const map = { 2: '화요일', 4: '목요일', 6: '토요일' };
+        const map = { 0: '일요일', 1: '월요일', 2: '화요일', 3: '수요일', 4: '목요일', 5: '금요일', 6: '토요일' };
         return map[date.getDay()] || '';
     };   
 

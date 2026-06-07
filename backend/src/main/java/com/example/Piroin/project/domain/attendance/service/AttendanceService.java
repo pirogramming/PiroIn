@@ -216,6 +216,7 @@ public class AttendanceService {
 
 
     // 5. 유저의 특정 날짜의 출석 현황을 조회하는 함수
+    @Transactional(readOnly = true)
     public List<AttendanceSlotRes> findByUserIdAndDate(Integer userId, LocalDate date) { // Long -> Integer
         // DB의 VARCHAR(255) 날짜 포맷과 맞추기 위해 String으로 변환 (예: "2026-05-17")
         String dateStr = date.toString();
@@ -234,6 +235,7 @@ public class AttendanceService {
     }
 
     // 6. 나의 전체 출석 현황 조회 서비스
+    @Transactional(readOnly = true)
     public List<AttendanceStatusRes> findByUserId(Integer userId) {
 
         List<Attendance> attendances =

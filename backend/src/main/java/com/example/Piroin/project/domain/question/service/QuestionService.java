@@ -281,7 +281,7 @@ public class QuestionService {
         Question question = findQuestion(questionId);
 
         // 이미 좋아요를 눌렀는지 확인
-        return questionLikeRepository.findByQuestionAndUser(question, loginUser)
+        QuestionResDTO.LikeRes result = questionLikeRepository.findByQuestionAndUser(question, loginUser)
                 .map(existingLike -> {
                     // 이미 눌렀으면 → 취소 (삭제 + likeCount -1)
                     questionLikeRepository.delete(existingLike);
@@ -298,6 +298,9 @@ public class QuestionService {
                     question.increaseLikeCount();
                     return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), true);
                 });
+
+        publishQuestionUpdatedEventAfterCommit(question, false);
+        return result;
     }
 
     // 질문 수정
@@ -313,6 +316,8 @@ public class QuestionService {
 
         question.updateContent(request.getContent());
 
+        publishQuestionUpdatedEventAfterCommit(question, false);
+
         return new QuestionResDTO.UpdateDeleteRes(
                 question.getId(), question.getContent(),
                 question.getUpdatedAt(), question.getDeletedAt()
@@ -327,6 +332,8 @@ public class QuestionService {
         validateQuestionOwner(question, loginUser);
 
         question.softDelete();
+
+        publishQuestionUpdatedEventAfterCommit(question, true);
 
         return new QuestionResDTO.UpdateDeleteRes(
                 question.getId(), question.getContent(),
@@ -347,6 +354,8 @@ public class QuestionService {
 
         comment.updateContent(request.getContent());
 
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
+
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
                 comment.getUpdatedAt(), comment.getDeletedAt()
@@ -361,6 +370,8 @@ public class QuestionService {
         validateCommentOwner(comment, loginUser);
 
         comment.softDelete();
+
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
 
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
@@ -378,6 +389,8 @@ public class QuestionService {
 
         Question question = findQuestion(questionId);
         question.markResolved();
+
+        publishQuestionUpdatedEventAfterCommit(question, false);
 
         return new QuestionResDTO.StatusUpdateRes(
                 question.getId(), question.getIsResolved(), question.getUpdatedAt()
@@ -742,6 +755,32 @@ public class QuestionService {
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
     }
 
+    private void publishCommentUpdatedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+        Long questionId = question.getId();
+        List<Long> questionIds = List.of(questionId);
+
+        Map<Long, Integer> commentCounts = new HashMap<>();
+        questionCommentRepository.countByQuestionIds(questionIds)
+                .forEach(row -> commentCounts.put(row.getQuestionId(), Math.toIntExact(row.getCommentCount())));
+
+        Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments = new HashMap<>();
+        questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
+                .forEach(row -> previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
+                        .add(toPreviewCommentResponse(question, row)));
+
+        QuestionResDTO.CommentUpdatedEvent event = new QuestionResDTO.CommentUpdatedEvent(
+                "COMMENT_UPDATED",
+                sessionId,
+                questionId,
+                question.getIsResolved(),
+                commentCounts.getOrDefault(questionId, 0),
+                previewComments.getOrDefault(questionId, List.of())
+        );
+
+        publishAfterCommit(() -> questionEventService.publishCommentUpdated(sessionId, event));
+    }
+
     private void publishQuestionCreatedEventAfterCommit(Question question) {
         Long sessionId = question.getSession().getId();
 
@@ -757,6 +796,23 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishQuestionCreated(sessionId, event));
+    }
+
+    private void publishQuestionUpdatedEventAfterCommit(Question question, boolean isDeleted) {
+        Long sessionId = question.getSession().getId();
+
+        QuestionResDTO.QuestionUpdatedEvent event = new QuestionResDTO.QuestionUpdatedEvent(
+                "QUESTION_UPDATED",
+                sessionId,
+                question.getId(),
+                question.getContent(),
+                question.getIsResolved(),
+                question.getLikeCount(),
+                isDeleted,
+                question.getUpdatedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishQuestionUpdated(sessionId, event));
     }
 
     private void publishUnderstandingCheckCreatedEventAfterCommit(

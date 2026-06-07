@@ -190,7 +190,7 @@ function QnAListPage() {
     const handleCommentSubmit = async (e, questionId) => {
         e.stopPropagation();
         const text = (commentInputs[questionId] || '').trim();
-        if (!text) return;
+        if (!text && !commentImages[questionId]) return;
         try {
             let imageUrl = null;
             if (commentImages[questionId]) {
@@ -268,7 +268,7 @@ function QnAListPage() {
     // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
-        if (!text) return;
+        if (!text && !selectedImage) return;
         setIsSubmitting(true);
         setSubmitError(null);
         try {

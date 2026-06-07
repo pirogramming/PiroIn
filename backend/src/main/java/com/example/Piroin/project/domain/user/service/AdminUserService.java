@@ -101,15 +101,15 @@ public class AdminUserService {
         }
 
         if (request.getAttendances() != null) {
-            List<Long> attendanceIds = request.getAttendances().stream()
-                    .map(dto -> dto.getAttendanceId().longValue())
+            List<Integer> attendanceIds = request.getAttendances().stream()
+                    .map(UpdateStudentStatusRequest.AttendanceStatusRequest::getAttendanceId)
                     .toList();
 
-            Map<Long, Attendance> attendanceMap = attendanceRepository.findAllById(attendanceIds).stream()
+            Map<Integer, Attendance> attendanceMap = attendanceRepository.findAllById(attendanceIds).stream()
                     .collect(Collectors.toMap(Attendance::getId, a -> a));
 
             for (UpdateStudentStatusRequest.AttendanceStatusRequest dto : request.getAttendances()) {
-                Attendance attendance = Optional.ofNullable(attendanceMap.get(dto.getAttendanceId().longValue()))
+                Attendance attendance = Optional.ofNullable(attendanceMap.get(dto.getAttendanceId()))
                         .orElseThrow(() -> new RuntimeException("출석 정보가 존재하지 않습니다."));
 
                 if (!attendance.getUser().getId().equals(userId)) {

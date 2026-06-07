@@ -318,17 +318,17 @@ function SessionForm({ day, week, onClose, onSave }) {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────
 function CurriculumPage() {
-    const [role, setRole] = useState(localStorage.getItem('role') || 'MEMBER');
+    const [role, setRole] = useState(null);
     const [days, setDays] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editDay, setEditDay] = useState(null);
     const [createWeek, setCreateWeek] = useState(null);
 
     useEffect(() => {
-        const handleStorage = () => setRole(localStorage.getItem('role') || 'MEMBER');
-        window.addEventListener('storage', handleStorage);
-        return () => window.removeEventListener('storage', handleStorage);
+        setRole(localStorage.getItem('role') || 'MEMBER');
     }, []);
+
+    // if (role === null) return null;
 
     const fetchDays = async () => {
         try {

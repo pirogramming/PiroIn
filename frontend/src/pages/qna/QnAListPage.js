@@ -11,6 +11,56 @@ import {
 } from '../../utils/qnaUtils';
 
 const MAX_VISIBLE_COMMENTS = 3;
+const POPULAR_LIKE_THRESHOLD = 5;
+
+const getQuestionGroupKey = (question) => {
+    if (question.isResolved) return 'resolvedQuestions';
+    if ((question.likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD) return 'popularQuestions';
+    return 'unresolvedQuestions';
+};
+
+const regroupQuestions = (questions) => {
+    const groups = {
+        popularQuestions: [],
+        unresolvedQuestions: [],
+        resolvedQuestions: [],
+    };
+    const seenQuestionIds = new Set();
+
+    questions.forEach(question => {
+        if (seenQuestionIds.has(question.questionId)) return;
+        seenQuestionIds.add(question.questionId);
+        groups[getQuestionGroupKey(question)].push(question);
+    });
+
+    return groups;
+};
+
+const updateQuestionGroupsByCommentEvent = (groups, eventData) => {
+    if (!eventData?.questionId) return groups;
+
+    let hasUpdatedQuestion = false;
+    const questions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ].map(question => {
+        if (question.questionId !== eventData.questionId) return question;
+
+        hasUpdatedQuestion = true;
+        const isResolved = eventData.isResolved ?? question.isResolved;
+
+        return {
+            ...question,
+            isResolved,
+            isPopular: !isResolved && (question.likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD,
+            commentCount: eventData.commentCount ?? question.commentCount,
+            previewComments: eventData.previewComments ?? question.previewComments,
+        };
+    });
+
+    return hasUpdatedQuestion ? regroupQuestions(questions) : groups;
+};
 
 function QnAListPage() {
     const { sessionId } = useParams();
@@ -29,6 +79,11 @@ function QnAListPage() {
     const [popularQuestions, setPopularQuestions] = useState([]);
     const [unresolvedQuestions, setUnresolvedQuestions] = useState([]);
     const [resolvedQuestions, setResolvedQuestions] = useState([]);
+    const questionGroupsRef = useRef({
+        popularQuestions: [],
+        unresolvedQuestions: [],
+        resolvedQuestions: [],
+    });
 
     // ── 필터 / 정렬 상태 ─────────────────────────────
     const [filterCurious, setFilterCurious] = useState(false);
@@ -50,6 +105,21 @@ function QnAListPage() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const fileInputRef = useRef(null);
+
+    const applyQuestionGroups = useCallback((groups) => {
+        questionGroupsRef.current = groups;
+        setPopularQuestions(groups.popularQuestions);
+        setUnresolvedQuestions(groups.unresolvedQuestions);
+        setResolvedQuestions(groups.resolvedQuestions);
+    }, []);
+
+    useEffect(() => {
+        questionGroupsRef.current = {
+            popularQuestions,
+            unresolvedQuestions,
+            resolvedQuestions,
+        };
+    }, [popularQuestions, unresolvedQuestions, resolvedQuestions]);
 
     // ── 질문 목록 불러오기 ───────────────────────────
     const fetchQuestions = useCallback(async (index) => {
@@ -99,18 +169,25 @@ function QnAListPage() {
             const unresolvedIds = idSet(questions.unresolvedQuestions ?? []);
             const resolvedIds = idSet(questions.resolvedQuestions ?? []);
 
-            setPopularQuestions(withBlob.filter(q => popularIds.has(q.questionId)));
-            setUnresolvedQuestions(withBlob.filter(q => unresolvedIds.has(q.questionId)));
-            setResolvedQuestions(withBlob.filter(q => resolvedIds.has(q.questionId)));
+            applyQuestionGroups({
+                popularQuestions: withBlob.filter(q => popularIds.has(q.questionId)),
+                unresolvedQuestions: withBlob.filter(q => unresolvedIds.has(q.questionId)),
+                resolvedQuestions: withBlob.filter(q => resolvedIds.has(q.questionId)),
+            });
 
         } catch (err) {
             console.error('질문 불러오기 실패:', err);
         }
-    }, [sessionId]);
+    }, [sessionId, applyQuestionGroups]);
 
     useEffect(() => {
         if (sessionId) fetchQuestions(understandingIndex);
     }, [sessionId, understandingIndex, fetchQuestions]);
+
+    const handleCommentCreatedEvent = useCallback((eventData) => {
+        const nextGroups = updateQuestionGroupsByCommentEvent(questionGroupsRef.current, eventData);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups]);
 
     const handleQuestionEvent = useCallback((message) => {
         const { event, data } = message;
@@ -120,7 +197,7 @@ function QnAListPage() {
                 console.debug('질문방 SSE 연결 완료');
                 break;
             case 'comment-created':
-                console.debug('댓글 생성 이벤트 수신:', data);
+                handleCommentCreatedEvent(data);
                 break;
             case 'question-created':
                 console.debug('질문 생성 이벤트 수신:', data);
@@ -135,7 +212,7 @@ function QnAListPage() {
                 console.debug('알 수 없는 질문방 SSE 이벤트 수신:', message);
                 break;
         }
-    }, []);
+    }, [handleCommentCreatedEvent]);
 
     useEffect(() => {
         if (!sessionId) {

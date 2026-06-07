@@ -434,6 +434,10 @@
 
 .formInput:focus { border-color: var(--dark); }
 
+.required {
+    color: #e53e3e;
+}
+
 .errorMsg {
     font-family: var(--font-main);
     font-size: 0.78rem;

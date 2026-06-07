@@ -13,6 +13,20 @@ import {
 const MAX_VISIBLE_COMMENTS = 3;
 const POPULAR_LIKE_THRESHOLD = 5;
 
+const getCreatedAtTime = (question) => new Date(question.createdAt ?? 0).getTime();
+
+const sortQuestionGroups = (groups) => ({
+    popularQuestions: [...groups.popularQuestions].sort(
+        (a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0) || getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+    unresolvedQuestions: [...groups.unresolvedQuestions].sort(
+        (a, b) => getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+    resolvedQuestions: [...groups.resolvedQuestions].sort(
+        (a, b) => getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+});
+
 const getQuestionGroupKey = (question) => {
     if (question.isResolved) return 'resolvedQuestions';
     if ((question.likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD) return 'popularQuestions';
@@ -33,7 +47,7 @@ const regroupQuestions = (questions) => {
         groups[getQuestionGroupKey(question)].push(question);
     });
 
-    return groups;
+    return sortQuestionGroups(groups);
 };
 
 const updateQuestionGroupsByCommentEvent = (groups, eventData) => {
@@ -60,6 +74,41 @@ const updateQuestionGroupsByCommentEvent = (groups, eventData) => {
     });
 
     return hasUpdatedQuestion ? regroupQuestions(questions) : groups;
+};
+
+const updateQuestionGroupsByQuestionEvent = (groups, eventData) => {
+    if (!eventData?.questionId) return groups;
+
+    const questions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ];
+
+    if (eventData.isDeleted) {
+        return regroupQuestions(questions.filter(question => question.questionId !== eventData.questionId));
+    }
+
+    let hasUpdatedQuestion = false;
+    const updatedQuestions = questions.map(question => {
+        if (question.questionId !== eventData.questionId) return question;
+
+        hasUpdatedQuestion = true;
+        const isResolved = eventData.isResolved ?? question.isResolved;
+        const likeCount = eventData.likeCount ?? question.likeCount;
+
+        return {
+            ...question,
+            content: eventData.content ?? question.content,
+            isResolved,
+            isPopular: !isResolved && (likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD,
+            likeCount,
+            iLiked: eventData.isLiked ?? question.iLiked,
+            isLiked: eventData.isLiked ?? question.isLiked,
+        };
+    });
+
+    return hasUpdatedQuestion ? regroupQuestions(updatedQuestions) : groups;
 };
 
 const addQuestionToGroups = (groups, question) => {
@@ -274,6 +323,11 @@ function QnAListPage() {
         applyQuestionGroups(nextGroups);
     }, [applyQuestionGroups, buildQuestionFromCreatedEvent]);
 
+    const handleQuestionUpdatedEvent = useCallback((eventData) => {
+        const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, eventData);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups]);
+
     const handleUnderstandingCheckCreatedEvent = useCallback((eventData) => {
         if (!eventData?.checkId) return;
         if (understandingRef.current?.current?.checkId === eventData.checkId) return;
@@ -335,6 +389,9 @@ function QnAListPage() {
             case 'question-created':
                 void handleQuestionCreatedEvent(data);
                 break;
+            case 'question-updated':
+                handleQuestionUpdatedEvent(data);
+                break;
             case 'understanding-check-created':
                 handleUnderstandingCheckCreatedEvent(data);
                 break;
@@ -348,6 +405,7 @@ function QnAListPage() {
     }, [
         handleCommentCreatedEvent,
         handleQuestionCreatedEvent,
+        handleQuestionUpdatedEvent,
         handleUnderstandingCheckCreatedEvent,
         handleUnderstandingResponseUpdatedEvent,
     ]);
@@ -415,14 +473,12 @@ function QnAListPage() {
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? { ...q, likeCount: json.result.likeCount, iLiked: json.result.isLiked }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
+                const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, {
+                    questionId,
+                    likeCount: json.result.likeCount,
+                    isLiked: json.result.isLiked,
+                });
+                applyQuestionGroups(nextGroups);
             }
         } catch (err) {
             console.error('좋아요 실패:', err);

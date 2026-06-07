@@ -50,6 +50,11 @@ public class QuestionEventService {
         broadcast(sessionId, "question-created", event);
     }
 
+    // 질문 상태 변경 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishQuestionUpdated(Long sessionId, QuestionResDTO.QuestionUpdatedEvent event) {
+        broadcast(sessionId, "question-updated", event);
+    }
+
     // 이해도 체크 생성 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
     public void publishUnderstandingCheckCreated(Long sessionId, QuestionResDTO.UnderstandingCheckCreatedEvent event) {
         broadcast(sessionId, "understanding-check-created", event);

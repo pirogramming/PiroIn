@@ -14,6 +14,8 @@ import profileImg from '../../assets/images/profile.png';
 import { authFetch } from '../../utils/Api';
 import { subscribeQuestionEvents } from '../../utils/sse';
 
+const POPULAR_LIKE_THRESHOLD = 5;
+
 // 시간만 표시하는 포맷 함수 (HH:MM)
 const formatTime = (dateStr) => {
     if (!dateStr) return '';
@@ -129,15 +131,36 @@ function QnADetailPage() {
     }, [questionId, fetchQuestion]);
 
     const handleQuestionEvent = useCallback((message) => {
-        if (message.event !== 'comment-created') {
-            return;
-        }
         if (String(message.data?.questionId) !== String(questionId)) {
             return;
         }
 
-        void fetchQuestion();
-    }, [fetchQuestion, questionId]);
+        if (message.event === 'comment-created') {
+            void fetchQuestion();
+            return;
+        }
+
+        if (message.event === 'question-updated') {
+            if (message.data?.isDeleted) {
+                navigate(-1);
+                return;
+            }
+
+            setQuestion(prev => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    content: message.data.content ?? prev.content,
+                    isResolved: message.data.isResolved ?? prev.isResolved,
+                    isPopular: message.data.isResolved === true
+                        ? false
+                        : (message.data.likeCount ?? prev.likeCount) >= POPULAR_LIKE_THRESHOLD,
+                    likeCount: message.data.likeCount ?? prev.likeCount,
+                };
+            });
+        }
+    }, [fetchQuestion, navigate, questionId]);
 
     useEffect(() => {
         if (!sessionId || !questionId) {

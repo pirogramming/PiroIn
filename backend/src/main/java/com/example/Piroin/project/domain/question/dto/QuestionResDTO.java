@@ -243,6 +243,19 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 좋아요, 해결 상태, 본문 수정, 삭제처럼 기존 질문의 상태가 바뀔 때 내려가는 SSE 이벤트
+    public record QuestionUpdatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            String content,
+            Boolean isResolved,
+            Integer likeCount,
+            Boolean isDeleted,
+            LocalDateTime updatedAt
+    ) {
+    }
+
     // 운영진이 이해도 체크를 생성했을 때 SSE로 내려가는 이벤트.
     // 같은 세션 질문방을 보고 있는 모든 클라이언트에게 전파된다.
     public record UnderstandingCheckCreatedEvent(

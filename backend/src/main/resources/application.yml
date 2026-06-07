@@ -13,6 +13,9 @@ spring:
       max-lifetime: 1800000
       leak-detection-threshold: 5000
 
+  transaction:
+    default-timeout: 30  # 트랜잭션 전체 30s 초과 시 롤백
+
   flyway:
 #    repair-on-migrate: true
     enabled: true
@@ -28,6 +31,17 @@ spring:
         packagesToScan: com.example.Piroin.project.domain
         jdbc:
           time_zone: Asia/Seoul
+        # 슬로우 쿼리 로그 — 1초 이상 걸리는 쿼리를 WARN 레벨로 출력
+        generate_statistics: true
+        session:
+          events:
+            log:
+              LOG_QUERIES_SLOWER_THAN_MS: 1000
+        # 쿼리 실행 자체 타임아웃 — 커넥션 획득 후 쿼리가 느린 경우 대응
+        javax:
+          persistence:
+            query:
+              timeout: 30000  # 30s 초과 쿼리 예외 발생
   
   jackson:
     time-zone: Asia/Seoul
@@ -35,6 +49,14 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
+
+logging:
+  level:
+    # 슬로우 쿼리 로그 (1초 이상 쿼리 감지)
+    org.hibernate.SQL_SLOW: WARN
+    # HikariCP 커넥션 풀 상태 로그
+    com.zaxxer.hikari: DEBUG
+    com.zaxxer.hikari.HikariConfig: DEBUG
 
 management:
   endpoints:
@@ -52,3 +74,8 @@ server:
     threads:
       max: 200        # 기본값 200 (명시적으로 설정)
       min-spare: 20   # 최소 대기 스레드 수
+    # 요청 레벨 타임아웃 — Soak에서 최대 24분 응답 방지
+    connection-timeout: 20000   # 커넥션 수립 타임아웃 20s
+  servlet:
+    session:
+      timeout: 30m

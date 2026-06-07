@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './QnAListPage.module.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
+import { subscribeQuestionEvents } from '../../utils/sse';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
     OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
@@ -110,6 +111,44 @@ function QnAListPage() {
     useEffect(() => {
         if (sessionId) fetchQuestions(understandingIndex);
     }, [sessionId, understandingIndex, fetchQuestions]);
+
+    const handleQuestionEvent = useCallback((message) => {
+        const { event, data } = message;
+
+        switch (event) {
+            case 'connected':
+                console.debug('질문방 SSE 연결 완료');
+                break;
+            case 'comment-created':
+                console.debug('댓글 생성 이벤트 수신:', data);
+                break;
+            case 'question-created':
+                console.debug('질문 생성 이벤트 수신:', data);
+                break;
+            case 'understanding-check-created':
+                console.debug('이해도 체크 생성 이벤트 수신:', data);
+                break;
+            case 'understanding-response-updated':
+                console.debug('이해도 응답 갱신 이벤트 수신:', data);
+                break;
+            default:
+                console.debug('알 수 없는 질문방 SSE 이벤트 수신:', message);
+                break;
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!sessionId) {
+            return undefined;
+        }
+
+        return subscribeQuestionEvents(sessionId, {
+            onEvent: handleQuestionEvent,
+            onError: (error) => {
+                console.error('질문방 SSE 연결 실패:', error);
+            },
+        });
+    }, [sessionId, handleQuestionEvent]);
 
     // ── 이해도 네비게이션 ────────────────────────────
     const goPrevUnderstand = () => {

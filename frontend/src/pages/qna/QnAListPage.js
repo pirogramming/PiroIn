@@ -133,20 +133,19 @@ function QnAListPage() {
             );
             if (!res.ok) throw new Error();
             const json = await res.json();
-            if (json.isSuccess) {
-                setMyChoices(prev => ({ ...prev, [checkId]: json.result.selectedChoice ?? null }));
-                setUnderstanding(prev => ({
-                    ...prev,
-                    current: {
-                        ...prev.current,
-                        understoodCount: json.result.understoodCount,
-                        notUnderstoodCount: json.result.notUnderstoodCount,
-                        attendanceCount: json.result.attendanceCount,
-                        respondedCount: json.result.respondedCount,
-                        selectedChoice: json.result.selectedChoice,
-                    }
-                }));
-            }
+            if (!json.isSuccess) throw new Error(json.message);
+            setMyChoices(prev => ({ ...prev, [checkId]: json.result.selectedChoice ?? null }));
+            setUnderstanding(prev => ({
+                ...prev,
+                current: {
+                    ...prev.current,
+                    understoodCount: json.result.understoodCount,
+                    notUnderstoodCount: json.result.notUnderstoodCount,
+                    attendanceCount: json.result.attendanceCount,
+                    respondedCount: json.result.respondedCount,
+                    selectedChoice: json.result.selectedChoice,
+                }
+            }));
         } catch (err) {
             setMyChoices(prev => ({ ...prev, [checkId]: previousChoice }));
             console.error('이해도 응답 실패:', err);

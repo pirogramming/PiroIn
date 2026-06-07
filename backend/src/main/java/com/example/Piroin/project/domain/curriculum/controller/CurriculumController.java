@@ -3,6 +3,7 @@ package com.example.Piroin.project.domain.curriculum.controller;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumReqDTO;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumResDTO;
 import com.example.Piroin.project.domain.curriculum.service.CurriculumService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,14 +27,14 @@ public class CurriculumController {
 
     @PostMapping
     public ResponseEntity<CurriculumResDTO.CreateDayRes> createDay(
-            @RequestBody CurriculumReqDTO.CreateDayReq req) {
+            @RequestBody @Valid CurriculumReqDTO.CreateDayReq req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(curriculumService.createDay(req));
     }
 
     @PatchMapping("/{sessionDate}")
     public ResponseEntity<CurriculumResDTO.CreateDayRes> updateDay(
             @PathVariable LocalDate sessionDate,
-            @RequestBody CurriculumReqDTO.UpdateDayReq req) {
+            @RequestBody @Valid CurriculumReqDTO.UpdateDayReq req) {
         return ResponseEntity.ok(curriculumService.updateDay(sessionDate, req));
     }
 

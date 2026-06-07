@@ -6,11 +6,9 @@ import AmImg from '../../assets/images/am.png';
 import PmImg from '../../assets/images/pm.png';
 import Toggle1 from '../../assets/images/icon_togle1.svg';
 
-const role = localStorage.getItem('role') || 'MEMBER';
-
 const DAY_LABEL = { SUNDAY: '일요일', MONDAY: '월요일', TUESDAY: '화요일', WEDNESDAY: '수요일', THURSDAY: '목요일', FRIDAY: '금요일', SATURDAY: '토요일' };
-const STATUS_OPTIONS = ['BEFORE', 'ONGOING', 'AFTER'];
-const STATUS_LABEL = { BEFORE: '세션 전', ONGOING: '세션 중', AFTER: '세션 후' };
+const STATUS_OPTIONS = ['BEFORE_SESSION', 'IN_SESSION', 'AFTER_SESSION'];
+const STATUS_LABEL = { BEFORE_SESSION: '세션 전', IN_SESSION: '세션 중', AFTER_SESSION: '세션 후' };
 
 // sessionDate(yyyy-mm-dd)에서 요일 계산
 function getWeekDayFromDate(dateStr) {
@@ -25,28 +23,35 @@ function getWeekDayFromDate(dateStr) {
 function SessionInfo({ session, isAdmin }) {
     const icon = session.dayPart === 'AM' ? AmImg : PmImg;
     const label = session.dayPart === 'AM' ? '오전 세션' : '오후 세션';
+    const status = session.status;
+    const showDetail = isAdmin || status === 'IN_SESSION' || status === 'AFTER_SESSION';
+    const showRecording = isAdmin || status === 'AFTER_SESSION';
 
     return (
         <div className={styles.sessionInfo}>
             <div className={styles.sessionTitleRow}>
                 <img src={icon} className={styles.sessionIcon} alt={label} />
                 <span className={styles.sessionTitle}>{session.title}</span>
-                <span className={styles.sessionHost}>{session.hostName}</span>
+                {showDetail && <span className={styles.sessionHost}>{session.hostName}</span>}
             </div>
-            <div className={styles.sessionDetailRow}>
-                <span className={styles.sessionDetailLabel}>세션 자료</span>
-                {session.sessionMaterialUrl
-                    ? <a href={session.sessionMaterialUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">{session.sessionMaterialName || '링크'}</a>
-                    : <span className={styles.sessionDetailVal}>{session.sessionMaterialName || '-'}</span>
-                }
-            </div>
-            <div className={styles.sessionDetailRow}>
-                {session.recordingUrl
-                    ? <a href={session.recordingUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">녹화본</a>
-                    : <span className={styles.sessionDetailVal}>-</span>
-                }
-                {session.recordingPassword && <span className={styles.sessionPw}>PW : {session.recordingPassword}</span>}
-            </div>
+            {showDetail && (
+                <div className={styles.sessionDetailRow}>
+                    <span className={styles.sessionDetailLabel}>세션 자료</span>
+                    {session.sessionMaterialUrl
+                        ? <a href={session.sessionMaterialUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">{session.sessionMaterialName || '링크'}</a>
+                        : <span className={styles.sessionDetailVal}>{session.sessionMaterialName || '-'}</span>
+                    }
+                </div>
+            )}
+            {showRecording && (
+                <div className={styles.sessionDetailRow}>
+                    {session.recordingUrl
+                        ? <a href={session.recordingUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">녹화본</a>
+                        : <span className={styles.sessionDetailVal}>-</span>
+                    }
+                    {session.recordingPassword && <span className={styles.sessionPw}>PW : {session.recordingPassword}</span>}
+                </div>
+            )}
         </div>
     );
 }
@@ -57,6 +62,7 @@ function MemberSessionCard({ day }) {
     const amSession = day.sessions?.find(s => s.dayPart === 'AM');
     const pmSession = day.sessions?.find(s => s.dayPart === 'PM');
     const weekDay = getWeekDayFromDate(day.sessionDate) || DAY_LABEL[day.dayOfWeek] || '';
+    const showAssignment = amSession?.status === 'AFTER_SESSION' && pmSession?.status === 'AFTER_SESSION';
 
     return (
         <div className={styles.sessionCard}>
@@ -73,7 +79,7 @@ function MemberSessionCard({ day }) {
                 <div className={styles.cardBody}>
                     {amSession && <SessionInfo session={amSession} />}
                     {pmSession && <SessionInfo session={pmSession} />}
-                    {(day.assignmentName || day.assignmentUrl) && (
+                    {showAssignment && (day.assignmentName || day.assignmentUrl) && (
                         <div className={styles.assignmentRow}>
                             <span className={styles.assignmentLabel}>과제</span>
                             {day.assignmentUrl
@@ -143,14 +149,14 @@ function SessionForm({ day, week, onClose, onSave }) {
         amMaterialName: day?.sessions?.find(s => s.dayPart === 'AM')?.sessionMaterialName || '',
         amRecordingUrl: day?.sessions?.find(s => s.dayPart === 'AM')?.recordingUrl || '',
         amRecordingPw: day?.sessions?.find(s => s.dayPart === 'AM')?.recordingPassword || '',
-        amStatus: day?.sessions?.find(s => s.dayPart === 'AM')?.status || 'BEFORE',
+        amStatus: day?.sessions?.find(s => s.dayPart === 'AM')?.status || 'BEFORE_SESSION',
         pmTitle: day?.sessions?.find(s => s.dayPart === 'PM')?.title || '',
         pmHost: day?.sessions?.find(s => s.dayPart === 'PM')?.hostName || '',
         pmMaterialUrl: day?.sessions?.find(s => s.dayPart === 'PM')?.sessionMaterialUrl || '',
         pmMaterialName: day?.sessions?.find(s => s.dayPart === 'PM')?.sessionMaterialName || '',
         pmRecordingUrl: day?.sessions?.find(s => s.dayPart === 'PM')?.recordingUrl || '',
         pmRecordingPw: day?.sessions?.find(s => s.dayPart === 'PM')?.recordingPassword || '',
-        pmStatus: day?.sessions?.find(s => s.dayPart === 'PM')?.status || 'BEFORE',
+        pmStatus: day?.sessions?.find(s => s.dayPart === 'PM')?.status || 'BEFORE_SESSION',
         assignmentUrl: day?.assignmentUrl || '',
         assignmentName: day?.assignmentName || '',
     });
@@ -312,10 +318,17 @@ function SessionForm({ day, week, onClose, onSave }) {
 
 // ── 메인 컴포넌트 ─────────────────────────────────────
 function CurriculumPage() {
+    const [role, setRole] = useState(localStorage.getItem('role') || 'MEMBER');
     const [days, setDays] = useState([]);
     const [showForm, setShowForm] = useState(false);
     const [editDay, setEditDay] = useState(null);
     const [createWeek, setCreateWeek] = useState(null);
+
+    useEffect(() => {
+        const handleStorage = () => setRole(localStorage.getItem('role') || 'MEMBER');
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
 
     const fetchDays = async () => {
         try {

@@ -34,7 +34,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AssignmentService {
 
     private final AssignmentRepository assignmentRepository;
@@ -163,6 +162,7 @@ public class AssignmentService {
     }
 
     // 3. 과제 삭제
+    @Transactional
     public DeleteAssignmentResponse deleteAssignment(Integer assignmentId) {
 
         Assignment assignment = assignmentRepository.findById(assignmentId)
@@ -182,6 +182,7 @@ public class AssignmentService {
     }
 
     // 4-1. 나의 과제 조회 (부원)
+    @Transactional(readOnly = true)
     public GetMyAssignmentsResponse getMyAssignments(
             Long userId,
             String week

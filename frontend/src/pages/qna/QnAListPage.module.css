@@ -609,3 +609,147 @@
     align-items: center;
     justify-content: center;
 }
+
+/* ════════════════════════════════════════
+   반응형 — 태블릿 (768px 이하)
+════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .title {
+        font-size: 26px;
+        padding-top: 40px;
+    }
+
+    .understandName {
+        font-size: 20px;
+    }
+
+    .understandCount {
+        font-size: 16px;
+    }
+
+    .questionText {
+        font-size: 18px;
+    }
+
+    .oxCount {
+        font-size: 18px;
+        margin-left: 10px;
+    }
+}
+
+
+/* ════════════════════════════════════════
+   반응형 — 모바일 (480px 이하)
+════════════════════════════════════════ */
+@media (max-width: 480px) {
+    .page {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 120px;
+    }
+
+    .title {
+        font-size: 22px;
+        padding-top: 28px;
+        margin: 6px;
+    }
+
+    .filterRow {
+        padding: 8px 4px;
+        gap: 8px;
+    }
+
+    /* ── 이해도 바 ── */
+    .understandBar {
+        height: auto;
+        min-height: 48px;
+        padding: 8px 10px;
+        flex-wrap: wrap;
+    }
+
+    .understandName {
+        font-size: 17px;
+    }
+
+    .understandCount {
+        font-size: 14px;
+    }
+
+    .oxBtn {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+        margin: 0 2px;
+    }
+
+    .oxBtn:disabled {
+        width: 58px;
+        height: 30px;
+    }
+
+    .oxCount {
+        font-size: 16px;
+        margin-left: 8px;
+    }
+
+    /* ── 질문 카드 ── */
+    .questionList {
+        gap: 14px;
+    }
+
+    .questionCard {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 20px;
+    }
+
+    .qIcon {
+        font-size: 28px;
+    }
+
+    .questionText {
+        font-size: 16px;
+    }
+
+    .questionActions {
+        gap: 6px;
+        margin-left: 4px;
+    }
+
+    .likeBtn {
+        width: 34px;
+        height: 22px;
+        font-size: 13px;
+    }
+
+    .commentBtn {
+        width: 76px;
+        height: 22px;
+        font-size: 13px;
+    }
+
+    /* ── 댓글 ── */
+    .commentPreview {
+        padding-left: 12px;
+        gap: 12px;
+    }
+
+    .commentItem {
+        max-width: 100%;
+    }
+
+    /* ── 하단 입력바 ── */
+    .newQuestionBar {
+        padding: 6px 10px;
+        bottom: 12px;
+    }
+
+    .newQuestionInput {
+        font-size: 16px;
+        /* iOS 자동 줌 방지 */
+    }
+
+    .newQuestionInputRow {
+        height: 36px;
+    }
+}

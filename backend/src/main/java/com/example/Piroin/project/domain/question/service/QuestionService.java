@@ -59,7 +59,7 @@ public class QuestionService {
         User loginUser = findLoginUser(userId);
         return new QuestionResDTO.QuestionRoomResponse(
                 toSessionResponse(session),
-                getUnderstandingSlice(session, understandingIndex),
+                getUnderstandingSlice(session, understandingIndex, loginUser),
                 getQuestionGroups(session, loginUser)
         );
     }
@@ -135,6 +135,9 @@ public class QuestionService {
 
         // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
         QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
+
+        // builder 전에 검증 추가
+        validateCommentContent(request.getContent(), request.getImageUrl());
 
         // 2. 댓글 엔티티 생성 및 저장
         LocalDateTime now = LocalDateTime.now();
@@ -248,6 +251,9 @@ public class QuestionService {
         User loginUser = findLoginUser(userId);
         StudySession session = findSession(sessionId);
 
+        // builder 전에 검증 추가
+        validateQuestionContent(request.getContent(), request.getImageUrl());
+
         Question question = Question.builder()
                 .session(session)
                 .user(loginUser)
@@ -275,7 +281,7 @@ public class QuestionService {
         Question question = findQuestion(questionId);
 
         // 이미 좋아요를 눌렀는지 확인
-        return questionLikeRepository.findByQuestionAndUser(question, loginUser)
+        QuestionResDTO.LikeRes result = questionLikeRepository.findByQuestionAndUser(question, loginUser)
                 .map(existingLike -> {
                     // 이미 눌렀으면 → 취소 (삭제 + likeCount -1)
                     questionLikeRepository.delete(existingLike);
@@ -292,6 +298,9 @@ public class QuestionService {
                     question.increaseLikeCount();
                     return new QuestionResDTO.LikeRes(question.getId(), question.getLikeCount(), true);
                 });
+
+        publishQuestionUpdatedEventAfterCommit(question, false);
+        return result;
     }
 
     // 질문 수정
@@ -307,6 +316,8 @@ public class QuestionService {
 
         question.updateContent(request.getContent());
 
+        publishQuestionUpdatedEventAfterCommit(question, false);
+
         return new QuestionResDTO.UpdateDeleteRes(
                 question.getId(), question.getContent(),
                 question.getUpdatedAt(), question.getDeletedAt()
@@ -321,6 +332,8 @@ public class QuestionService {
         validateQuestionOwner(question, loginUser);
 
         question.softDelete();
+
+        publishQuestionUpdatedEventAfterCommit(question, true);
 
         return new QuestionResDTO.UpdateDeleteRes(
                 question.getId(), question.getContent(),
@@ -341,6 +354,8 @@ public class QuestionService {
 
         comment.updateContent(request.getContent());
 
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
+
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
                 comment.getUpdatedAt(), comment.getDeletedAt()
@@ -355,6 +370,8 @@ public class QuestionService {
         validateCommentOwner(comment, loginUser);
 
         comment.softDelete();
+
+        publishCommentUpdatedEventAfterCommit(comment.getQuestion());
 
         return new QuestionResDTO.CommentUpdateDeleteRes(
                 comment.getId(), comment.getContent(),
@@ -372,6 +389,8 @@ public class QuestionService {
 
         Question question = findQuestion(questionId);
         question.markResolved();
+
+        publishQuestionUpdatedEventAfterCommit(question, false);
 
         return new QuestionResDTO.StatusUpdateRes(
                 question.getId(), question.getIsResolved(), question.getUpdatedAt()
@@ -543,7 +562,11 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(StudySession session, int understandingIndex) {
+    private QuestionResDTO.UnderstandingSliceResponse getUnderstandingSlice(
+            StudySession session,
+            int understandingIndex,
+            User loginUser
+    ) {
         Page<UnderstandingCheck> understandingPage = understandingCheckRepository
                 .findBySessionOrderByCreatedAtDesc(session, PageRequest.of(understandingIndex, UNDERSTANDING_PAGE_SIZE));
 
@@ -559,17 +582,17 @@ public class QuestionService {
         // attendanceCount는 프론트 화면의 "13/29" 중 29에 해당한다.
         int attendanceCount = attendanceService.countAttendedBySession(session);
         return new QuestionResDTO.UnderstandingSliceResponse(
-                toUnderstandingCheckResponse(current, attendanceCount), understandingIndex, totalCount,
+                toUnderstandingCheckResponse(current, attendanceCount, loginUser), understandingIndex, totalCount,
                 understandingIndex < totalCount - 1, understandingIndex > 0
         );
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(UnderstandingCheck check) {
-        return toUnderstandingCheckResponse(check, null);
+        return toUnderstandingCheckResponse(check, null, null);
     }
 
     private QuestionResDTO.UnderstandingCheckResponse toUnderstandingCheckResponse(
-            UnderstandingCheck check, Integer attendanceCount
+            UnderstandingCheck check, Integer attendanceCount, User loginUser
     ) {
         // understoodCount/notUnderstoodCount는 오른쪽 O/X 뱃지 숫자로 그대로 사용한다.
         int understoodCount = understandingResponseRepository.countByCheckAndChoice(
@@ -585,8 +608,18 @@ public class QuestionService {
                 attendanceCount,
                 understoodCount,
                 notUnderstoodCount,
+                getSelectedChoice(check, loginUser),
                 check.getCreatedAt()
         );
+    }
+
+    private UnderstandResChoice getSelectedChoice(UnderstandingCheck check, User loginUser) {
+        if (loginUser == null) {
+            return null;
+        }
+        return understandingResponseRepository.findByCheckAndUser(check, loginUser)
+                .map(UnderstandingResponse::getChoice)
+                .orElse(null);
     }
 
     private QuestionResDTO.QuestionGroupsResponse getQuestionGroups(StudySession session, User loginUser) {
@@ -722,6 +755,32 @@ public class QuestionService {
         publishAfterCommit(() -> questionEventService.publishCommentCreated(sessionId, event));
     }
 
+    private void publishCommentUpdatedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+        Long questionId = question.getId();
+        List<Long> questionIds = List.of(questionId);
+
+        Map<Long, Integer> commentCounts = new HashMap<>();
+        questionCommentRepository.countByQuestionIds(questionIds)
+                .forEach(row -> commentCounts.put(row.getQuestionId(), Math.toIntExact(row.getCommentCount())));
+
+        Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments = new HashMap<>();
+        questionCommentRepository.findPreviewCommentsByQuestionIds(questionIds)
+                .forEach(row -> previewComments.computeIfAbsent(row.getQuestionId(), key -> new ArrayList<>())
+                        .add(toPreviewCommentResponse(question, row)));
+
+        QuestionResDTO.CommentUpdatedEvent event = new QuestionResDTO.CommentUpdatedEvent(
+                "COMMENT_UPDATED",
+                sessionId,
+                questionId,
+                question.getIsResolved(),
+                commentCounts.getOrDefault(questionId, 0),
+                previewComments.getOrDefault(questionId, List.of())
+        );
+
+        publishAfterCommit(() -> questionEventService.publishCommentUpdated(sessionId, event));
+    }
+
     private void publishQuestionCreatedEventAfterCommit(Question question) {
         Long sessionId = question.getSession().getId();
 
@@ -737,6 +796,23 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishQuestionCreated(sessionId, event));
+    }
+
+    private void publishQuestionUpdatedEventAfterCommit(Question question, boolean isDeleted) {
+        Long sessionId = question.getSession().getId();
+
+        QuestionResDTO.QuestionUpdatedEvent event = new QuestionResDTO.QuestionUpdatedEvent(
+                "QUESTION_UPDATED",
+                sessionId,
+                question.getId(),
+                question.getContent(),
+                question.getIsResolved(),
+                question.getLikeCount(),
+                isDeleted,
+                question.getUpdatedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishQuestionUpdated(sessionId, event));
     }
 
     private void publishUnderstandingCheckCreatedEventAfterCommit(
@@ -792,5 +868,23 @@ public class QuestionService {
             Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments,
             Set<Long> likedQuestionIds
     ) {
+    }
+
+    // 질문은 내용 또는 이미지 중 하나는 반드시 있어야 함
+    private void validateQuestionContent(String content, String imageUrl) {
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        if (!hasContent && !hasImage) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "질문 내용 또는 이미지 중 하나는 필수입니다.");
+        }
+    }
+
+    // 댓글은 내용 또는 이미지 중 하나는 반드시 있어야 함
+    private void validateCommentContent(String content, String imageUrl) {
+        boolean hasContent = content != null && !content.isBlank();
+        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        if (!hasContent && !hasImage) {
+            throw new QuestionException(HttpStatus.BAD_REQUEST, "댓글 내용 또는 이미지 중 하나는 필수입니다.");
+        }
     }
 }

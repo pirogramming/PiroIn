@@ -434,6 +434,17 @@
 
 .formInput:focus { border-color: var(--dark); }
 
+.required {
+    color: #e53e3e;
+}
+
+.errorMsg {
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    color: #e53e3e;
+    margin: 3px 0 0 2px;
+}
+
 .saveFormBtn {
     width: 40%;
     margin: 30px auto 0;

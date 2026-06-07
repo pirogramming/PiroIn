@@ -3,6 +3,8 @@
     min-height: 100vh;
     max-width: 880px;
     margin: 0 auto;
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 
 /* ── 섹션 공통 ── */
@@ -119,6 +121,7 @@
     border: none;
     cursor: pointer;
     color: var(--black);
+    flex-shrink: 0;
 }
 
 .listItem:hover .enterBtn {
@@ -130,4 +133,125 @@
     text-align: center;
     color: var(--gray400);
     margin-top: 40px;
+}
+
+
+/* ════════════════════════════════════════
+   반응형 — 태블릿 (768px 이하)
+════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .sectionTitle {
+        font-size: 26px;
+        padding: 16px 48px;
+        margin-bottom: 24px;
+    }
+
+    .card {
+        width: min(356px, 80%);
+        height: auto;
+        min-height: 120px;
+        box-sizing: border-box;
+    }
+
+    .cardTitle {
+        font-size: 20px;
+        margin: 12px 0;
+    }
+
+    .cardWeek,
+    .cardDate,
+    .cardTime {
+        font-size: 16px;
+    }
+
+    .listTitle {
+        font-size: 20px;
+    }
+
+    .listWeek {
+        font-size: 16px;
+    }
+
+    .icon {
+        margin-right: 14px;
+    }
+
+    .divider {
+        margin: 24px 0;
+    }
+
+    .section {
+        margin-bottom: 24px;
+    }
+}
+
+
+/* ════════════════════════════════════════
+   반응형 — 모바일 (480px 이하)
+════════════════════════════════════════ */
+@media (max-width: 480px) {
+    .page {
+        padding: 0 12px;
+    }
+
+    .sectionTitle {
+        font-size: 22px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+
+    .card {
+        width: min(356px, 80%);
+        padding: 14px 12px;
+    }
+
+    .cardTitle {
+        font-size: 18px;
+        margin: 10px 0;
+    }
+
+    .cardWeek,
+    .cardDate,
+    .cardTime {
+        font-size: 14px;
+    }
+
+    .list {
+        gap: 14px;
+    }
+
+    .listItem {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .listTitle {
+        font-size: 16px;
+    }
+
+    .listWeek {
+        font-size: 13px;
+    }
+
+    .icon {
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    .enterBtn {
+        padding: 4px;
+    }
+
+    .divider {
+        margin: 20px 0;
+    }
+
+    .section {
+        margin-bottom: 20px;
+    }
+
+    .empty {
+        margin-top: 28px;
+        font-size: 14px;
+    }
 }

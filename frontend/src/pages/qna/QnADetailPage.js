@@ -207,7 +207,7 @@ function QnADetailPage() {
     // ── 댓글 등록 ────────────────────────────────────
     const handleCommentSubmit = async () => {
         const text = commentText.trim();
-        if (!text) return;
+        if (!text && !selectedImage) return;
         setIsSubmitting(true);
         try {
             let imageUrl = null;
@@ -495,7 +495,7 @@ function QnADetailPage() {
                     <button
                         className={styles.submitBtn}
                         onClick={handleCommentSubmit}
-                        disabled={!commentText.trim() || isSubmitting}
+                        disabled={(!commentText.trim() && !selectedImage) || isSubmitting}
                         aria-label="댓글 제출"
                     >
                         {isSubmitting ? '⏳' : <SumitBtn />}

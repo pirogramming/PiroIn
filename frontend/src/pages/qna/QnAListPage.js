@@ -62,6 +62,48 @@ const updateQuestionGroupsByCommentEvent = (groups, eventData) => {
     return hasUpdatedQuestion ? regroupQuestions(questions) : groups;
 };
 
+const addQuestionToGroups = (groups, question) => {
+    if (!question?.questionId) return groups;
+
+    const existingQuestions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ];
+    const alreadyExists = existingQuestions.some(item => item.questionId === question.questionId);
+
+    if (alreadyExists) return groups;
+    return regroupQuestions([question, ...existingQuestions]);
+};
+
+const buildUnderstandingCheckFromEvent = (eventData) => ({
+    checkId: eventData.checkId,
+    content: eventData.content,
+    respondedCount: eventData.respondedCount ?? 0,
+    attendanceCount: eventData.attendanceCount ?? 0,
+    understoodCount: eventData.understoodCount ?? 0,
+    notUnderstoodCount: eventData.notUnderstoodCount ?? 0,
+    selectedChoice: null,
+    createdAt: eventData.createdAt,
+});
+
+const updateCurrentUnderstandingCounts = (understanding, eventData) => {
+    if (!understanding?.current || understanding.current.checkId !== eventData?.checkId) {
+        return understanding;
+    }
+
+    return {
+        ...understanding,
+        current: {
+            ...understanding.current,
+            respondedCount: eventData.respondedCount ?? understanding.current.respondedCount,
+            attendanceCount: eventData.attendanceCount ?? understanding.current.attendanceCount,
+            understoodCount: eventData.understoodCount ?? understanding.current.understoodCount,
+            notUnderstoodCount: eventData.notUnderstoodCount ?? understanding.current.notUnderstoodCount,
+        },
+    };
+};
+
 function QnAListPage() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
@@ -74,6 +116,7 @@ function QnAListPage() {
     const [understanding, setUnderstanding] = useState(null);
     const [understandingIndex, setUnderstandingIndex] = useState(0);
     const [myChoices, setMyChoices] = useState({});
+    const understandingRef = useRef(null);
 
     // ── 질문 목록 상태 ───────────────────────────────
     const [popularQuestions, setPopularQuestions] = useState([]);
@@ -112,6 +155,10 @@ function QnAListPage() {
         setUnresolvedQuestions(groups.unresolvedQuestions);
         setResolvedQuestions(groups.resolvedQuestions);
     }, []);
+
+    useEffect(() => {
+        understandingRef.current = understanding;
+    }, [understanding]);
 
     useEffect(() => {
         questionGroupsRef.current = {
@@ -189,6 +236,92 @@ function QnAListPage() {
         applyQuestionGroups(nextGroups);
     }, [applyQuestionGroups]);
 
+    const buildQuestionFromCreatedEvent = useCallback(async (eventData) => {
+        if (!eventData?.questionId) return null;
+
+        let blobImageUrl = null;
+        if (eventData.imageUrl) {
+            try {
+                const imgRes = await authFetch(eventData.imageUrl);
+                const blob = await imgRes.blob();
+                blobImageUrl = URL.createObjectURL(blob);
+            } catch {
+                blobImageUrl = null;
+            }
+        }
+
+        return {
+            questionId: eventData.questionId,
+            content: eventData.content,
+            imageUrl: blobImageUrl,
+            isResolved: false,
+            isPopular: false,
+            isLiked: false,
+            isMine: false,
+            iLiked: false,
+            likeCount: eventData.likeCount ?? 0,
+            commentCount: eventData.commentCount ?? 0,
+            previewComments: [],
+            createdAt: eventData.createdAt,
+        };
+    }, []);
+
+    const handleQuestionCreatedEvent = useCallback(async (eventData) => {
+        const createdQuestion = await buildQuestionFromCreatedEvent(eventData);
+        if (!createdQuestion) return;
+
+        const nextGroups = addQuestionToGroups(questionGroupsRef.current, createdQuestion);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups, buildQuestionFromCreatedEvent]);
+
+    const handleUnderstandingCheckCreatedEvent = useCallback((eventData) => {
+        if (!eventData?.checkId) return;
+        if (understandingRef.current?.current?.checkId === eventData.checkId) return;
+
+        if (understandingIndex === 0) {
+            setUnderstanding(prev => {
+                if (prev?.current?.checkId === eventData.checkId) return prev;
+
+                const previousTotalCount = prev?.totalCount ?? 0;
+                const nextUnderstanding = {
+                    current: buildUnderstandingCheckFromEvent(eventData),
+                    currentIndex: 0,
+                    totalCount: previousTotalCount + 1,
+                    hasOlder: previousTotalCount > 0,
+                    hasNewer: false,
+                };
+                understandingRef.current = nextUnderstanding;
+                return nextUnderstanding;
+            });
+            return;
+        }
+
+        setUnderstanding(prev => {
+            if (prev?.current?.checkId === eventData.checkId) return prev;
+
+            const nextTotalCount = (prev?.totalCount ?? understandingIndex + 1) + 1;
+            const nextCurrentIndex = (prev?.currentIndex ?? understandingIndex) + 1;
+            const nextUnderstanding = {
+                ...(prev ?? {}),
+                currentIndex: nextCurrentIndex,
+                totalCount: nextTotalCount,
+                hasOlder: nextCurrentIndex < nextTotalCount - 1,
+                hasNewer: true,
+            };
+            understandingRef.current = nextUnderstanding;
+            return nextUnderstanding;
+        });
+        setUnderstandingIndex(prev => prev + 1);
+    }, [understandingIndex]);
+
+    const handleUnderstandingResponseUpdatedEvent = useCallback((eventData) => {
+        setUnderstanding(prev => {
+            const nextUnderstanding = updateCurrentUnderstandingCounts(prev, eventData);
+            understandingRef.current = nextUnderstanding;
+            return nextUnderstanding;
+        });
+    }, []);
+
     const handleQuestionEvent = useCallback((message) => {
         const { event, data } = message;
 
@@ -200,19 +333,24 @@ function QnAListPage() {
                 handleCommentCreatedEvent(data);
                 break;
             case 'question-created':
-                console.debug('질문 생성 이벤트 수신:', data);
+                void handleQuestionCreatedEvent(data);
                 break;
             case 'understanding-check-created':
-                console.debug('이해도 체크 생성 이벤트 수신:', data);
+                handleUnderstandingCheckCreatedEvent(data);
                 break;
             case 'understanding-response-updated':
-                console.debug('이해도 응답 갱신 이벤트 수신:', data);
+                handleUnderstandingResponseUpdatedEvent(data);
                 break;
             default:
                 console.debug('알 수 없는 질문방 SSE 이벤트 수신:', message);
                 break;
         }
-    }, [handleCommentCreatedEvent]);
+    }, [
+        handleCommentCreatedEvent,
+        handleQuestionCreatedEvent,
+        handleUnderstandingCheckCreatedEvent,
+        handleUnderstandingResponseUpdatedEvent,
+    ]);
 
     useEffect(() => {
         if (!sessionId) {

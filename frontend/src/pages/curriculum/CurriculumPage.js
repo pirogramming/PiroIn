@@ -243,7 +243,7 @@ function SessionForm({ day, week, onClose, onSave }) {
                           readOnly />
                   </div>
                   <div className={styles.formSection}>
-                      <label className={styles.formLabel}>날짜</label>
+                      <label className={styles.formLabel}>날짜 <span className={styles.required}>*</span></label>
                       <input className={styles.formInput} type="date" value={form.sessionDate}
                           onChange={e => setForm({ ...form, sessionDate: e.target.value })} />
                       {errors.sessionDate && <p className={styles.errorMsg}>{errors.sessionDate}</p>}
@@ -265,7 +265,7 @@ function SessionForm({ day, week, onClose, onSave }) {
                     </div>
                 </div>
                 <div className={styles.formGrid}>
-                    <div><label className={styles.formLabel}>세션 제목</label><input className={styles.formInput} value={form.amTitle} onChange={e => setForm({ ...form, amTitle: e.target.value })} />{errors.amTitle && <p className={styles.errorMsg}>{errors.amTitle}</p>}</div>
+                    <div><label className={styles.formLabel}>세션 제목 <span className={styles.required}>*</span></label><input className={styles.formInput} value={form.amTitle} onChange={e => setForm({ ...form, amTitle: e.target.value })} />{errors.amTitle && <p className={styles.errorMsg}>{errors.amTitle}</p>}</div>
                     <div><label className={styles.formLabel}>세션자</label><input className={styles.formInput} value={form.amHost} onChange={e => setForm({ ...form, amHost: e.target.value })} /></div>
                     <div><label className={styles.formLabel}>세션 자료</label><input className={styles.formInput} value={form.amMaterialName} onChange={e => setForm({ ...form, amMaterialName: e.target.value })} /></div>
                     <div><label className={styles.formLabel}>세션 자료 링크</label><input className={styles.formInput} value={form.amMaterialUrl} onChange={e => setForm({ ...form, amMaterialUrl: e.target.value })} /></div>
@@ -288,7 +288,7 @@ function SessionForm({ day, week, onClose, onSave }) {
                     </div>
                 </div>
                 <div className={styles.formGrid}>
-                    <div><label className={styles.formLabel}>세션 제목</label><input className={styles.formInput} value={form.pmTitle} onChange={e => setForm({ ...form, pmTitle: e.target.value })} />{errors.pmTitle && <p className={styles.errorMsg}>{errors.pmTitle}</p>}</div>
+                    <div><label className={styles.formLabel}>세션 제목 <span className={styles.required}>*</span></label><input className={styles.formInput} value={form.pmTitle} onChange={e => setForm({ ...form, pmTitle: e.target.value })} />{errors.pmTitle && <p className={styles.errorMsg}>{errors.pmTitle}</p>}</div>
                     <div><label className={styles.formLabel}>세션자</label><input className={styles.formInput} value={form.pmHost} onChange={e => setForm({ ...form, pmHost: e.target.value })} /></div>
                     <div><label className={styles.formLabel}>세션 자료</label><input className={styles.formInput} value={form.pmMaterialName} onChange={e => setForm({ ...form, pmMaterialName: e.target.value })} /></div>
                     <div><label className={styles.formLabel}>세션 자료 링크</label><input className={styles.formInput} value={form.pmMaterialUrl} onChange={e => setForm({ ...form, pmMaterialUrl: e.target.value })} /></div>

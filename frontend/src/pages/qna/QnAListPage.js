@@ -62,6 +62,13 @@ function QnAListPage() {
 
             setSessionTitle(`${session.week}주차 ${DAY_OF_WEEK_KO[session.dayOfWeek]}요일 ${DAY_PART_KO[session.dayPart]} (${session.title})`);
             setUnderstanding(understanding);
+            const currentCheck = understanding?.current;
+            if (currentCheck?.checkId) {
+                setMyChoices(prev => ({
+                    ...prev,
+                    [currentCheck.checkId]: currentCheck.selectedChoice ?? null,
+                }));
+            }
 
             const allQ = [
                 ...(questions.popularQuestions ?? []),
@@ -116,29 +123,31 @@ function QnAListPage() {
     const handleUnderstandChoice = async (choice) => {
         if (!understanding?.current?.checkId) return;
         const checkId = understanding.current.checkId;
-        const newChoice = myChoices[checkId] === choice ? null : choice;
+        const previousChoice = myChoices[checkId] ?? null;
+        const newChoice = previousChoice === choice ? null : choice;
         setMyChoices(prev => ({ ...prev, [checkId]: newChoice }));
-        if (!newChoice) return;
         try {
             const res = await authFetch(
                 `/api/sessions/${sessionId}/understanding-checks/${checkId}/responses`,
-                { method: 'POST', body: JSON.stringify({ choice: newChoice }) }
+                { method: 'POST', body: JSON.stringify({ choice }) }
             );
             if (!res.ok) throw new Error();
             const json = await res.json();
-            if (json.isSuccess) {
-                setUnderstanding(prev => ({
-                    ...prev,
-                    current: {
-                        ...prev.current,
-                        understoodCount: json.result.understoodCount,
-                        notUnderstoodCount: json.result.notUnderstoodCount,
-                        attendanceCount: json.result.attendanceCount,
-                        respondedCount: json.result.respondedCount,
-                    }
-                }));
-            }
+            if (!json.isSuccess) throw new Error(json.message);
+            setMyChoices(prev => ({ ...prev, [checkId]: json.result.selectedChoice ?? null }));
+            setUnderstanding(prev => ({
+                ...prev,
+                current: {
+                    ...prev.current,
+                    understoodCount: json.result.understoodCount,
+                    notUnderstoodCount: json.result.notUnderstoodCount,
+                    attendanceCount: json.result.attendanceCount,
+                    respondedCount: json.result.respondedCount,
+                    selectedChoice: json.result.selectedChoice,
+                }
+            }));
         } catch (err) {
+            setMyChoices(prev => ({ ...prev, [checkId]: previousChoice }));
             console.error('이해도 응답 실패:', err);
         }
     };

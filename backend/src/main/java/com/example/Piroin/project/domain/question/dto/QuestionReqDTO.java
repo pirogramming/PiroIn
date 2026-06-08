@@ -4,6 +4,8 @@ import com.example.Piroin.project.domain.question.enums.UnderstandResChoice;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 public class QuestionReqDTO {
 
     // 질문 등록 요청
@@ -11,7 +13,9 @@ public class QuestionReqDTO {
     @NoArgsConstructor
     public static class CreateReq {
         private String content;
-        private String imageUrl;
+        // 이미지 여러 장 지원: URL 목록으로 수신
+        // 프론트에서 /api/images/multi로 업로드 후 반환된 URL 목록을 넘겨줌
+        private List<String> imageUrls;
     }
 
     // 질문 수정 요청
@@ -27,7 +31,8 @@ public class QuestionReqDTO {
     @NoArgsConstructor
     public static class CommentReq {
         private String content;
-        private String imageUrl;
+        // 이미지 여러 장 지원
+        private List<String> imageUrls;
         private Long parentCommentId;  // 대댓글일 때만 값이 있음, 일반 댓글이면 null
     }
 

@@ -75,7 +75,8 @@ public class QuestionResDTO {
             Long questionId,
             String displayName,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원: URL 목록
+            List<String> imageUrls,
             Boolean isResolved,
             Boolean isPopular,
             Integer likeCount,
@@ -91,7 +92,8 @@ public class QuestionResDTO {
             Long commentId,
             String displayName,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             Boolean isMine,
             LocalDateTime createdAt,
             List<CommentResponse> replies
@@ -161,7 +163,8 @@ public class QuestionResDTO {
     public record QuestionSummaryResponse(
             Long questionId,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             Boolean isResolved,
             Boolean isPopular,
             Boolean isLiked,
@@ -245,7 +248,8 @@ public class QuestionResDTO {
             Long sessionId,
             Long questionId,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             // 좋아요 수 (생성 직후에는 0)
             Integer likeCount,
             // 댓글 수 (생성 직후에는 0)

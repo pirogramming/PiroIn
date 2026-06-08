@@ -6,6 +6,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "question")
@@ -30,6 +34,12 @@ public class Question {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /*
+    이미지 URL 목록을 JSON 배열 문자열로 저장
+    예시: ["\/api\/images\/uuid1.png","\/api\/images\/uuid2.jpg"]
+    기존 단일 URL(하위 호환): 기존 데이터에 imageUrl이 JSON 배열이 아닌 단일 URL 문자열로 저장된 경우
+    getImageUrls()에서 정상적으로 파싱하여 1개짜리 리스트로 반환
+    */
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
@@ -47,6 +57,18 @@ public class Question {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 이미지 URL 목록 조회 (JSON 배열 → List<String> 변환)
+    @Transient
+    public List<String> getImageUrls() {
+        return parseImageUrls(this.imageUrl);
+    }
+
+    // 이미지 URL 목록 저장 (List<String> → JSON 배열 문자열 변환)
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrl = serializeImageUrls(imageUrls);
+        this.updatedAt = LocalDateTime.now();
+    }
 
     // 댓글이 새로 달리면 미해결로 되돌리도록
     public void markUnresolved() {
@@ -84,5 +106,38 @@ public class Question {
     public void markResolved() {
         this.isResolved = true;
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // JSON 배열 문자열 파싱 유틸 (하위 호환: 기존 단일 URL도 1개짜리 리스트로 반환)
+    public static List<String> parseImageUrls(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return new ArrayList<>();
+        }
+        String trimmed = raw.trim();
+        // JSON 배열 형태인 경우
+        if (trimmed.startsWith("[")) {
+            // 간단한 JSON 배열 파싱 (외부 라이브러리 없이)
+            String inner = trimmed.substring(1, trimmed.length() - 1).trim();
+            if (inner.isEmpty()) return new ArrayList<>();
+            return Arrays.stream(inner.split(","))
+                    .map(s -> s.trim().replaceAll("^\"|\"$", ""))
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+        }
+        // 기존 단일 URL (하위 호환)
+        List<String> list = new ArrayList<>();
+        list.add(trimmed);
+        return list;
+    }
+
+    // List<String> → JSON 배열 문자열 직렬화 유틸
+    public static String serializeImageUrls(List<String> urls) {
+        if (urls == null || urls.isEmpty()) {
+            return null;
+        }
+        String joined = urls.stream()
+                .map(url -> "\"" + url.replace("\"", "\\\"") + "\"")
+                .collect(Collectors.joining(","));
+        return "[" + joined + "]";
     }
 }

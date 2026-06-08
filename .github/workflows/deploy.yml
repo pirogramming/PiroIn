@@ -58,6 +58,7 @@ jobs:
               --name piroin-backend \
               --restart unless-stopped \
               -p 8080:8080 \
+              -v piroin-uploads:/app/uploads \
               --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
               --health-interval=30s \
               --health-timeout=10s \

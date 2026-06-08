@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "question_comment")
@@ -39,6 +40,10 @@ public class QuestionComment {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /*
+    이미지 URL 목록을 JSON 배열 문자열로 저장
+    Question 엔티티와 동일한 방식 사용
+    */
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
@@ -50,6 +55,12 @@ public class QuestionComment {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    // 이미지 URL 목록 조회
+    @Transient
+    public List<String> getImageUrls() {
+        return Question.parseImageUrls(this.imageUrl);
+    }
 
     // 댓글 내용 수정
     public void updateContent(String content) {

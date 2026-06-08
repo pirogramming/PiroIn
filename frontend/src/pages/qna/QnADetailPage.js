@@ -8,7 +8,7 @@ import {
     MeCuriousToo,
     StaffCheck,
     SumitBtn,
-    uploadImage,
+    uploadImages,
 } from '../../utils/qnaUtils';
 import profileImg from '../../assets/images/profile.png';
 import { authFetch } from '../../utils/Api';
@@ -39,10 +39,16 @@ const createBlobImageUrl = async (imageUrl) => {
     }
 };
 
+// imageUrls 배열을 blob URL 배열로 변환
+const createBlobImageUrls = async (imageUrls) => {
+    if (!imageUrls || imageUrls.length === 0) return [];
+    return Promise.all(imageUrls.map(url => createBlobImageUrl(url)));
+};
+
 const attachCommentBlobImages = async (comments = []) => Promise.all(
     comments.map(async (comment) => ({
         ...comment,
-        imageUrl: await createBlobImageUrl(comment.imageUrl),
+        imageUrls: await createBlobImageUrls(comment.imageUrls ?? []),
         replies: await attachCommentBlobImages(comment.replies ?? []),
     }))
 );
@@ -82,8 +88,8 @@ function QnADetailPage() {
     // ── 댓글 입력 상태 ───────────────────────────────
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    const [selectedImages, setSelectedImages] = useState([]);       // 여러 장
+    const [imagePreviews, setImagePreviews] = useState([]);         // 여러 장 미리보기
     const fileInputRef = useRef(null);
 
     // ── 댓글 수정 상태 ───────────────────────────────
@@ -104,8 +110,8 @@ function QnADetailPage() {
 
             const result = json.result;
 
-            // 질문 이미지 blob 변환
-            result.imageUrl = await createBlobImageUrl(result.imageUrl);
+            // 질문 이미지 blob 변환 (여러 장)
+            result.imageUrls = await createBlobImageUrls(result.imageUrls ?? []);
 
             // 댓글과 대댓글 이미지 blob 변환
             if (result.comments) {
@@ -259,10 +265,14 @@ function QnADetailPage() {
 
     // ── 댓글 이미지 선택 / 붙여넣기 ─────────────────
     const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setSelectedImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        // 최대 5장 제한
+        const merged = [...selectedImages, ...files].slice(0, 5);
+        setSelectedImages(merged);
+        setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+        // 같은 파일 재선택 허용
+        e.target.value = '';
     };
 
     const handlePaste = (e) => {
@@ -272,49 +282,44 @@ function QnADetailPage() {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
                 if (file) {
-                    setSelectedImage(file);
-                    setImagePreview(URL.createObjectURL(file));
+                    const merged = [...selectedImages, file].slice(0, 5);
+                    setSelectedImages(merged);
+                    setImagePreviews(merged.map(f => URL.createObjectURL(f)));
                 }
                 break;
             }
         }
     };
 
+    const handleRemoveImage = (idx) => {
+        const next = selectedImages.filter((_, i) => i !== idx);
+        setSelectedImages(next);
+        setImagePreviews(next.map(f => URL.createObjectURL(f)));
+    };
+
     // ── 댓글 등록 ────────────────────────────────────
     const handleCommentSubmit = async () => {
         const text = commentText.trim();
-        if (!text && !selectedImage) return;
+        if (!text && selectedImages.length === 0) return;
         setIsSubmitting(true);
         try {
-            let imageUrl = null;
-            if (selectedImage) {
-                imageUrl = await uploadImage(selectedImage);
+            let imageUrls = [];
+            if (selectedImages.length > 0) {
+                imageUrls = await uploadImages(selectedImages);
             }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                // 댓글 등록 응답값으로 해결 상태 반영
-                setQuestion(prev => ({ ...prev, isResolved: json.result.isResolved }));
-
-                const newComment = {
-                    commentId: json.result.commentId,
-                    displayName: json.result.displayName,
-                    content: json.result.content,
-                    createdAt: json.result.createdAt,
-                    imageUrl: imagePreview,
-                    isMine: true,
-                };
-                setQuestion(prev => ({
-                    ...prev,
-                    comments: [...(prev.comments ?? []), newComment],
-                }));
                 setCommentText('');
-                setSelectedImage(null);
-                setImagePreview(null);
+                setSelectedImages([]);
+                setImagePreviews([]);
+                // 로컬 상태에 blob URL을 직접 넣으면 새로고침 시 이미지가 깨지므로
+                // 등록 직후 fetchQuestion으로 서버의 정식 URL을 받아온다.
+                await fetchQuestion();
             }
         } catch (err) {
             console.error('댓글 등록 실패:', err);
@@ -432,8 +437,12 @@ function QnADetailPage() {
                         {comment.content}
                     </div>
                 )}
-                {comment.imageUrl && (
-                    <img src={comment.imageUrl} alt="댓글 첨부 이미지" className={styles.commentImage} />
+                {comment.imageUrls?.length > 0 && (
+                    <div className={styles.commentImages}>
+                        {comment.imageUrls.map((url, idx) => (
+                            <img key={idx} src={url} alt={`댓글 첨부 이미지 ${idx + 1}`} className={styles.commentImage} />
+                        ))}
+                    </div>
                 )}
             </div>
             <p className={styles.commentDate}>{formatTime(comment.createdAt)}</p>
@@ -516,9 +525,13 @@ function QnADetailPage() {
                 )}
             </div>
 
-            {/* ── 질문 첨부 이미지 ── */}
-            {question.imageUrl && (
-                <img src={question.imageUrl} alt="첨부 이미지" className={styles.questionImage} />
+            {/* ── 질문 첨부 이미지 (여러 장) ── */}
+            {question.imageUrls?.length > 0 && (
+                <div className={styles.questionImages}>
+                    {question.imageUrls.map((url, idx) => (
+                        <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`} className={styles.questionImage} />
+                    ))}
+                </div>
             )}
 
             {/* ── 액션 버튼 (좋아요 / 댓글달기) ── */}
@@ -548,13 +561,17 @@ function QnADetailPage() {
 
             {/* ── 하단 댓글 입력바 ── */}
             <div className={styles.commentInputBar}>
-                {imagePreview && (
-                    <div className={styles.imagePreviewWrapper}>
-                        <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
-                        <button
-                            className={styles.imageRemoveBtn}
-                            onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-                        >✕</button>
+                {imagePreviews.length > 0 && (
+                    <div className={styles.imagePreviewList}>
+                        {imagePreviews.map((preview, idx) => (
+                            <div key={idx} className={styles.imagePreviewWrapper}>
+                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                <button
+                                    className={styles.imageRemoveBtn}
+                                    onClick={() => handleRemoveImage(idx)}
+                                >✕</button>
+                            </div>
+                        ))}
                     </div>
                 )}
                 <div className={styles.commentInputRow}>
@@ -565,6 +582,7 @@ function QnADetailPage() {
                     <input
                         type="file"
                         accept="image/*"
+                        multiple
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleImageSelect}
@@ -582,7 +600,7 @@ function QnADetailPage() {
                     <button
                         className={styles.submitBtn}
                         onClick={handleCommentSubmit}
-                        disabled={(!commentText.trim() && !selectedImage) || isSubmitting}
+                        disabled={(!commentText.trim() && selectedImages.length === 0) || isSubmitting}
                         aria-label="댓글 제출"
                     >
                         {isSubmitting ? '⏳' : <SumitBtn />}

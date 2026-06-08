@@ -92,7 +92,7 @@ public class QuestionService {
                 .toList();
 
         return new QuestionResDTO.QuestionDetailResponse(
-                question.getId(), "작성자", question.getContent(), question.getImageUrl(),
+                question.getId(), "작성자", question.getContent(), question.getImageUrls(),
                 question.getIsResolved(), isPopular, question.getLikeCount(), isLiked,
                 isMine,
                 question.getCreatedAt(), commentResponses
@@ -106,14 +106,14 @@ public class QuestionService {
         List<QuestionResDTO.CommentResponse> replyResponses = replies.stream()
                 .map(reply -> new QuestionResDTO.CommentResponse(
                         reply.getId(), getDisplayName(question, reply.getUser()),
-                        reply.getContent(), reply.getImageUrl(), isCommentMine(reply, loginUser),
+                        reply.getContent(), reply.getImageUrls(), isCommentMine(reply, loginUser),
                         reply.getCreatedAt(), List.of()
                 ))
                 .toList();
 
         return new QuestionResDTO.CommentResponse(
                 comment.getId(), getDisplayName(question, comment.getUser()),
-                comment.getContent(), comment.getImageUrl(), isCommentMine(comment, loginUser),
+                comment.getContent(), comment.getImageUrls(), isCommentMine(comment, loginUser),
                 comment.getCreatedAt(), replyResponses
         );
     }
@@ -137,7 +137,7 @@ public class QuestionService {
         QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
 
         // builder 전에 검증 추가
-        validateCommentContent(request.getContent(), request.getImageUrl());
+        validateCommentContent(request.getContent(), request.getImageUrls());
 
         // 2. 댓글 엔티티 생성 및 저장
         LocalDateTime now = LocalDateTime.now();
@@ -146,7 +146,7 @@ public class QuestionService {
                 .user(loginUser)
                 .parentComment(parentComment)  // 일반 댓글이면 null, 대댓글이면 부모 댓글
                 .content(request.getContent())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(Question.serializeImageUrls(request.getImageUrls()))
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
@@ -252,13 +252,13 @@ public class QuestionService {
         StudySession session = findSession(sessionId);
 
         // builder 전에 검증 추가
-        validateQuestionContent(request.getContent(), request.getImageUrl());
+        validateQuestionContent(request.getContent(), request.getImageUrls());
 
         Question question = Question.builder()
                 .session(session)
                 .user(loginUser)
                 .content(request.getContent())
-                .imageUrl(request.getImageUrl())
+                .imageUrl(Question.serializeImageUrls(request.getImageUrls()))
                 .isResolved(false)
                 .likeCount(0)
                 .createdAt(LocalDateTime.now())
@@ -654,7 +654,7 @@ public class QuestionService {
         boolean isLiked = summaryContext.likedQuestionIds().contains(questionId);
         boolean isMine = question.getUser().getId().equals(loginUser.getId());
         return new QuestionResDTO.QuestionSummaryResponse(
-                questionId, question.getContent(), question.getImageUrl(),
+                questionId, question.getContent(), question.getImageUrls(),
                 question.getIsResolved(),
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 isLiked,
@@ -713,6 +713,7 @@ public class QuestionService {
     }
 
     private boolean hasPreviewImage(QuestionCommentRepository.PreviewCommentRow row) {
+        // image_url 컬럼에 값이 있으면 이미지 있는 것으로 처리 (JSON 배열 또는 단일 URL 모두 포함)
         return row.getImageUrl() != null && !row.getImageUrl().isBlank();
     }
 
@@ -789,7 +790,7 @@ public class QuestionService {
                 sessionId,
                 question.getId(),
                 question.getContent(),
-                question.getImageUrl(),
+                question.getImageUrls(),
                 question.getLikeCount(),
                 0,  // 방금 만들어진 질문이므로 댓글 수는 0
                 question.getCreatedAt()
@@ -871,18 +872,18 @@ public class QuestionService {
     }
 
     // 질문은 내용 또는 이미지 중 하나는 반드시 있어야 함
-    private void validateQuestionContent(String content, String imageUrl) {
+    private void validateQuestionContent(String content, List<String> imageUrls) {
         boolean hasContent = content != null && !content.isBlank();
-        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        boolean hasImage = imageUrls != null && !imageUrls.isEmpty();
         if (!hasContent && !hasImage) {
             throw new QuestionException(HttpStatus.BAD_REQUEST, "질문 내용 또는 이미지 중 하나는 필수입니다.");
         }
     }
 
     // 댓글은 내용 또는 이미지 중 하나는 반드시 있어야 함
-    private void validateCommentContent(String content, String imageUrl) {
+    private void validateCommentContent(String content, List<String> imageUrls) {
         boolean hasContent = content != null && !content.isBlank();
-        boolean hasImage = imageUrl != null && !imageUrl.isBlank();
+        boolean hasImage = imageUrls != null && !imageUrls.isEmpty();
         if (!hasContent && !hasImage) {
             throw new QuestionException(HttpStatus.BAD_REQUEST, "댓글 내용 또는 이미지 중 하나는 필수입니다.");
         }

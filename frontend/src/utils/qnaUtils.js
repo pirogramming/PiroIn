@@ -96,7 +96,7 @@ export const getTime = (dayPart) => dayPart === 'AM' ? '10:00 ~ 13:00' : '14:00 
 // 운영진 여부 판단 (displayName이 '운영진'으로 시작하면 true)
 export const isStaffDisplay = (displayName) => displayName?.startsWith('운영진') ?? false;
 
-// 이미지 업로드 후 서버 URL 반환
+// 이미지 단일 업로드 후 서버 URL 반환
 export const uploadImage = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -108,4 +108,20 @@ export const uploadImage = async (file) => {
     });
     const json = await res.json();
     return json.imageUrl;
+};
+
+// 이미지 여러 장 업로드 후 서버 URL 목록 반환
+// files: File[] (최대 5장)
+export const uploadImages = async (files) => {
+    if (!files || files.length === 0) return [];
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/images/multi', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData,
+    });
+    const json = await res.json();
+    return json.imageUrls ?? [];
 };

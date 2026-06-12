@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class QuestionEventService {
-    private static final long SSE_TIMEOUT_MILLIS = 60L * 60L * 1000L;
+    private static final long SSE_TIMEOUT_MILLIS = 3L * 60L * 1000L;
 
     // sessionId별로 현재 질문방을 보고 있는 SSE 연결들을 보관한다.
     private final Map<Long, List<SseEmitter>> sessionEmitters = new ConcurrentHashMap<>();

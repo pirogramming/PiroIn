@@ -7,7 +7,7 @@ import { subscribeQuestionEvents } from '../../utils/sse';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
     OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
-    DAY_PART_KO, DAY_OF_WEEK_KO, uploadImage,
+    DAY_PART_KO, DAY_OF_WEEK_KO, uploadImages,
 } from '../../utils/qnaUtils';
 
 const MAX_VISIBLE_COMMENTS = 3;
@@ -186,7 +186,9 @@ function QnAListPage() {
     // ── 댓글 입력 상태 ───────────────────────────────
     const [commentOpenId, setCommentOpenId] = useState(null);
     const [commentInputs, setCommentInputs] = useState({});
+    // 질문별 댓글 이미지 여러 장: { [questionId]: File[] }
     const [commentImages, setCommentImages] = useState({});
+    // 질문별 댓글 이미지 미리보기: { [questionId]: string[] }
     const [commentImagePreviews, setCommentImagePreviews] = useState({});
     const commentFileRefs = useRef({});
 
@@ -194,8 +196,9 @@ function QnAListPage() {
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    // 질문 이미지 여러 장
+    const [selectedImages, setSelectedImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const fileInputRef = useRef(null);
 
     const applyQuestionGroups = useCallback((groups) => {
@@ -243,20 +246,22 @@ function QnAListPage() {
                 ...(questions.resolvedQuestions ?? []),
             ];
 
-            // 질문 이미지 blob URL 변환
+            // 질문 이미지 blob URL 변환 (여러 장: imageUrls 배열)
             const withBlob = await Promise.all(
                 allQ.map(async (q) => {
-                    let blobImageUrl = null;
-                    if (q.imageUrl) {
-                        try {
-                            const imgRes = await authFetch(q.imageUrl);
-                            const blob = await imgRes.blob();
-                            blobImageUrl = URL.createObjectURL(blob);
-                        } catch {
-                            blobImageUrl = null;
-                        }
-                    }
-                    return { ...q, iLiked: q.isLiked, imageUrl: blobImageUrl };
+                    const rawUrls = q.imageUrls ?? [];
+                    const blobUrls = await Promise.all(
+                        rawUrls.map(async (url) => {
+                            try {
+                                const imgRes = await authFetch(url);
+                                const blob = await imgRes.blob();
+                                return URL.createObjectURL(blob);
+                            } catch {
+                                return null;
+                            }
+                        })
+                    );
+                    return { ...q, iLiked: q.isLiked, imageUrls: blobUrls.filter(Boolean) };
                 })
             );
 
@@ -288,21 +293,24 @@ function QnAListPage() {
     const buildQuestionFromCreatedEvent = useCallback(async (eventData) => {
         if (!eventData?.questionId) return null;
 
-        let blobImageUrl = null;
-        if (eventData.imageUrl) {
-            try {
-                const imgRes = await authFetch(eventData.imageUrl);
-                const blob = await imgRes.blob();
-                blobImageUrl = URL.createObjectURL(blob);
-            } catch {
-                blobImageUrl = null;
-            }
-        }
+        // SSE 이벤트의 imageUrls 배열을 blob URL로 변환
+        const rawUrls = eventData.imageUrls ?? [];
+        const blobUrls = await Promise.all(
+            rawUrls.map(async (url) => {
+                try {
+                    const imgRes = await authFetch(url);
+                    const blob = await imgRes.blob();
+                    return URL.createObjectURL(blob);
+                } catch {
+                    return null;
+                }
+            })
+        );
 
         return {
             questionId: eventData.questionId,
             content: eventData.content,
-            imageUrl: blobImageUrl,
+            imageUrls: blobUrls.filter(Boolean),
             isResolved: false,
             isPopular: false,
             isLiked: false,
@@ -506,15 +514,16 @@ function QnAListPage() {
     const handleCommentSubmit = async (e, questionId) => {
         e.stopPropagation();
         const text = (commentInputs[questionId] || '').trim();
-        if (!text && !commentImages[questionId]) return;
+        const images = commentImages[questionId] ?? [];
+        if (!text && images.length === 0) return;
         try {
-            let imageUrl = null;
-            if (commentImages[questionId]) {
-                imageUrl = await uploadImage(commentImages[questionId]);
+            let imageUrls = [];
+            if (images.length > 0) {
+                imageUrls = await uploadImages(images);
             }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
@@ -541,8 +550,8 @@ function QnAListPage() {
                 setUnresolvedQuestions(update);
                 setResolvedQuestions(update);
                 setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
-                setCommentImages(prev => ({ ...prev, [questionId]: null }));
-                setCommentImagePreviews(prev => ({ ...prev, [questionId]: null }));
+                setCommentImages(prev => ({ ...prev, [questionId]: [] }));
+                setCommentImagePreviews(prev => ({ ...prev, [questionId]: [] }));
                 setCommentOpenId(null);
             }
         } catch (err) {
@@ -552,10 +561,20 @@ function QnAListPage() {
 
     // ── 댓글 이미지 선택 / 붙여넣기 ─────────────────
     const handleCommentImageSelect = (e, questionId) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setCommentImages(prev => ({ ...prev, [questionId]: file }));
-        setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const prev = commentImages[questionId] ?? [];
+        const merged = [...prev, ...files].slice(0, 5);
+        setCommentImages(p => ({ ...p, [questionId]: merged }));
+        setCommentImagePreviews(p => ({ ...p, [questionId]: merged.map(f => URL.createObjectURL(f)) }));
+        e.target.value = '';
+    };
+
+    const handleCommentRemoveImage = (questionId, idx) => {
+        const prev = commentImages[questionId] ?? [];
+        const next = prev.filter((_, i) => i !== idx);
+        setCommentImages(p => ({ ...p, [questionId]: next }));
+        setCommentImagePreviews(p => ({ ...p, [questionId]: next.map(f => URL.createObjectURL(f)) }));
     };
 
     const handleCommentPaste = (e, questionId) => {
@@ -565,43 +584,53 @@ function QnAListPage() {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
                 if (file) {
-                    setCommentImages(prev => ({ ...prev, [questionId]: file }));
-                    setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+                    const prev = commentImages[questionId] ?? [];
+                    const merged = [...prev, file].slice(0, 5);
+                    setCommentImages(p => ({ ...p, [questionId]: merged }));
+                    setCommentImagePreviews(p => ({ ...p, [questionId]: merged.map(f => URL.createObjectURL(f)) }));
                 }
                 break;
             }
         }
     };
 
-    // ── 질문 이미지 선택 ─────────────────────────────
+    // ── 질문 이미지 선택 (여러 장) ───────────────────
     const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setSelectedImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const merged = [...selectedImages, ...files].slice(0, 5);
+        setSelectedImages(merged);
+        setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+        e.target.value = '';
+    };
+
+    const handleRemoveImage = (idx) => {
+        const next = selectedImages.filter((_, i) => i !== idx);
+        setSelectedImages(next);
+        setImagePreviews(next.map(f => URL.createObjectURL(f)));
     };
 
     // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
-        if (!text && !selectedImage) return;
+        if (!text && selectedImages.length === 0) return;
         setIsSubmitting(true);
         setSubmitError(null);
         try {
-            let imageUrl = null;
-            if (selectedImage) {
-                imageUrl = await uploadImage(selectedImage);
+            let imageUrls = [];
+            if (selectedImages.length > 0) {
+                imageUrls = await uploadImages(selectedImages);
             }
             const res = await authFetch(`/api/sessions/${sessionId}/questions`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, imageUrl }),
+                body: JSON.stringify({ content: text, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
                 setNewQuestion('');
-                setSelectedImage(null);
-                setImagePreview(null);
+                setSelectedImages([]);
+                setImagePreviews([]);
                 fetchQuestions(understandingIndex);
             }
         } catch (err) {
@@ -768,11 +797,14 @@ function QnAListPage() {
                             </div>
                         </div>
 
-                        {/* 질문 첨부 이미지 */}
-                        {question.imageUrl && (
-                            <img src={question.imageUrl} alt="첨부 이미지"
-                                className={styles.questionImage}
-                                onClick={e => e.stopPropagation()} />
+                        {/* 질문 첨부 이미지 (여러 장) */}
+                        {question.imageUrls?.length > 0 && (
+                            <div className={styles.questionImages} onClick={e => e.stopPropagation()}>
+                                {question.imageUrls.map((url, idx) => (
+                                    <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`}
+                                        className={styles.questionImage} />
+                                ))}
+                            </div>
                         )}
 
                         {/* 댓글 미리보기 */}
@@ -815,17 +847,20 @@ function QnAListPage() {
                         {/* 댓글 입력창 */}
                         {commentOpenId === question.questionId && (
                             <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                {commentImagePreviews[question.questionId] && (
-                                    <div className={styles.imagePreviewWrapper}>
-                                        <img src={commentImagePreviews[question.questionId]} alt="미리보기" className={styles.imagePreview} />
-                                        <button
-                                            className={styles.imageRemoveBtn}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                setCommentImages(prev => ({ ...prev, [question.questionId]: null }));
-                                                setCommentImagePreviews(prev => ({ ...prev, [question.questionId]: null }));
-                                            }}
-                                        >✕</button>
+                                {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
+                                    <div className={styles.imagePreviewList}>
+                                        {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
+                                            <div key={idx} className={styles.imagePreviewWrapper}>
+                                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                                <button
+                                                    className={styles.imageRemoveBtn}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleCommentRemoveImage(question.questionId, idx);
+                                                    }}
+                                                >✕</button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                                 <div className={styles.commentInputInner}>
@@ -837,6 +872,7 @@ function QnAListPage() {
                                                 commentFileRefs.current[question.questionId] = document.createElement('input');
                                                 commentFileRefs.current[question.questionId].type = 'file';
                                                 commentFileRefs.current[question.questionId].accept = 'image/*';
+                                                commentFileRefs.current[question.questionId].multiple = true;
                                                 commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
                                             }
                                             commentFileRefs.current[question.questionId].click();
@@ -868,13 +904,17 @@ function QnAListPage() {
             {!isPast && (
                 <div className={styles.newQuestionBar}>
                     {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                    {imagePreview && (
-                        <div className={styles.imagePreviewWrapper}>
-                            <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
-                            <button
-                                className={styles.imageRemoveBtn}
-                                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-                            >✕</button>
+                    {imagePreviews.length > 0 && (
+                        <div className={styles.imagePreviewList}>
+                            {imagePreviews.map((preview, idx) => (
+                                <div key={idx} className={styles.imagePreviewWrapper}>
+                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                    <button
+                                        className={styles.imageRemoveBtn}
+                                        onClick={() => handleRemoveImage(idx)}
+                                    >✕</button>
+                                </div>
+                            ))}
                         </div>
                     )}
                     <div className={styles.newQuestionInputRow}>
@@ -888,6 +928,7 @@ function QnAListPage() {
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     ref={fileInputRef}
                                     style={{ display: 'none' }}
                                     onChange={handleImageSelect}

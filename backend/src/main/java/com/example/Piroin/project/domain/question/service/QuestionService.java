@@ -121,15 +121,16 @@ public class QuestionService {
                 .filter(commenterId -> !commenterId.equals(questionAuthorId))
                 .collect(Collectors.toSet());
 
-        Map<Long, Integer> anonymousNumbersByUserId = new HashMap<>();
+        Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId = new HashMap<>();
         if (!anonymousUserIds.isEmpty()) {
             anonymousIdentityRepository.findByQuestionAndUserIds(question, anonymousUserIds)
-                    .forEach(identity -> anonymousNumbersByUserId.put(
-                            identity.getUser().getId(), identity.getAnonymousNo()
+                    .forEach(identity -> anonymousIdentitiesByUserId.put(
+                            identity.getUser().getId(),
+                            new AnonymousIdentityDisplay(identity.getRole(), identity.getAnonymousNo())
                     ));
         }
 
-        return new DetailCommentContext(topComments, repliesByParentId, anonymousNumbersByUserId);
+        return new DetailCommentContext(topComments, repliesByParentId, anonymousIdentitiesByUserId);
     }
 
     private QuestionResDTO.CommentResponse toTopLevelCommentResponse(
@@ -145,7 +146,7 @@ public class QuestionService {
                 .toList();
 
         return new QuestionResDTO.CommentResponse(
-                comment.getId(), getDisplayName(question, comment.getUser(), commentContext.anonymousNumbersByUserId()),
+                comment.getId(), getDisplayName(question, comment.getUser(), commentContext.anonymousIdentitiesByUserId()),
                 comment.getContent(), comment.getImageUrls(), isCommentMine(comment, loginUser),
                 comment.getCreatedAt(), replyResponses
         );
@@ -158,7 +159,7 @@ public class QuestionService {
             DetailCommentContext commentContext
     ) {
         return new QuestionResDTO.CommentResponse(
-                reply.getId(), getDisplayName(question, reply.getUser(), commentContext.anonymousNumbersByUserId()),
+                reply.getId(), getDisplayName(question, reply.getUser(), commentContext.anonymousIdentitiesByUserId()),
                 reply.getContent(), reply.getImageUrls(), isCommentMine(reply, loginUser),
                 reply.getCreatedAt(), List.of()
         );
@@ -177,7 +178,7 @@ public class QuestionService {
             Long userId
     ) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestion(questionId);
+        Question question = findQuestionForUpdate(questionId);
 
         // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
         QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
@@ -258,7 +259,7 @@ public class QuestionService {
         // 이미 이 질문에서 익명 번호가 있는지 확인
         return anonymousIdentityRepository
                 .findByQuestionAndUser(question, commenter)
-                .map(identity -> buildDisplayName(commenter.getRole(), identity.getAnonymousNo()))
+                .map(identity -> buildDisplayName(identity.getRole(), identity.getAnonymousNo()))
                 .orElseGet(() -> {
                     // 처음 댓글 다는 유저 → 역할별 카운트 기반으로 새 번호 부여
                     int nextNo = anonymousIdentityRepository
@@ -268,6 +269,7 @@ public class QuestionService {
                             .question(question)
                             .user(commenter)
                             .anonymousNo(nextNo)
+                            .role(commenter.getRole())
                             .createdAt(LocalDateTime.now())
                             .build());
 
@@ -280,16 +282,20 @@ public class QuestionService {
         return role == Role.ADMIN ? "운영진" + anonymousNo : "익명" + anonymousNo;
     }
 
-    private String getDisplayName(Question question, User commenter, Map<Long, Integer> anonymousNumbersByUserId) {
+    private String getDisplayName(
+            Question question,
+            User commenter,
+            Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId
+    ) {
         if (commenter.getId().equals(question.getUser().getId())) {
             return "작성자";
         }
 
-        Integer anonymousNo = anonymousNumbersByUserId.get(commenter.getId());
-        if (anonymousNo == null) {
+        AnonymousIdentityDisplay identity = anonymousIdentitiesByUserId.get(commenter.getId());
+        if (identity == null) {
             return commenter.getRole() == Role.ADMIN ? "운영진" : "익명";
         }
-        return buildDisplayName(commenter.getRole(), anonymousNo);
+        return buildDisplayName(identity.role(), identity.anonymousNo());
     }
 
     // 질문 등록
@@ -325,7 +331,7 @@ public class QuestionService {
     @Transactional
     public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestionForLikeUpdate(questionId);
+        Question question = findQuestionForUpdate(questionId);
 
         // 이미 좋아요를 눌렀는지 확인
         QuestionResDTO.LikeRes result = questionLikeRepository.findByQuestionAndUser(question, loginUser)
@@ -528,7 +534,7 @@ public class QuestionService {
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
     }
 
-    private Question findQuestionForLikeUpdate(Long questionId) {
+    private Question findQuestionForUpdate(Long questionId) {
         return questionRepository.findByIdAndDeletedAtIsNullForUpdate(questionId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
     }
@@ -931,7 +937,13 @@ public class QuestionService {
     private record DetailCommentContext(
             List<QuestionComment> topComments,
             Map<Long, List<QuestionComment>> repliesByParentId,
-            Map<Long, Integer> anonymousNumbersByUserId
+            Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId
+    ) {
+    }
+
+    private record AnonymousIdentityDisplay(
+            Role role,
+            Integer anonymousNo
     ) {
     }
 

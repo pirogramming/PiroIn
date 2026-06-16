@@ -33,7 +33,7 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
             SELECT ranked.question_id AS "questionId",
                    ranked.id AS "commentId",
                    ranked.user_id AS "userId",
-                   u.role AS "userRole",
+                   COALESCE(qai.role, u.role) AS "userRole",
                    ranked.content AS "content",
                    ranked.image_url AS "imageUrl",
                    ranked.created_at AS "createdAt",

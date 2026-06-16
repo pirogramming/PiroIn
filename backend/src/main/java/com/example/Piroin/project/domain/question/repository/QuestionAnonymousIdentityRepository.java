@@ -31,12 +31,12 @@ public interface QuestionAnonymousIdentityRepository extends JpaRepository<Quest
             @Param("userIds") Set<Long> userIds
     );
 
-    // 해당 질문에서 특정 역할(MEMBER/ADMIN)의 익명 번호 수 조회
-    // 용도: 새 익명 번호 발급 시 역할별로 따로 카운트
-    // MEMBER → 익명1, 익명2... / ADMIN → 운영진1, 운영진2...
-    int countByQuestionAndUser_Role(Question question, Role role);
-
-    @Query("SELECT COALESCE(MAX(a.anonymousNo), 0) FROM QuestionAnonymousIdentity a " + "WHERE a.question = :question AND a.user.role = :role")
+    @Query("""
+            SELECT COALESCE(MAX(identity.anonymousNo), 0)
+            FROM QuestionAnonymousIdentity identity
+            WHERE identity.question = :question
+              AND identity.role = :role
+            """)
     int findMaxAnonymousNoByQuestionAndRole(
             @Param("question") Question question,
             @Param("role") Role role

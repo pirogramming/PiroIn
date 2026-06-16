@@ -11,11 +11,19 @@ import java.util.List;
 
 public interface QuestionCommentRepository extends JpaRepository<QuestionComment, Long> {
     /*
-    특정 질문의 삭제되지 않은 최상위 댓글 목록(등록순)
-    parentComment가 null인 것 = 대댓글이 아닌 최상위 댓글
-    용도: 질문 상세 페이지에서 댓글 목록 표시 시
+    질문 상세 조회용 댓글 목록을 한 번에 가져온다.
+    댓글 작성자와 부모 댓글을 함께 로딩해 댓글/대댓글 DTO 조립 중 N+1 조회를 피한다.
     */
-    List<QuestionComment> findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(Question question);
+    @Query("""
+            SELECT comment
+            FROM QuestionComment comment
+            JOIN FETCH comment.user
+            LEFT JOIN FETCH comment.parentComment
+            WHERE comment.question = :question
+              AND comment.deletedAt IS NULL
+            ORDER BY comment.createdAt ASC, comment.id ASC
+            """)
+    List<QuestionComment> findByQuestionWithUserAndParentComment(@Param("question") Question question);
 
     /*
     질문 목록 미리보기용 최상위 댓글 3개를 질문별로 한 번에 조회한다.
@@ -25,7 +33,7 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
             SELECT ranked.question_id AS "questionId",
                    ranked.id AS "commentId",
                    ranked.user_id AS "userId",
-                   u.role AS "userRole",
+                   COALESCE(qai.role, u.role) AS "userRole",
                    ranked.content AS "content",
                    ranked.image_url AS "imageUrl",
                    ranked.created_at AS "createdAt",
@@ -63,12 +71,6 @@ public interface QuestionCommentRepository extends JpaRepository<QuestionComment
             GROUP BY comment.question.id
             """)
     List<CommentCountRow> countByQuestionIds(@Param("questionIds") List<Long> questionIds);
-
-    /*
-    특정 댓글의 대댓글 목록(등록순)
-    용도: 댓글 아래 대댓글을 가져올 때
-    */
-    List<QuestionComment> findByParentCommentAndDeletedAtIsNullOrderByCreatedAtAsc(QuestionComment parentComment);
 
     interface PreviewCommentRow {
         Long getQuestionId();

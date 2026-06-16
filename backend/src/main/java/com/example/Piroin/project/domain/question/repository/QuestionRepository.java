@@ -2,7 +2,9 @@ package com.example.Piroin.project.domain.question.repository;
 
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.question.entity.Question;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,4 +35,16 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
               AND question.deletedAt IS NULL
             """)
     Optional<Question> findDetailByIdAndDeletedAtIsNull(@Param("id") Long id);
+
+    /*
+    좋아요 카운트 갱신용: 같은 질문에 대한 동시 토글 요청을 직렬화해 likeCount lost update를 방지한다.
+    */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT question
+            FROM Question question
+            WHERE question.id = :id
+              AND question.deletedAt IS NULL
+            """)
+    Optional<Question> findByIdAndDeletedAtIsNullForUpdate(@Param("id") Long id);
 }

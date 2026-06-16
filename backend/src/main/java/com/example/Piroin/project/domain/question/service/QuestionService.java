@@ -325,7 +325,7 @@ public class QuestionService {
     @Transactional
     public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestion(questionId);
+        Question question = findQuestionForLikeUpdate(questionId);
 
         // 이미 좋아요를 눌렀는지 확인
         QuestionResDTO.LikeRes result = questionLikeRepository.findByQuestionAndUser(question, loginUser)
@@ -525,6 +525,11 @@ public class QuestionService {
 
     private Question findQuestionDetail(Long questionId) {
         return questionRepository.findDetailByIdAndDeletedAtIsNull(questionId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
+    }
+
+    private Question findQuestionForLikeUpdate(Long questionId) {
+        return questionRepository.findByIdAndDeletedAtIsNullForUpdate(questionId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
     }
 

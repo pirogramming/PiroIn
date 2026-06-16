@@ -11,12 +11,8 @@ import java.time.LocalDateTime;
         name = "question_anonymous_identity",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uq_question_anon_question_user",
+                        name = "uq_question_anonymous_identity_question_user",
                         columnNames = {"question_id", "user_id"}
-                ),
-                @UniqueConstraint(
-                        name = "uq_question_anon_question_no",
-                        columnNames = {"question_id", "anonymous_no"}
                 )
         }
 )
@@ -44,4 +40,3 @@ public class QuestionAnonymousIdentity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 }
-

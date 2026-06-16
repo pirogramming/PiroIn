@@ -101,8 +101,8 @@ public class AdminUserService {
         }
 
         if (request.getAttendances() != null) {
-            List<Long> attendanceIds = request.getAttendances().stream()
-                    .map(dto -> dto.getAttendanceId().longValue())
+            List<Integer> attendanceIds = request.getAttendances().stream()
+                    .map(UpdateStudentStatusRequest.AttendanceStatusRequest::getAttendanceId)
                     .toList();
 
             Map<Integer, Attendance> attendanceMap = attendanceRepository.findAllById(attendanceIds).stream()

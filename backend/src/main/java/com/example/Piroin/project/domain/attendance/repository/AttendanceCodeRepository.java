@@ -5,14 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 
-public interface AttendanceCodeRepository extends JpaRepository<AttendanceCode, Long> {
+public interface AttendanceCodeRepository extends JpaRepository<AttendanceCode, Integer> {
 
     // [추가] 모든 활성화된 코드를 한 번에 만료 처리 (벌크 연산)
     @Modifying
@@ -33,5 +32,4 @@ public interface AttendanceCodeRepository extends JpaRepository<AttendanceCode, 
 
     List<AttendanceCode> findByAttendanceDate(LocalDate attendanceDate);
 }
-
 

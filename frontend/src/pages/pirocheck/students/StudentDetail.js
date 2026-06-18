@@ -11,7 +11,7 @@ const IS_MOCK = false;
 
 const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
 const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT', 'FAILURE'];
-const statusLabel = { PENDING: '대기', SUCCESS: '성공', INSUFFICIENT: '미달', FAILURE: '실패' };
+const statusLabel = { PENDING: '채점 중', SUCCESS: '성공', INSUFFICIENT: '미달', FAILURE: '실패' };
 
 function WeekBlock({ weekData, onChange }) {
     const [isOpen, setIsOpen] = useState(false);

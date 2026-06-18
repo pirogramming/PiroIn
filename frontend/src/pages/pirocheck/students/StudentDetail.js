@@ -134,6 +134,7 @@ function StudentDetail() {
                     [1, 2, 3, 4, 5].map(w =>
                         authFetch(`/api/admin/admin/student/${userId}/status/${w}`)
                             .then(r => r.json())
+                            .then(res => res.data ?? { week: w, days: [] })
                             .catch(() => ({ week: w, days: [] }))
                     )
                 );

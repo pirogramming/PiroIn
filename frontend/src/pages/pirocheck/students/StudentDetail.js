@@ -10,8 +10,8 @@ import Toggle2 from '../../../assets/images/icon_togle2.svg';
 const IS_MOCK = false;
 
 const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
-const statusOptions = ['SUBMITTED', 'LATE', 'NOT_SUBMITTED'];
-const statusLabel = { SUBMITTED: '성공', LATE: '미달', NOT_SUBMITTED: '실패' };
+const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT', 'FAILURE'];
+const statusLabel = { PENDING: '대기', SUCCESS: '성공', INSUFFICIENT: '미달', FAILURE: '실패' };
 
 function WeekBlock({ weekData, onChange }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -134,7 +134,20 @@ function StudentDetail() {
                     [1, 2, 3, 4, 5].map(w =>
                         authFetch(`/api/admin/admin/student/${userId}/status/${w}`)
                             .then(r => r.json())
-                            .then(res => res.data ?? { week: w, days: [] })
+                            .then(res => {
+                                const weekData = res.data ?? { week: w, days: [] };
+
+                                const uniqueDays = Array.from(
+                                    new Map(
+                                        (weekData.days || []).map(day => [day.sessionDate, day])
+                                    ).values()
+                                ).sort((a, b) => new Date(a.sessionDate) - new Date(b.sessionDate));
+
+                                return {
+                                    ...weekData,
+                                    days: uniqueDays,
+                                };
+                            })
                             .catch(() => ({ week: w, days: [] }))
                     )
                 );

@@ -2,7 +2,7 @@ import '../../assets/styles/global.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './QnADetailPage.module.css';
-import { FiMoreVertical, FiCornerDownRight, FiChevronLeft } from 'react-icons/fi';
+import { FiMoreVertical, FiCornerDownRight, FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
 import {
     CommentImoji,
     MeCuriousToo,
@@ -96,6 +96,60 @@ function QnADetailPage() {
     const [commentMenuId, setCommentMenuId] = useState(null);
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editCommentText, setEditCommentText] = useState('');
+
+    // ── 이미지 확대보기(라이트박스) 상태 ─────────────
+    // images: 같은 묶음(질문 또는 한 댓글)의 이미지 url 배열, index: 현재 보고 있는 인덱스
+    const [lightbox, setLightbox] = useState(null);
+
+    const openLightbox = (images, index) => setLightbox({ images, index });
+    const closeLightbox = () => setLightbox(null);
+
+    const showPrevImage = useCallback(() => {
+        setLightbox(prev => {
+            if (!prev) return prev;
+            const nextIndex = (prev.index - 1 + prev.images.length) % prev.images.length;
+            return { ...prev, index: nextIndex };
+        });
+    }, []);
+
+    const showNextImage = useCallback(() => {
+        setLightbox(prev => {
+            if (!prev) return prev;
+            const nextIndex = (prev.index + 1) % prev.images.length;
+            return { ...prev, index: nextIndex };
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!lightbox) return undefined;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') showPrevImage();
+            if (e.key === 'ArrowRight') showNextImage();
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [lightbox, showPrevImage, showNextImage]);
+
+    // 모바일 좌우 스와이프로 이미지 넘기기
+    const touchStartXRef = useRef(null);
+
+    const handleLightboxTouchStart = (e) => {
+        touchStartXRef.current = e.touches[0].clientX;
+    };
+
+    const handleLightboxTouchEnd = (e) => {
+        if (touchStartXRef.current === null) return;
+        const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+        const SWIPE_THRESHOLD = 50;
+        if (deltaX > SWIPE_THRESHOLD) {
+            showPrevImage();
+        } else if (deltaX < -SWIPE_THRESHOLD) {
+            showNextImage();
+        }
+        touchStartXRef.current = null;
+    };
 
 
     const fetchQuestion = useCallback(async ({ showLoading = false } = {}) => {
@@ -446,7 +500,13 @@ function QnADetailPage() {
                 {comment.imageUrls?.length > 0 && (
                     <div className={styles.commentImages}>
                         {comment.imageUrls.map((url, idx) => (
-                            <img key={idx} src={url} alt={`댓글 첨부 이미지 ${idx + 1}`} className={styles.commentImage} />
+                            <img
+                                key={idx}
+                                src={url}
+                                alt={`댓글 첨부 이미지 ${idx + 1}`}
+                                className={styles.commentImage}
+                                onClick={() => openLightbox(comment.imageUrls, idx)}
+                            />
                         ))}
                     </div>
                 )}
@@ -544,7 +604,13 @@ function QnADetailPage() {
             {question.imageUrls?.length > 0 && (
                 <div className={styles.questionImages}>
                     {question.imageUrls.map((url, idx) => (
-                        <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`} className={styles.questionImage} />
+                        <img
+                            key={idx}
+                            src={url}
+                            alt={`첨부 이미지 ${idx + 1}`}
+                            className={styles.questionImage}
+                            onClick={() => openLightbox(question.imageUrls, idx)}
+                        />
                     ))}
                 </div>
             )}
@@ -622,6 +688,57 @@ function QnADetailPage() {
                     </button>
                 </div>
             </div>
+
+            {/* ── 이미지 확대보기 ── */}
+            {lightbox && (
+                <div
+                    className={styles.lightboxOverlay}
+                    onClick={closeLightbox}
+                    onTouchStart={handleLightboxTouchStart}
+                    onTouchEnd={handleLightboxTouchEnd}
+                >
+                    <button
+                        className={styles.lightboxCloseBtn}
+                        onClick={closeLightbox}
+                        aria-label="닫기"
+                    >
+                        <FiX size={28} />
+                    </button>
+
+                    {lightbox.images.length > 1 && (
+                        <button
+                            className={styles.lightboxPrevBtn}
+                            onClick={(e) => { e.stopPropagation(); showPrevImage(); }}
+                            aria-label="이전 이미지"
+                        >
+                            <FiChevronLeft size={28} />
+                        </button>
+                    )}
+
+                    <img
+                        src={lightbox.images[lightbox.index]}
+                        alt={`확대 이미지 ${lightbox.index + 1}`}
+                        className={styles.lightboxImage}
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {lightbox.images.length > 1 && (
+                        <button
+                            className={styles.lightboxNextBtn}
+                            onClick={(e) => { e.stopPropagation(); showNextImage(); }}
+                            aria-label="다음 이미지"
+                        >
+                            <FiChevronRight size={28} />
+                        </button>
+                    )}
+
+                    {lightbox.images.length > 1 && (
+                        <div className={styles.lightboxCounter}>
+                            {lightbox.index + 1} / {lightbox.images.length}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

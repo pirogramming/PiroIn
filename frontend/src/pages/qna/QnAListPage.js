@@ -610,6 +610,23 @@ function QnAListPage() {
         setImagePreviews(next.map(f => URL.createObjectURL(f)));
     };
 
+    const handleNewQuestionPaste = (e) => {
+        if (isStaff) return; // 이해도 체크 입력창에는 이미지 첨부 없음
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    const merged = [...selectedImages, file].slice(0, 5);
+                    setSelectedImages(merged);
+                    setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+                }
+                break;
+            }
+        }
+    };
+
     // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
@@ -945,6 +962,7 @@ function QnAListPage() {
                             onKeyDown={e => {
                                 if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
                             }}
+                            onPaste={handleNewQuestionPaste}
                             disabled={isSubmitting}
                         />
                         <button

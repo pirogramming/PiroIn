@@ -2,7 +2,7 @@ import '../../assets/styles/global.css';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './QnADetailPage.module.css';
-import { FiMoreVertical, FiCornerDownRight } from 'react-icons/fi';
+import { FiMoreVertical, FiCornerDownRight, FiChevronLeft } from 'react-icons/fi';
 import {
     CommentImoji,
     MeCuriousToo,
@@ -96,6 +96,7 @@ function QnADetailPage() {
     const [commentMenuId, setCommentMenuId] = useState(null);
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editCommentText, setEditCommentText] = useState('');
+
 
     const fetchQuestion = useCallback(async ({ showLoading = false } = {}) => {
         try {
@@ -193,6 +194,11 @@ function QnADetailPage() {
         if (showMenu || commentMenuId) document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, [showMenu, commentMenuId]);
+
+    // ── 목록으로 가기 ────────────────────────────────
+    const handleBackToList = () => {
+        navigate(`/sessions/${sessionId}/questions/`);
+    };
 
     // ── 좋아요 토글 ──────────────────────────────────
     const toggleLike = async () => {
@@ -457,6 +463,15 @@ function QnADetailPage() {
 
     return (
         <div className={styles.page}>
+
+            {/* ── 목록으로 가기 ── */}
+            <button
+                className={styles.backToListBtn}
+                onClick={handleBackToList}
+            >
+                <FiChevronLeft size={18} />
+                목록으로
+            </button>
 
             {/* ── 작성자 행 ── */}
             <div className={styles.authorRow}>

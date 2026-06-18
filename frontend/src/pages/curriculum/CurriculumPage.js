@@ -73,7 +73,7 @@ function MemberSessionCard({ day }) {
                 </div>
                 <img src={Toggle1} className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />
             </div>
-            <hr className={styles.divider}/>
+            <hr className={styles.divider} />
 
             {isOpen && (
                 <div className={styles.cardBody}>
@@ -110,7 +110,7 @@ function AdminSessionCard({ day, onEdit, onDelete }) {
                 </div>
                 <img src={Toggle1} className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />
             </div>
-            <hr className={styles.divider} /> 
+            <hr className={styles.divider} />
 
             {isOpen && (
                 <div className={styles.cardBody}>
@@ -168,7 +168,7 @@ function SessionForm({ day, week, onClose, onSave }) {
         const date = new Date(year, month - 1, day);
         const map = { 0: '일요일', 1: '월요일', 2: '화요일', 3: '수요일', 4: '목요일', 5: '금요일', 6: '토요일' };
         return map[date.getDay()] || '';
-    };   
+    };
 
     const handleSave = async () => {
         const newErrors = {};
@@ -233,6 +233,7 @@ function SessionForm({ day, week, onClose, onSave }) {
     return (
         <div className={styles.formOverlay}>
             <div className={styles.formCard}>
+
               <div className={styles.formSection}>
                   <label className={styles.formLabel}>주차</label>
                   <select className={styles.formInput} value={form.week}
@@ -255,6 +256,7 @@ function SessionForm({ day, week, onClose, onSave }) {
                       {errors.sessionDate && <p className={styles.errorMsg}>{errors.sessionDate}</p>}
                   </div>
               </div>
+
 
                 {/* 오전 세션 */}
                 <div className={styles.formSectionTitle}>
@@ -305,8 +307,8 @@ function SessionForm({ day, week, onClose, onSave }) {
                 {/* 과제 */}
                 <div className={styles.assignmentSection}>
                     <span className={styles.assignmentLabel}>과제</span>
-                    <div><label className={styles.formLabel}>과제 제목</label><input className={styles.formInput} style={{width:'100%'}} value={form.assignmentName} onChange={e => setForm({ ...form, assignmentName: e.target.value })} /></div>
-                    <div><label className={styles.formLabel}>과제 링크</label><input className={styles.formInput} style={{width:'100%'}} value={form.assignmentUrl} onChange={e => setForm({ ...form, assignmentUrl: e.target.value })} /></div>
+                    <div><label className={styles.formLabel}>과제 제목</label><input className={styles.formInput} style={{ width: '100%' }} value={form.assignmentName} onChange={e => setForm({ ...form, assignmentName: e.target.value })} /></div>
+                    <div><label className={styles.formLabel}>과제 링크</label><input className={styles.formInput} style={{ width: '100%' }} value={form.assignmentUrl} onChange={e => setForm({ ...form, assignmentUrl: e.target.value })} /></div>
                 </div>
 
                 <button className={styles.saveFormBtn} onClick={handleSave}>저장하기</button>
@@ -330,7 +332,7 @@ function CurriculumPage() {
             const res = await authFetch('/api/curriculums');
             const data = await res.json();
             setDays(Array.isArray(data) ? data : []);
-        } catch (e) {}
+        } catch (e) { }
     };
 
     useEffect(() => { fetchDays(); }, []);
@@ -364,7 +366,7 @@ function CurriculumPage() {
                         세션 생성
                     </button>
                 </div>
-            )}          
+            )}
             {Object.entries(grouped).map(([week, weekDays]) => (
                 <div key={week} className={styles.weekSection}>
                     <div className={styles.weekHeader}>
@@ -387,8 +389,8 @@ function CurriculumPage() {
             ))}
 
             {showForm && (
-              
-                <SessionForm                
+
+                <SessionForm
                     day={editDay}
                     week={createWeek}
                     onClose={() => { setShowForm(false); setEditDay(null); setCreateWeek(null); }}

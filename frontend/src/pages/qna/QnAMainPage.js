@@ -18,7 +18,7 @@ function QNAMainPage() {
     // ── 세션 목록 불러오기 ──────────────────────────
     useEffect(() => {
         document.title = "Q&A | PIROIN";
-        
+
         const fetchSessions = async () => {
             try {
                 setLoading(true);
@@ -50,7 +50,7 @@ function QNAMainPage() {
             {activeSessions.length > 0 && (
                 <>
                     <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Q&A</h2>
+                        <h2 className={styles.sectionTitle}>현재 세션</h2>
                         {activeSessions.map(session => (
                             <div
                                 key={session.sessionId}

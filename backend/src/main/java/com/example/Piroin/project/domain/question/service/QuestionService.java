@@ -75,7 +75,7 @@ public class QuestionService {
     @Transactional(readOnly = true)
     public QuestionResDTO.QuestionDetailResponse getQuestionDetail(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestion(questionId);
+        Question question = findQuestionDetail(questionId);
         return toDetailResponse(question, loginUser);
     }
 
@@ -84,11 +84,11 @@ public class QuestionService {
         boolean isMine = question.getUser().getId().equals(loginUser.getId());
         boolean isPopular = !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD;
 
-        List<QuestionComment> topComments =
-                questionCommentRepository.findByQuestionAndParentCommentIsNullAndDeletedAtIsNullOrderByCreatedAtAsc(question);
+        List<QuestionComment> comments = questionCommentRepository.findByQuestionWithUserAndParentComment(question);
+        DetailCommentContext commentContext = getDetailCommentContext(question, comments);
 
-        List<QuestionResDTO.CommentResponse> commentResponses = topComments.stream()
-                .map(comment -> toCommentResponse(question, comment, loginUser))
+        List<QuestionResDTO.CommentResponse> commentResponses = commentContext.topComments().stream()
+                .map(comment -> toTopLevelCommentResponse(question, comment, loginUser, commentContext))
                 .toList();
 
         return new QuestionResDTO.QuestionDetailResponse(
@@ -99,22 +99,69 @@ public class QuestionService {
         );
     }
 
-    private QuestionResDTO.CommentResponse toCommentResponse(Question question, QuestionComment comment, User loginUser) {
-        List<QuestionComment> replies =
-                questionCommentRepository.findByParentCommentAndDeletedAtIsNullOrderByCreatedAtAsc(comment);
+    private DetailCommentContext getDetailCommentContext(Question question, List<QuestionComment> comments) {
+        List<QuestionComment> topComments = new ArrayList<>();
+        Map<Long, List<QuestionComment>> repliesByParentId = new HashMap<>();
+        Set<Long> commenterIds = new HashSet<>();
 
-        List<QuestionResDTO.CommentResponse> replyResponses = replies.stream()
-                .map(reply -> new QuestionResDTO.CommentResponse(
-                        reply.getId(), getDisplayName(question, reply.getUser()),
-                        reply.getContent(), reply.getImageUrls(), isCommentMine(reply, loginUser),
-                        reply.getCreatedAt(), List.of()
-                ))
+        for (QuestionComment comment : comments) {
+            commenterIds.add(comment.getUser().getId());
+
+            QuestionComment parentComment = comment.getParentComment();
+            if (parentComment == null) {
+                topComments.add(comment);
+                continue;
+            }
+            repliesByParentId.computeIfAbsent(parentComment.getId(), key -> new ArrayList<>())
+                    .add(comment);
+        }
+
+        Long questionAuthorId = question.getUser().getId();
+        Set<Long> anonymousUserIds = commenterIds.stream()
+                .filter(commenterId -> !commenterId.equals(questionAuthorId))
+                .collect(Collectors.toSet());
+
+        Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId = new HashMap<>();
+        if (!anonymousUserIds.isEmpty()) {
+            anonymousIdentityRepository.findByQuestionAndUserIds(question, anonymousUserIds)
+                    .forEach(identity -> anonymousIdentitiesByUserId.put(
+                            identity.getUser().getId(),
+                            new AnonymousIdentityDisplay(identity.getRole(), identity.getAnonymousNo())
+                    ));
+        }
+
+        return new DetailCommentContext(topComments, repliesByParentId, anonymousIdentitiesByUserId);
+    }
+
+    private QuestionResDTO.CommentResponse toTopLevelCommentResponse(
+            Question question,
+            QuestionComment comment,
+            User loginUser,
+            DetailCommentContext commentContext
+    ) {
+        List<QuestionResDTO.CommentResponse> replyResponses = commentContext.repliesByParentId()
+                .getOrDefault(comment.getId(), List.of())
+                .stream()
+                .map(reply -> toReplyCommentResponse(question, reply, loginUser, commentContext))
                 .toList();
 
         return new QuestionResDTO.CommentResponse(
-                comment.getId(), getDisplayName(question, comment.getUser()),
+                comment.getId(), getDisplayName(question, comment.getUser(), commentContext.anonymousIdentitiesByUserId()),
                 comment.getContent(), comment.getImageUrls(), isCommentMine(comment, loginUser),
                 comment.getCreatedAt(), replyResponses
+        );
+    }
+
+    private QuestionResDTO.CommentResponse toReplyCommentResponse(
+            Question question,
+            QuestionComment reply,
+            User loginUser,
+            DetailCommentContext commentContext
+    ) {
+        return new QuestionResDTO.CommentResponse(
+                reply.getId(), getDisplayName(question, reply.getUser(), commentContext.anonymousIdentitiesByUserId()),
+                reply.getContent(), reply.getImageUrls(), isCommentMine(reply, loginUser),
+                reply.getCreatedAt(), List.of()
         );
     }
 
@@ -131,7 +178,7 @@ public class QuestionService {
             Long userId
     ) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestion(questionId);
+        Question question = findQuestionForUpdate(questionId);
 
         // 1. 대댓글 여부 확인: parentCommentId가 있으면 부모 댓글 조회
         QuestionComment parentComment = resolveParentComment(request.getParentCommentId(), question);
@@ -212,7 +259,7 @@ public class QuestionService {
         // 이미 이 질문에서 익명 번호가 있는지 확인
         return anonymousIdentityRepository
                 .findByQuestionAndUser(question, commenter)
-                .map(identity -> buildDisplayName(commenter.getRole(), identity.getAnonymousNo()))
+                .map(identity -> buildDisplayName(identity.getRole(), identity.getAnonymousNo()))
                 .orElseGet(() -> {
                     // 처음 댓글 다는 유저 → 역할별 카운트 기반으로 새 번호 부여
                     int nextNo = anonymousIdentityRepository
@@ -222,6 +269,7 @@ public class QuestionService {
                             .question(question)
                             .user(commenter)
                             .anonymousNo(nextNo)
+                            .role(commenter.getRole())
                             .createdAt(LocalDateTime.now())
                             .build());
 
@@ -234,15 +282,20 @@ public class QuestionService {
         return role == Role.ADMIN ? "운영진" + anonymousNo : "익명" + anonymousNo;
     }
 
-    // getDisplayName: 상세 조회 시 기존 익명 번호 읽기 (번호 부여 없음)
-    private String getDisplayName(Question question, User commenter) {
+    private String getDisplayName(
+            Question question,
+            User commenter,
+            Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId
+    ) {
         if (commenter.getId().equals(question.getUser().getId())) {
             return "작성자";
         }
-        return anonymousIdentityRepository
-                .findByQuestionAndUser(question, commenter)
-                .map(identity -> buildDisplayName(commenter.getRole(), identity.getAnonymousNo()))
-                .orElse(commenter.getRole() == Role.ADMIN ? "운영진" : "익명");
+
+        AnonymousIdentityDisplay identity = anonymousIdentitiesByUserId.get(commenter.getId());
+        if (identity == null) {
+            return commenter.getRole() == Role.ADMIN ? "운영진" : "익명";
+        }
+        return buildDisplayName(identity.role(), identity.anonymousNo());
     }
 
     // 질문 등록
@@ -278,7 +331,7 @@ public class QuestionService {
     @Transactional
     public QuestionResDTO.LikeRes toggleLike(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
-        Question question = findQuestion(questionId);
+        Question question = findQuestionForUpdate(questionId);
 
         // 이미 좋아요를 눌렀는지 확인
         QuestionResDTO.LikeRes result = questionLikeRepository.findByQuestionAndUser(question, loginUser)
@@ -473,6 +526,16 @@ public class QuestionService {
 
     private Question findQuestion(Long questionId) {
         return questionRepository.findByIdAndDeletedAtIsNull(questionId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
+    }
+
+    private Question findQuestionDetail(Long questionId) {
+        return questionRepository.findDetailByIdAndDeletedAtIsNull(questionId)
+                .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
+    }
+
+    private Question findQuestionForUpdate(Long questionId) {
+        return questionRepository.findByIdAndDeletedAtIsNullForUpdate(questionId)
                 .orElseThrow(() -> new QuestionException(HttpStatus.NOT_FOUND, "질문을 찾을 수 없습니다."));
     }
 
@@ -868,6 +931,19 @@ public class QuestionService {
             Map<Long, Integer> commentCounts,
             Map<Long, List<QuestionResDTO.PreviewCommentResponse>> previewComments,
             Set<Long> likedQuestionIds
+    ) {
+    }
+
+    private record DetailCommentContext(
+            List<QuestionComment> topComments,
+            Map<Long, List<QuestionComment>> repliesByParentId,
+            Map<Long, AnonymousIdentityDisplay> anonymousIdentitiesByUserId
+    ) {
+    }
+
+    private record AnonymousIdentityDisplay(
+            Role role,
+            Integer anonymousNo
     ) {
     }
 

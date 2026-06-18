@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -248,17 +249,21 @@ public class AssignmentService {
         List<StudySession> sessions =
                 curriculumRepository.findByWeek(week);
 
+        List<LocalDate> sessionDates = sessions.stream()
+                .map(StudySession::getSessionDate)
+                .distinct()
+                .sorted()
+                .toList();
+
         List<DayStatusResponse> dayResponses = new ArrayList<>();
 
-        for (StudySession session : sessions) {
+        for (LocalDate sessionDate : sessionDates) {
 
-            LocalDate sessionDate = session.getSessionDate();
-
-            String day =
-                    sessionDate.getDayOfWeek().toString();
+            String day = sessionDate.getDayOfWeek().toString();
 
             /*
              * 과제 조회
+             * 과제 date를 요일/sessionDate 기준으로 조회하는 기존 방식 유지
              */
             List<Assignment> assignments =
                     assignmentRepository.findBySessionDate(sessionDate);
@@ -293,12 +298,14 @@ public class AssignmentService {
 
             /*
              * 출석 조회
+             * attendance는 attendance_code의 날짜 기준으로 계산하는 기존 방식 유지
              */
             List<AttendanceCode> attendanceCodes =
                     attendanceCodeRepository.findByAttendanceDate(sessionDate);
 
             List<AttendanceStatusResponse> attendanceResponses =
                     attendanceCodes.stream()
+                            .sorted(Comparator.comparing(AttendanceCode::getAttendanceOrder))
                             .map(code -> {
 
                                 Attendance attendance =

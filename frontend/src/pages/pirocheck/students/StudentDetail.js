@@ -10,8 +10,8 @@ import Toggle2 from '../../../assets/images/icon_togle2.svg';
 const IS_MOCK = false;
 
 const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
-const statusOptions = ['SUBMITTED', 'LATE', 'NOT_SUBMITTED'];
-const statusLabel = { SUBMITTED: '성공', LATE: '미달', NOT_SUBMITTED: '실패' };
+const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT', 'FAILURE'];
+const statusLabel = { PENDING: '채점 중', SUCCESS: '성공', INSUFFICIENT: '미달', FAILURE: '실패' };
 
 function WeekBlock({ weekData, onChange }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -62,7 +62,7 @@ function WeekBlock({ weekData, onChange }) {
                                         <div className={styles.statusItems}>
                                             {day.attendances.map((att, j) => (
                                                 <div key={j} className={styles.statusItem}>
-                                                    <span className={styles.itemLabel}>{att.attendanceOrder}</span>
+                                                    <span className={styles.itemLabel}>{att.attendanceOrder}차</span>
                                                     <select
                                                         className={styles.select}
                                                         value={att.attended ? 'true' : 'false'}
@@ -99,7 +99,7 @@ function WeekBlock({ weekData, onChange }) {
                                         </div>
                                     )}
 
-                                    <button className={styles.saveWeekBtn}>저장하기</button>
+                                    {/* <button className={styles.saveWeekBtn}>저장하기</button> */}
                                 </div>
                             )}
 
@@ -120,6 +120,19 @@ function StudentDetail() {
     const [data, setData] = useState(null);
     const [defence, setDefence] = useState('');
 
+    // 보증금 정보 새로고침 함수
+    const refreshDeposit = async () => {
+        const depositRes = await authFetch(`/api/deposit/${userId}/deposit/view`);
+        const depositData = await depositRes.json();
+
+        setDefence(depositData.ascentDefence.toString());
+
+        setData(prev => ({
+            ...prev,
+            deposit: depositData,
+        }));
+    };
+
     useEffect(() => {
 
         const fetchData = async () => {
@@ -134,6 +147,20 @@ function StudentDetail() {
                     [1, 2, 3, 4, 5].map(w =>
                         authFetch(`/api/admin/admin/student/${userId}/status/${w}`)
                             .then(r => r.json())
+                            .then(res => {
+                                const weekData = res.data ?? { week: w, days: [] };
+
+                                const uniqueDays = Array.from(
+                                    new Map(
+                                        (weekData.days || []).map(day => [day.sessionDate, day])
+                                    ).values()
+                                ).sort((a, b) => new Date(a.sessionDate) - new Date(b.sessionDate));
+
+                                return {
+                                    ...weekData,
+                                    days: uniqueDays,
+                                };
+                            })
                             .catch(() => ({ week: w, days: [] }))
                     )
                 );
@@ -152,6 +179,9 @@ function StudentDetail() {
             method: 'PATCH',
             body: JSON.stringify({ ascentDefence: Number(defence) }),
         });
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 
@@ -200,6 +230,7 @@ function StudentDetail() {
                                 submitted: a.submitted,
                             })),
                         };
+
                         return authFetch(`/api/admin/users/${userId}/weeks/${w.week}`, {
                             method: 'PATCH',
                             body: JSON.stringify(body),
@@ -208,6 +239,9 @@ function StudentDetail() {
                 )
             )
         );
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 

@@ -610,6 +610,23 @@ function QnAListPage() {
         setImagePreviews(next.map(f => URL.createObjectURL(f)));
     };
 
+    const handleNewQuestionPaste = (e) => {
+        if (isStaff) return; // 이해도 체크 입력창에는 이미지 첨부 없음
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    const merged = [...selectedImages, file].slice(0, 5);
+                    setSelectedImages(merged);
+                    setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+                }
+                break;
+            }
+        }
+    };
+
     // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
@@ -733,40 +750,42 @@ function QnAListPage() {
             </div>
             <hr className={styles.divider} />
 
-            {/* ── 이해도 바 ── */}
-            <div className={styles.understandBar}>
-                <button className={styles.arrowBtn} onClick={goPrevUnderstand}
-                    disabled={!understanding?.hasOlder}>
-                    <FiChevronLeft size={30} />
-                </button>
-                <span className={styles.understandName}>
-                    {understanding?.current?.content ?? '이해도 없음'}
-                    <span className={styles.understandCount}>
-                        ({understanding?.current?.respondedCount ?? 0}/
-                        {understanding?.current?.attendanceCount ?? 0})
+            {/* ── 이해도 바 (이해도 체크가 없으면 숨김) ── */}
+            {understanding?.current?.checkId != null && (
+                <div className={styles.understandBar}>
+                    <button className={styles.arrowBtn} onClick={goPrevUnderstand}
+                        disabled={!understanding?.hasOlder}>
+                        <FiChevronLeft size={30} />
+                    </button>
+                    <span className={styles.understandName}>
+                        {understanding.current.content}
+                        <span className={styles.understandCount}>
+                            ({understanding.current.respondedCount ?? 0}/
+                            {understanding.current.attendanceCount ?? 0})
+                        </span>
                     </span>
-                </span>
-                <button
-                    className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
-                    onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                    disabled={isStaff || isPast}
-                >
-                    <OBtn />
-                    {isStaff && <span className={styles.oxCount}>{understanding?.current?.understoodCount ?? 0}</span>}
-                </button>
-                <button
-                    className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
-                    onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                    disabled={isStaff || isPast}
-                >
-                    <XBtn />
-                    {isStaff && <span className={styles.oxCount}>{understanding?.current?.notUnderstoodCount ?? 0}</span>}
-                </button>
-                <button className={styles.arrowBtn} onClick={goNextUnderstand}
-                    disabled={!understanding?.hasNewer}>
-                    <FiChevronRight size={30} />
-                </button>
-            </div>
+                    <button
+                        className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
+                        onClick={() => handleUnderstandChoice('UNDERSTOOD')}
+                        disabled={isStaff || isPast}
+                    >
+                        <OBtn />
+                        {isStaff && <span className={styles.oxCount}>{understanding.current.understoodCount ?? 0}</span>}
+                    </button>
+                    <button
+                        className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
+                        onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
+                        disabled={isStaff || isPast}
+                    >
+                        <XBtn />
+                        {isStaff && <span className={styles.oxCount}>{understanding.current.notUnderstoodCount ?? 0}</span>}
+                    </button>
+                    <button className={styles.arrowBtn} onClick={goNextUnderstand}
+                        disabled={!understanding?.hasNewer}>
+                        <FiChevronRight size={30} />
+                    </button>
+                </div>
+            )}
 
             {/* ── 질문 목록 ── */}
             <div className={styles.questionList}>
@@ -943,6 +962,7 @@ function QnAListPage() {
                             onKeyDown={e => {
                                 if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
                             }}
+                            onPaste={handleNewQuestionPaste}
                             disabled={isSubmitting}
                         />
                         <button

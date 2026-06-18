@@ -15,7 +15,7 @@
     border: none;
     border-radius: 10px;
     color: var(--main);
-    font-family: var(--font-title);
+    font-family: var(--font-main);
     font-size: 2rem;
     font-weight: 800;
     cursor: pointer;

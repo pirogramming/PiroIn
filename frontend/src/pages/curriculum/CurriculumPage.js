@@ -35,21 +35,19 @@ function SessionInfo({ session, isAdmin }) {
                 {showDetail && <span className={styles.sessionHost}>{session.hostName}</span>}
             </div>
             {showDetail && (
-                <div className={styles.sessionDetailRow}>
-                    <span className={styles.sessionDetailLabel}>세션 자료</span>
+                <div className={styles.sessionDetailRow}>                    
                     {session.sessionMaterialUrl
-                        ? <a href={session.sessionMaterialUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">{session.sessionMaterialName || '링크'}</a>
-                        : <span className={styles.sessionDetailVal}>{session.sessionMaterialName || '-'}</span>
+                        ? <a href={session.sessionMaterialUrl} className={styles.sessionLink} target="_blank" rel="noreferrer"><span className={styles.sessionDetailLabel}>세션 자료</span>{session.sessionMaterialName || '링크'}</a>
+                        : <span className={styles.sessionDetailVal}>{session.sessionMaterialName || ''}</span>
                     }
                 </div>
             )}
             {showRecording && (
                 <div className={styles.sessionDetailRow}>
                     {session.recordingUrl
-                        ? <a href={session.recordingUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">녹화본</a>
-                        : <span className={styles.sessionDetailVal}>-</span>
+                        ? <a href={session.recordingUrl} className={styles.sessionLink} target="_blank" rel="noreferrer">녹화본                    {session.recordingPassword && <span className={styles.sessionPw}>PW : {session.recordingPassword}</span>}</a>
+                        : <span className={styles.sessionDetailVal}></span>
                     }
-                    {session.recordingPassword && <span className={styles.sessionPw}>PW : {session.recordingPassword}</span>}
                 </div>
             )}
         </div>

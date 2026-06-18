@@ -13,9 +13,9 @@ function PIroCheckMain() {
     ];
 
     const memberMenus = [
-        { label: 'ATTENDANCE CHECK', path: '/pirocheck/attendance' },
-        { label: 'ASSIGNMENT CHECK', path: '/pirocheck/assignment' },
-        { label: 'DEPOSIT CHECK', path: '/pirocheck/deposit' },
+        { label: '출석 체크', path: '/pirocheck/attendance' },
+        { label: '과제 체크', path: '/pirocheck/assignment' },
+        { label: '보증금 체크', path: '/pirocheck/deposit' },
     ];
 
     const menus = role === 'ADMIN' ? adminMenus : memberMenus;

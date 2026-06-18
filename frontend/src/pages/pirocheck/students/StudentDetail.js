@@ -62,7 +62,7 @@ function WeekBlock({ weekData, onChange }) {
                                         <div className={styles.statusItems}>
                                             {day.attendances.map((att, j) => (
                                                 <div key={j} className={styles.statusItem}>
-                                                    <span className={styles.itemLabel}>{att.attendanceOrder}</span>
+                                                    <span className={styles.itemLabel}>{att.attendanceOrder}차</span>
                                                     <select
                                                         className={styles.select}
                                                         value={att.attended ? 'true' : 'false'}

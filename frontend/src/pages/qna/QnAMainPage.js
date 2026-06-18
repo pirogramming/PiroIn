@@ -50,7 +50,7 @@ function QNAMainPage() {
             {activeSessions.length > 0 && (
                 <>
                     <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>Q&A</h2>
+                        <h2 className={styles.sectionTitle}>현재 세션</h2>
                         {activeSessions.map(session => (
                             <div
                                 key={session.sessionId}

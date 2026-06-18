@@ -120,6 +120,19 @@ function StudentDetail() {
     const [data, setData] = useState(null);
     const [defence, setDefence] = useState('');
 
+    // 보증금 정보 새로고침 함수
+    const refreshDeposit = async () => {
+        const depositRes = await authFetch(`/api/deposit/${userId}/deposit/view`);
+        const depositData = await depositRes.json();
+
+        setDefence(depositData.ascentDefence.toString());
+
+        setData(prev => ({
+            ...prev,
+            deposit: depositData,
+        }));
+    };
+
     useEffect(() => {
 
         const fetchData = async () => {
@@ -166,6 +179,9 @@ function StudentDetail() {
             method: 'PATCH',
             body: JSON.stringify({ ascentDefence: Number(defence) }),
         });
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 
@@ -214,6 +230,7 @@ function StudentDetail() {
                                 submitted: a.submitted,
                             })),
                         };
+
                         return authFetch(`/api/admin/users/${userId}/weeks/${w.week}`, {
                             method: 'PATCH',
                             body: JSON.stringify(body),
@@ -222,6 +239,9 @@ function StudentDetail() {
                 )
             )
         );
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 

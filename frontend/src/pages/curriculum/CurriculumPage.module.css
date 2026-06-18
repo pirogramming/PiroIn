@@ -187,15 +187,19 @@
     white-space: nowrap;
 }
 
-.sessionDetailRow {
+.sessionDetailRow:hover .sessionDetailLabel,
+.sessionDetailRow:hover .sessionLink,
+.sessionDetailRow:hover .sessionPw,
+.sessionDetailRow:hover .sessionDetailVal {
+    color: var(--dark);
+    transition: color 0.2s ease-in-out;
+}
+.sessionLink {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
     padding: 3px 0 3px 26px;
-}
-
-.sessionLink {
     font-family: var(--font-main);
     font-size: 0.9rem;
     color: var(--black);
@@ -242,10 +246,12 @@
     font-family: var(--font-main);
     font-size: 0.9rem;
     color: var(--black);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     text-align: right;
+    flex-wrap: nowrap;
+    overflow: hidden;
 }
 
 /* 과제 */

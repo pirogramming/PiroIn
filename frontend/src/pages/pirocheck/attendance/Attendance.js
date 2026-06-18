@@ -102,28 +102,32 @@ function MemberView() {
     const [message, setMessage] = useState('');
     const [todaySlots, setTodaySlots] = useState([]);
     const [history, setHistory] = useState([]);
-
-    useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-
-    authFetch(`/api/attendance/user/date?date=${today}`)
-        .then(r => r.json())
-        .then(d => setTodaySlots(d.data || []))
-        .catch(() => setTodaySlots([]));
-
     const dayOrder = ['TUESDAY', 'THURSDAY', 'SATURDAY'];
 
-    const defaultHistory = [1, 2, 3, 4, 5].map(week => ({
-        week,
-        days: dayOrder.map(day => ({
-            day,
-            slots: []
-        }))
-    }));
+    const fetchTodaySlots = async () => {
+        const today = new Date().toISOString().split('T')[0];
 
-    authFetch('/api/attendance/user')
-        .then(r => r.json())
-        .then(data => {
+        try {
+            const res = await authFetch(`/api/attendance/user/date?date=${today}`);
+            const data = await res.json();
+            setTodaySlots(data.data || []);
+        } catch (e) {
+            setTodaySlots([]);
+        }
+    };
+
+    const fetchHistory = async () => {
+        const defaultHistory = [1, 2, 3, 4, 5].map(week => ({
+            week,
+            days: dayOrder.map(day => ({
+                day,
+                slots: []
+            }))
+        }));
+
+        try {
+            const res = await authFetch('/api/attendance/user');
+            const data = await res.json();
             const apiData = data.data || [];
 
             const merged = defaultHistory.map(def => {
@@ -149,30 +153,37 @@ function MemberView() {
             });
 
             setHistory(merged);
-        })
-        .catch(() => setHistory(defaultHistory));
-}, []);
+        } catch (e) {
+            setHistory(defaultHistory);
+        }
+    };
+
+    useEffect(() => {
+        fetchTodaySlots();
+        fetchHistory();
+    }, []);
 
     const handleSubmit = async () => {
         if (!inputCode.trim()) return;
+
         const res = await authFetch('/api/attendance/mark', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: inputCode }),
         });
+
         const data = await res.json();
         const result = data.data;
 
         if (result.statusCode === 'SUCCESS') {
             setMessage('출석 성공!');
-            const today = new Date().toISOString().split('T')[0];
-            authFetch(`/api/attendance/user/date?date=${today}`)
-                .then(r => r.json())
-                .then(d => setTodaySlots(d.data || []));
+
+            await fetchTodaySlots();
+            await fetchHistory();
         } else if (result.statusCode === 'INVALID_CODE') {
             setMessage('출석 코드를 확인해주세요.');
         } else {
-            setMessage(result.message); 
+            setMessage(result.message);
         }
 
         setInputCode('');

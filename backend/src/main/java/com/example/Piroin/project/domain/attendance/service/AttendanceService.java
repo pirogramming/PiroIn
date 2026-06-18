@@ -64,22 +64,18 @@ public class AttendanceService {
             throw new IllegalStateException("하루에 최대 3회까지만 출석 코드를 생성할 수 있습니다.");
         }
 
-        // 1-3) 기존 활성화된 코드들 만료 처리
+        // 1-3) 기존 활성화된 코드들 만료 처리 + 보증금 일괄 재계산
         List<AttendanceCode> activeCodes = attendanceCodeRepository.findByIsExpiredFalse();
         for (AttendanceCode activeCode : activeCodes) {
             activeCode.expire();
         }
 
-        for (AttendanceCode activeCode : activeCodes) {
-            activeCode.expire();
-
-            List<Attendance> attendances =
-                    attendanceRepository.findByAttendanceCodeId(activeCode.getId());
-
-            for (Attendance attendance : attendances) {
-                depositService.recalculateDeposit(attendance.getUser().getId());
-            }
-        }
+        List<Long> userIdsToRecalculate = activeCodes.stream()
+                .flatMap(activeCode -> attendanceRepository.findByAttendanceCodeId(activeCode.getId()).stream())
+                .map(attendance -> attendance.getUser().getId())
+                .distinct()
+                .toList();
+        depositService.recalculateDepositBatch(userIdsToRecalculate);
 
 
         // 1-4) 4자리 랜덤 코드 생성 및 차수(Order) 계산
@@ -169,7 +165,7 @@ public class AttendanceService {
         // 혹은 조회된 code의 날짜/차수 정보를 기반으로 기존 출석 기록을 찾아야 합니다.
         // (여기서는 이전 답변 시나리오 1인 'attendanceCodeId'로 매핑했다고 가정했을 때의 예시입니다.)
         Attendance attendance = attendanceRepository
-                .findByUserIdAndAttendanceCodeId(userId, Long.valueOf(code.getId()))
+                .findByUserIdAndAttendanceCodeId(userId, code.getId())
                 .orElse(null);
 
         // 해당 사용자와 출석 코드에 대한 출석 기록이 존재하지 않는 경우
@@ -208,16 +204,19 @@ public class AttendanceService {
         List<Attendance> absents =
                 attendanceRepository.findByAttendanceCodeIdAndStatusFalse(attendanceCodeId);
 
-        // 4. 결석자 대상 보증금 재계산 (User ID 타입 Integer 반영)
-        for (Attendance attendance : absents) {
-            depositService.recalculateDeposit(attendance.getUser().getId());
-        }
+        // 4. 결석자 대상 보증금 일괄 재계산
+        List<Long> absentUserIds = absents.stream()
+                .map(attendance -> attendance.getUser().getId())
+                .distinct()
+                .toList();
+        depositService.recalculateDepositBatch(absentUserIds);
 
         return "출석 코드가 성공적으로 만료되었습니다.";
     }
 
 
     // 5. 유저의 특정 날짜의 출석 현황을 조회하는 함수
+    @Transactional(readOnly = true)
     public List<AttendanceSlotRes> findByUserIdAndDate(Integer userId, LocalDate date) { // Long -> Integer
         // DB의 VARCHAR(255) 날짜 포맷과 맞추기 위해 String으로 변환 (예: "2026-05-17")
         String dateStr = date.toString();
@@ -236,6 +235,7 @@ public class AttendanceService {
     }
 
     // 6. 나의 전체 출석 현황 조회 서비스
+    @Transactional(readOnly = true)
     public List<AttendanceStatusRes> findByUserId(Integer userId) {
 
         List<Attendance> attendances =
@@ -323,4 +323,3 @@ public class AttendanceService {
 
 
 }
-

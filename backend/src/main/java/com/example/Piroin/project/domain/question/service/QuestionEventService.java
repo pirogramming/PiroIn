@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class QuestionEventService {
-    private static final long SSE_TIMEOUT_MILLIS = 60L * 60L * 1000L;
+    private static final long SSE_TIMEOUT_MILLIS = 3L * 60L * 1000L;
 
     // sessionId별로 현재 질문방을 보고 있는 SSE 연결들을 보관한다.
     private final Map<Long, List<SseEmitter>> sessionEmitters = new ConcurrentHashMap<>();
@@ -45,9 +45,19 @@ public class QuestionEventService {
         broadcast(sessionId, "comment-created", event);
     }
 
+    // 댓글 수정/삭제 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishCommentUpdated(Long sessionId, QuestionResDTO.CommentUpdatedEvent event) {
+        broadcast(sessionId, "comment-updated", event);
+    }
+
     // 질문 등록 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
     public void publishQuestionCreated(Long sessionId, QuestionResDTO.QuestionCreatedEvent event) {
         broadcast(sessionId, "question-created", event);
+    }
+
+    // 질문 상태 변경 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.
+    public void publishQuestionUpdated(Long sessionId, QuestionResDTO.QuestionUpdatedEvent event) {
+        broadcast(sessionId, "question-updated", event);
     }
 
     // 이해도 체크 생성 이벤트를 같은 세션 질문방을 구독 중인 모든 클라이언트에게 전파한다.

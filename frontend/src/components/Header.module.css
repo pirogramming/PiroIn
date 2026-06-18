@@ -3,6 +3,7 @@
     --header-bg: var(--white);
     --header-color: var(--gray600);
     --logo-color: var(--dark);
+    --drawer-bg: var(--white);
 }
 
 /* 다크 헤더 */
@@ -11,6 +12,7 @@
     --header-color: var(--white);
     --logo-color: var(--main);
     border-bottom: none;
+    --drawer-bg: var(--black);
 }
 
 .header {
@@ -151,6 +153,7 @@
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
                 visibility 0.35s ease;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+    background: var(--drawer-bg);
 }
 
 .drawerOpen {

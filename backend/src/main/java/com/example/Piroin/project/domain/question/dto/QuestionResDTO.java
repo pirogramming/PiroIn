@@ -75,7 +75,8 @@ public class QuestionResDTO {
             Long questionId,
             String displayName,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원: URL 목록
+            List<String> imageUrls,
             Boolean isResolved,
             Boolean isPopular,
             Integer likeCount,
@@ -91,7 +92,8 @@ public class QuestionResDTO {
             Long commentId,
             String displayName,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             Boolean isMine,
             LocalDateTime createdAt,
             List<CommentResponse> replies
@@ -145,6 +147,8 @@ public class QuestionResDTO {
             Integer understoodCount,
             // 오른쪽 X 뱃지 숫자
             Integer notUnderstoodCount,
+            // 현재 로그인 유저가 누른 선택지. 누르지 않았거나 취소한 상태면 null
+            UnderstandResChoice selectedChoice,
             LocalDateTime createdAt
     ) {
     }
@@ -159,7 +163,8 @@ public class QuestionResDTO {
     public record QuestionSummaryResponse(
             Long questionId,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             Boolean isResolved,
             Boolean isPopular,
             Boolean isLiked,
@@ -189,6 +194,17 @@ public class QuestionResDTO {
             Long sessionId,
             Long questionId,
             // 댓글 작성 후 서버 내부 규칙까지 반영된 최신 해결 상태
+            Boolean isResolved,
+            Integer commentCount,
+            List<PreviewCommentResponse> previewComments
+    ) {
+    }
+
+    // 댓글 수정/삭제 시 SSE로 내려가는 목록 갱신 이벤트 응답
+    public record CommentUpdatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
             Boolean isResolved,
             Integer commentCount,
             List<PreviewCommentResponse> previewComments
@@ -232,12 +248,26 @@ public class QuestionResDTO {
             Long sessionId,
             Long questionId,
             String content,
-            String imageUrl,
+            // 이미지 여러 장 지원
+            List<String> imageUrls,
             // 좋아요 수 (생성 직후에는 0)
             Integer likeCount,
             // 댓글 수 (생성 직후에는 0)
             Integer commentCount,
             LocalDateTime createdAt
+    ) {
+    }
+
+    // 좋아요, 해결 상태, 본문 수정, 삭제처럼 기존 질문의 상태가 바뀔 때 내려가는 SSE 이벤트
+    public record QuestionUpdatedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            String content,
+            Boolean isResolved,
+            Integer likeCount,
+            Boolean isDeleted,
+            LocalDateTime updatedAt
     ) {
     }
 

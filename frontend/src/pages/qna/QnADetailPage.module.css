@@ -318,6 +318,32 @@
     padding: 8px 0;
 }
 
+.replyList {
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+    margin-left: 42px;
+}
+
+.replyBlock {
+    padding-bottom: 0;
+}
+
+.replyBlock .commentAvatar {
+    width: 28px;
+    height: 28px;
+}
+
+.replyBlock .commentBubble {
+    margin-left: 35px;
+    max-width: calc(100% - 35px);
+    background: var(--gray20);
+}
+
+.replyBlock .commentDate {
+    margin-left: 35px;
+}
+
 /* ── 댓글 작성자 행 ── */
 .commentAuthorRow {
     display: flex;
@@ -633,6 +659,19 @@
 
     .commentDate {
         margin-left: 32px;
+    }
+
+    .replyList {
+        margin-left: 28px;
+    }
+
+    .replyBlock .commentBubble {
+        margin-left: 28px;
+        max-width: calc(100% - 28px);
+    }
+
+    .replyBlock .commentDate {
+        margin-left: 28px;
     }
 
     .commentContent {

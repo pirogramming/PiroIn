@@ -23,6 +23,9 @@ import com.example.Piroin.project.domain.user.dto.UpdateStudentStatusResponse;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,17 +79,17 @@ public class AdminUserService {
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
 
         if (request.getAssignments() != null) {
-            for (UpdateStudentStatusRequest.AssignmentStatusRequest dto
-                    : request.getAssignments()) {
+            List<Integer> itemIds = request.getAssignments().stream()
+                    .map(UpdateStudentStatusRequest.AssignmentStatusRequest::getAssignmentItemId)
+                    .toList();
 
-                // 해당 assignmentItem 존재하지 않을 때
-                AssignmentItem assignmentItem =
-                        assignmentItemRepository.findById(dto.getAssignmentItemId())
-                                .orElseThrow(() ->
-                                        new RuntimeException("과제 정보가 존재하지 않습니다.")
-                                );
+            Map<Integer, AssignmentItem> itemMap = assignmentItemRepository.findAllById(itemIds).stream()
+                    .collect(Collectors.toMap(AssignmentItem::getId, item -> item));
 
-                // assignmentItem가 userId의 과제가 아닐 경우
+            for (UpdateStudentStatusRequest.AssignmentStatusRequest dto : request.getAssignments()) {
+                AssignmentItem assignmentItem = Optional.ofNullable(itemMap.get(dto.getAssignmentItemId()))
+                        .orElseThrow(() -> new RuntimeException("과제 정보가 존재하지 않습니다."));
+
                 if (!assignmentItem.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 과제가 아닙니다.");
                 }
@@ -98,16 +101,17 @@ public class AdminUserService {
         }
 
         if (request.getAttendances() != null) {
-            for (UpdateStudentStatusRequest.AttendanceStatusRequest dto
-                    : request.getAttendances()) {
+            List<Integer> attendanceIds = request.getAttendances().stream()
+                    .map(UpdateStudentStatusRequest.AttendanceStatusRequest::getAttendanceId)
+                    .toList();
 
-                Attendance attendance =
-                        attendanceRepository.findById(dto.getAttendanceId())
-                                .orElseThrow(() ->
-                                        new RuntimeException("출석 정보가 존재하지 않습니다.")
-                                );
+            Map<Integer, Attendance> attendanceMap = attendanceRepository.findAllById(attendanceIds).stream()
+                    .collect(Collectors.toMap(Attendance::getId, a -> a));
 
-                // assignmentId가 userId의 것이 아닐 때
+            for (UpdateStudentStatusRequest.AttendanceStatusRequest dto : request.getAttendances()) {
+                Attendance attendance = Optional.ofNullable(attendanceMap.get(dto.getAttendanceId()))
+                        .orElseThrow(() -> new RuntimeException("출석 정보가 존재하지 않습니다."));
+
                 if (!attendance.getUser().getId().equals(userId)) {
                     throw new RuntimeException("해당 유저의 출석이 아닙니다.");
                 }

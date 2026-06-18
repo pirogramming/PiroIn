@@ -73,14 +73,11 @@
     border-radius: 20px;
     padding: 30px 30px 24px 30px;
     min-width: 200px;
-    width: calc(28% - 14px);
-    max-height: 380px;
+    width: calc(33.333% - 14px);  
     display: flex;
     flex-direction: column;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     box-sizing: border-box;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
 }
 
 .cardHeader {
@@ -434,6 +431,17 @@
 
 .formInput:focus { border-color: var(--dark); }
 
+.required {
+    color: #e53e3e;
+}
+
+.errorMsg {
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    color: #e53e3e;
+    margin: 3px 0 0 2px;
+}
+
 .saveFormBtn {
     width: 40%;
     margin: 30px auto 0;
@@ -501,8 +509,6 @@
         width: 100%;
         min-width: unset;
         padding: 20px;
-        height: auto;
-        overflow: visible;
     }
 
     .cardBody {
@@ -510,47 +516,13 @@
         flex: none;
     }
 
-    .cardTitle {
-        font-size: 1.1rem;
-    }
-
-    .cardDate {
-        margin-left: 0;
-    }
-
-    /* 폼 */
-    .formOverlay {
-        padding: 0;
-        align-items: flex-start;
-    }
-
-    .formCard {
-        width: 100%;
-        min-height: 100vh;
-        border-radius: 0;
-        padding: 28px 20px;
-    }
-
-    .formGrid {
-        grid-template-columns: 1fr;
-    }
-
-    .formRow2 {
-        grid-template-columns: 1fr;
-    }
-
-    .saveFormBtn {
-        width: 100%;
-    }
-
-    .statusBtns {
-        margin-left: 0;
-        margin-top: 6px;
-        width: 100%;
-    }
-
-    .formSectionTitle {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+    .cardTitle { font-size: 1.1rem; }
+    .cardDate { margin-left: 0; }
+    .formOverlay { padding: 0; align-items: flex-start; }
+    .formCard { width: 100%; min-height: 100vh; border-radius: 0; padding: 28px 20px; }
+    .formGrid { grid-template-columns: 1fr; }
+    .formRow2 { grid-template-columns: 1fr; }
+    .saveFormBtn { width: 100%; }
+    .statusBtns { margin-left: 0; margin-top: 6px; width: 100%; }
+    .formSectionTitle { flex-direction: column; align-items: flex-start; }
 }

@@ -1,25 +1,18 @@
 package com.example.Piroin.project.domain.attendance.repository;
 
-import com.example.Piroin.project.domain.attendance.entity.AttendanceCode;
-import com.example.Piroin.project.domain.curriculum.entity.StudySession;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.attendance.entity.Attendance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
+public interface AttendanceRepository extends JpaRepository<Attendance, Integer> {
 
     Optional<Attendance> findById(Integer id);
-
-
-    // 연관관계 필드명이 attendanceCode 라면 내부 ID인 Id를 조합하여 명명
-    Optional<Attendance> findByUserIdAndAttendanceCodeId(Long userId, Long attendanceCodeId);
 
 
     int countByUserAndStatusFalse(User user);
@@ -54,6 +47,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     List<Attendance> findByAttendanceCodeId(Integer id);
 
+
+    @Query("SELECT a.user.id, COUNT(a) FROM Attendance a WHERE a.user.id IN :userIds AND a.status = false GROUP BY a.user.id")
+    List<Object[]> countFailedAttendanceByUserIds(@Param("userIds") List<Long> userIds);
 
     // 특정 날짜에 발급된 출석 코드의 개수를 세는 메서드
     //long countByAttendanceDate(String attendanceDate);

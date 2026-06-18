@@ -1,5 +1,5 @@
 import '../../assets/styles/global.css';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './QnADetailPage.module.css';
 import { FiMoreVertical, FiCornerDownRight, FiChevronLeft } from 'react-icons/fi';
@@ -8,10 +8,13 @@ import {
     MeCuriousToo,
     StaffCheck,
     SumitBtn,
-    uploadImage,
+    uploadImages,
 } from '../../utils/qnaUtils';
 import profileImg from '../../assets/images/profile.png';
 import { authFetch } from '../../utils/Api';
+import { subscribeQuestionEvents } from '../../utils/sse';
+
+const POPULAR_LIKE_THRESHOLD = 5;
 
 // 시간만 표시하는 포맷 함수 (HH:MM)
 const formatTime = (dateStr) => {
@@ -23,6 +26,50 @@ const formatTime = (dateStr) => {
         hour12: false,
     });
 };
+
+const createBlobImageUrl = async (imageUrl) => {
+    if (!imageUrl) return null;
+
+    try {
+        const imgRes = await authFetch(imageUrl);
+        const blob = await imgRes.blob();
+        return URL.createObjectURL(blob);
+    } catch {
+        return null;
+    }
+};
+
+// imageUrls 배열을 blob URL 배열로 변환
+const createBlobImageUrls = async (imageUrls) => {
+    if (!imageUrls || imageUrls.length === 0) return [];
+    return Promise.all(imageUrls.map(url => createBlobImageUrl(url)));
+};
+
+const attachCommentBlobImages = async (comments = []) => Promise.all(
+    comments.map(async (comment) => ({
+        ...comment,
+        imageUrls: await createBlobImageUrls(comment.imageUrls ?? []),
+        replies: await attachCommentBlobImages(comment.replies ?? []),
+    }))
+);
+
+const removeCommentFromTree = (comments = [], commentId) => comments
+    .filter(comment => comment.commentId !== commentId)
+    .map(comment => ({
+        ...comment,
+        replies: removeCommentFromTree(comment.replies ?? [], commentId),
+    }));
+
+const updateCommentInTree = (comments = [], commentId, updater) => comments.map(comment => {
+    if (comment.commentId === commentId) {
+        return updater(comment);
+    }
+
+    return {
+        ...comment,
+        replies: updateCommentInTree(comment.replies ?? [], commentId, updater),
+    };
+});
 
 function QnADetailPage() {
     const { sessionId, questionId } = useParams();
@@ -41,8 +88,8 @@ function QnADetailPage() {
     // ── 댓글 입력 상태 ───────────────────────────────
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    const [selectedImages, setSelectedImages] = useState([]);       // 여러 장
+    const [imagePreviews, setImagePreviews] = useState([]);         // 여러 장 미리보기
     const fileInputRef = useRef(null);
 
     // ── 댓글 수정 상태 ───────────────────────────────
@@ -50,57 +97,93 @@ function QnADetailPage() {
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editCommentText, setEditCommentText] = useState('');
 
+
+    const fetchQuestion = useCallback(async ({ showLoading = false } = {}) => {
+        try {
+            if (showLoading) {
+                setLoading(true);
+            }
+
+            const res = await authFetch(`/api/questions/${questionId}`);
+            if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+            const json = await res.json();
+            if (!json.isSuccess) throw new Error(json.message);
+
+            const result = json.result;
+
+            // 질문 이미지 blob 변환 (여러 장)
+            result.imageUrls = await createBlobImageUrls(result.imageUrls ?? []);
+
+            // 댓글과 대댓글 이미지 blob 변환
+            if (result.comments) {
+                result.comments = await attachCommentBlobImages(result.comments);
+            }
+            setQuestion(result);
+        } catch (err) {
+            console.error('질문 불러오기 실패:', err);
+        } finally {
+            if (showLoading) {
+                setLoading(false);
+            }
+        }
+    }, [questionId]);
+
     // ── 질문 불러오기 ────────────────────────────────
     useEffect(() => {
         document.title = "Q&A | PIROIN";
 
-        const fetchQuestion = async () => {
-            try {
-                setLoading(true);
-                const res = await authFetch(`/api/questions/${questionId}`);
-                if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
-                const json = await res.json();
-                if (!json.isSuccess) throw new Error(json.message);
+        if (questionId) {
+            void fetchQuestion({ showLoading: true });
+        }
+    }, [questionId, fetchQuestion]);
 
-                const result = json.result;
+    const handleQuestionEvent = useCallback((message) => {
+        if (String(message.data?.questionId) !== String(questionId)) {
+            return;
+        }
 
-                // 질문 이미지 blob 변환
-                if (result.imageUrl) {
-                    try {
-                        const imgRes = await authFetch(result.imageUrl);
-                        const blob = await imgRes.blob();
-                        result.imageUrl = URL.createObjectURL(blob);
-                    } catch {
-                        result.imageUrl = null;
-                    }
-                }
+        if (message.event === 'comment-created' || message.event === 'comment-updated') {
+            void fetchQuestion();
+            return;
+        }
 
-                // 댓글 이미지 blob 변환
-                if (result.comments) {
-                    result.comments = await Promise.all(
-                        result.comments.map(async (comment) => {
-                            if (comment.imageUrl) {
-                                try {
-                                    const imgRes = await authFetch(comment.imageUrl);
-                                    const blob = await imgRes.blob();
-                                    return { ...comment, imageUrl: URL.createObjectURL(blob) };
-                                } catch {
-                                    return { ...comment, imageUrl: null };
-                                }
-                            }
-                            return comment;
-                        })
-                    );
-                }
-                setQuestion(result);
-            } catch (err) {
-                console.error('질문 불러오기 실패:', err);
-            } finally {
-                setLoading(false);
+        if (message.event === 'question-updated') {
+            if (message.data?.isDeleted) {
+                navigate(-1);
+                return;
             }
-        };
-        if (questionId) fetchQuestion();
-    }, [questionId]);
+
+            setQuestion(prev => {
+                if (!prev) return prev;
+
+                return {
+                    ...prev,
+                    content: message.data.content ?? prev.content,
+                    isResolved: message.data.isResolved ?? prev.isResolved,
+                    isPopular: message.data.isResolved === true
+                        ? false
+                        : (message.data.likeCount ?? prev.likeCount) >= POPULAR_LIKE_THRESHOLD,
+                    likeCount: message.data.likeCount ?? prev.likeCount,
+                };
+            });
+        }
+    }, [fetchQuestion, navigate, questionId]);
+
+    useEffect(() => {
+        if (!sessionId || !questionId) {
+            return undefined;
+        }
+
+        return subscribeQuestionEvents(sessionId, {
+            onOpen: () => {
+                console.debug('질문 상세 SSE 연결 열림');
+            },
+            onEvent: handleQuestionEvent,
+            onError: (error) => {
+                console.error('질문 상세 SSE 연결 실패:', error);
+            },
+        });
+    }, [sessionId, questionId, handleQuestionEvent]);
 
     // ── 메뉴 외부 클릭 시 닫기 ──────────────────────
     useEffect(() => {
@@ -188,10 +271,14 @@ function QnADetailPage() {
 
     // ── 댓글 이미지 선택 / 붙여넣기 ─────────────────
     const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setSelectedImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        // 최대 5장 제한
+        const merged = [...selectedImages, ...files].slice(0, 5);
+        setSelectedImages(merged);
+        setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+        // 같은 파일 재선택 허용
+        e.target.value = '';
     };
 
     const handlePaste = (e) => {
@@ -201,49 +288,44 @@ function QnADetailPage() {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
                 if (file) {
-                    setSelectedImage(file);
-                    setImagePreview(URL.createObjectURL(file));
+                    const merged = [...selectedImages, file].slice(0, 5);
+                    setSelectedImages(merged);
+                    setImagePreviews(merged.map(f => URL.createObjectURL(f)));
                 }
                 break;
             }
         }
     };
 
+    const handleRemoveImage = (idx) => {
+        const next = selectedImages.filter((_, i) => i !== idx);
+        setSelectedImages(next);
+        setImagePreviews(next.map(f => URL.createObjectURL(f)));
+    };
+
     // ── 댓글 등록 ────────────────────────────────────
     const handleCommentSubmit = async () => {
         const text = commentText.trim();
-        if (!text) return;
+        if (!text && selectedImages.length === 0) return;
         setIsSubmitting(true);
         try {
-            let imageUrl = null;
-            if (selectedImage) {
-                imageUrl = await uploadImage(selectedImage);
+            let imageUrls = [];
+            if (selectedImages.length > 0) {
+                imageUrls = await uploadImages(selectedImages);
             }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                // 댓글 등록 응답값으로 해결 상태 반영
-                setQuestion(prev => ({ ...prev, isResolved: json.result.isResolved }));
-
-                const newComment = {
-                    commentId: json.result.commentId,
-                    displayName: json.result.displayName,
-                    content: json.result.content,
-                    createdAt: json.result.createdAt,
-                    imageUrl: imagePreview,
-                    isMine: true,
-                };
-                setQuestion(prev => ({
-                    ...prev,
-                    comments: [...(prev.comments ?? []), newComment],
-                }));
                 setCommentText('');
-                setSelectedImage(null);
-                setImagePreview(null);
+                setSelectedImages([]);
+                setImagePreviews([]);
+                // 로컬 상태에 blob URL을 직접 넣으면 새로고침 시 이미지가 깨지므로
+                // 등록 직후 fetchQuestion으로 서버의 정식 URL을 받아온다.
+                await fetchQuestion();
             }
         } catch (err) {
             console.error('댓글 등록 실패:', err);
@@ -260,7 +342,7 @@ function QnADetailPage() {
             if (!res.ok) throw new Error();
             setQuestion(prev => ({
                 ...prev,
-                comments: prev.comments.filter(c => c.commentId !== commentId),
+                comments: removeCommentFromTree(prev.comments ?? [], commentId),
             }));
         } catch (err) {
             console.error('댓글 삭제 실패:', err);
@@ -288,8 +370,10 @@ function QnADetailPage() {
             if (json.isSuccess) {
                 setQuestion(prev => ({
                     ...prev,
-                    comments: prev.comments.map(c =>
-                        c.commentId === commentId ? { ...c, content: text } : c
+                    comments: updateCommentInTree(
+                        prev.comments ?? [],
+                        commentId,
+                        comment => ({ ...comment, content: text })
                     ),
                 }));
                 setEditingCommentId(null);
@@ -303,6 +387,79 @@ function QnADetailPage() {
     if (!question) return <div className={styles.page}>질문을 찾을 수 없어요</div>;
 
     const isMyQuestion = question.isMine;
+    const renderCommentBlock = (comment, isReply = false) => (
+        <div
+            key={comment.commentId}
+            className={`${styles.commentBlock} ${isReply ? styles.replyBlock : ''}`}
+        >
+            {/* 댓글 작성자 행 */}
+            <div className={styles.commentAuthorRow}>
+                <div className={styles.commentAvatar}>
+                    <img src={profileImg} alt={comment.displayName} className={styles.commentAvatarImg} />
+                </div>
+                <span className={styles.commentAuthorName}>
+                    {comment.displayName}
+                    {comment.displayName?.startsWith('운영진') && (
+                        <span className={styles.staffBadge}><StaffCheck /></span>
+                    )}
+                </span>
+                {/* 본인 댓글만 수정/삭제 메뉴 표시 */}
+                {comment.isMine && (
+                    <div className={styles.commentMenuWrapper}>
+                        <button
+                            className={styles.menuBtn}
+                            onClick={(e) => { e.stopPropagation(); setCommentMenuId(prev => prev === comment.commentId ? null : comment.commentId); }}
+                        >
+                            <FiMoreVertical size={16} />
+                        </button>
+                        {commentMenuId === comment.commentId && (
+                            <div className={styles.dropdownMenu}>
+                                <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentEditStart(comment); }}>수정</button>
+                                <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentDelete(comment.commentId); }}>삭제</button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* 댓글 말풍선 */}
+            <div className={styles.commentBubble}>
+                {editingCommentId === comment.commentId ? (
+                    <div className={styles.commentEditWrapper}>
+                        <textarea
+                            className={styles.editCommentInput}
+                            value={editCommentText}
+                            onChange={e => setEditCommentText(e.target.value)}
+                            autoFocus
+                        />
+                        <div className={styles.commentEditButtons}>
+                            <button className={styles.editConfirmBtn} onClick={() => handleCommentEditSubmit(comment.commentId)}>완료</button>
+                            <button className={styles.editCancelBtn} onClick={() => setEditingCommentId(null)}>취소</button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={styles.commentContent}>
+                        <FiCornerDownRight size={14} className={styles.commentArrow} />
+                        {comment.content}
+                    </div>
+                )}
+                {comment.imageUrls?.length > 0 && (
+                    <div className={styles.commentImages}>
+                        {comment.imageUrls.map((url, idx) => (
+                            <img key={idx} src={url} alt={`댓글 첨부 이미지 ${idx + 1}`} className={styles.commentImage} />
+                        ))}
+                    </div>
+                )}
+            </div>
+            <p className={styles.commentDate}>{formatTime(comment.createdAt)}</p>
+
+            {comment.replies?.length > 0 && (
+                <div className={styles.replyList}>
+                    {comment.replies.map(reply => renderCommentBlock(reply, true))}
+                </div>
+            )}
+        </div>
+    );
 
     return (
         <div className={styles.page}>
@@ -383,9 +540,13 @@ function QnADetailPage() {
                 )}
             </div>
 
-            {/* ── 질문 첨부 이미지 ── */}
-            {question.imageUrl && (
-                <img src={question.imageUrl} alt="첨부 이미지" className={styles.questionImage} />
+            {/* ── 질문 첨부 이미지 (여러 장) ── */}
+            {question.imageUrls?.length > 0 && (
+                <div className={styles.questionImages}>
+                    {question.imageUrls.map((url, idx) => (
+                        <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`} className={styles.questionImage} />
+                    ))}
+                </div>
             )}
 
             {/* ── 액션 버튼 (좋아요 / 댓글달기) ── */}
@@ -408,80 +569,24 @@ function QnADetailPage() {
 
             {/* ── 댓글 목록 ── */}
             <div className={styles.commentList}>
-                {question.comments?.map(comment => (
-                    <div key={comment.commentId} className={styles.commentBlock}>
-
-                        {/* 댓글 작성자 행 */}
-                        <div className={styles.commentAuthorRow}>
-                            <div className={styles.commentAvatar}>
-                                <img src={profileImg} alt={comment.displayName} className={styles.commentAvatarImg} />
-                            </div>
-                            <span className={styles.commentAuthorName}>
-                                {comment.displayName}
-                                {comment.displayName?.startsWith('운영진') && (
-                                    <span className={styles.staffBadge}><StaffCheck /></span>
-                                )}
-                            </span>
-                            {/* 본인 댓글만 수정/삭제 메뉴 표시 */}
-                            {comment.isMine && (
-                                <div className={styles.commentMenuWrapper}>
-                                    <button
-                                        className={styles.menuBtn}
-                                        onClick={(e) => { e.stopPropagation(); setCommentMenuId(prev => prev === comment.commentId ? null : comment.commentId); }}
-                                    >
-                                        <FiMoreVertical size={16} />
-                                    </button>
-                                    {commentMenuId === comment.commentId && (
-                                        <div className={styles.dropdownMenu}>
-                                            <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentEditStart(comment); }}>수정</button>
-                                            <button className={styles.dropdownItem} onClick={(e) => { e.stopPropagation(); handleCommentDelete(comment.commentId); }}>삭제</button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 댓글 말풍선 */}
-                        <div className={styles.commentBubble}>
-                            {editingCommentId === comment.commentId ? (
-                                <div className={styles.commentEditWrapper}>
-                                    <textarea
-                                        className={styles.editCommentInput}
-                                        value={editCommentText}
-                                        onChange={e => setEditCommentText(e.target.value)}
-                                        autoFocus
-                                    />
-                                    <div className={styles.commentEditButtons}>
-                                        <button className={styles.editConfirmBtn} onClick={() => handleCommentEditSubmit(comment.commentId)}>완료</button>
-                                        <button className={styles.editCancelBtn} onClick={() => setEditingCommentId(null)}>취소</button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className={styles.commentContent}>
-                                    <FiCornerDownRight size={14} className={styles.commentArrow} />
-                                    {comment.content}
-                                </div>
-                            )}
-                            {comment.imageUrl && (
-                                <img src={comment.imageUrl} alt="댓글 첨부 이미지" className={styles.commentImage} />
-                            )}
-                        </div>
-                        <p className={styles.commentDate}>{formatTime(comment.createdAt)}</p>
-                    </div>
-                ))}
+                {question.comments?.map(comment => renderCommentBlock(comment))}
             </div>
 
             <div className={styles.bottomCover} />
 
             {/* ── 하단 댓글 입력바 ── */}
             <div className={styles.commentInputBar}>
-                {imagePreview && (
-                    <div className={styles.imagePreviewWrapper}>
-                        <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
-                        <button
-                            className={styles.imageRemoveBtn}
-                            onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-                        >✕</button>
+                {imagePreviews.length > 0 && (
+                    <div className={styles.imagePreviewList}>
+                        {imagePreviews.map((preview, idx) => (
+                            <div key={idx} className={styles.imagePreviewWrapper}>
+                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                <button
+                                    className={styles.imageRemoveBtn}
+                                    onClick={() => handleRemoveImage(idx)}
+                                >✕</button>
+                            </div>
+                        ))}
                     </div>
                 )}
                 <div className={styles.commentInputRow}>
@@ -492,6 +597,7 @@ function QnADetailPage() {
                     <input
                         type="file"
                         accept="image/*"
+                        multiple
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleImageSelect}
@@ -509,7 +615,7 @@ function QnADetailPage() {
                     <button
                         className={styles.submitBtn}
                         onClick={handleCommentSubmit}
-                        disabled={!commentText.trim() || isSubmitting}
+                        disabled={(!commentText.trim() && selectedImages.length === 0) || isSubmitting}
                         aria-label="댓글 제출"
                     >
                         {isSubmitting ? '⏳' : <SumitBtn />}

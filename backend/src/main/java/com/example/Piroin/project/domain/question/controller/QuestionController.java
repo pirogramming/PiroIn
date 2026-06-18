@@ -35,8 +35,12 @@ public class QuestionController {
     // text/event-stream으로 연결을 유지하며, 댓글 생성 같은 목록 갱신 이벤트를 받는다.
     // 인증 헤더가 필요하므로 프론트에서는 기본 EventSource 대신 fetch 기반 SSE 클라이언트로 구독한다.
     @GetMapping(value = "/api/sessions/{sessionId}/questions/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribeQuestionEvents(@PathVariable Long sessionId) {
-        return questionService.subscribeQuestionEvents(sessionId);
+    public ResponseEntity<SseEmitter> subscribeQuestionEvents(@PathVariable Long sessionId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_EVENT_STREAM)
+                .header("Cache-Control", "no-cache")
+                .header("X-Accel-Buffering", "no")
+                .body(questionService.subscribeQuestionEvents(sessionId));
     }
 
     // 질문 상세 조회

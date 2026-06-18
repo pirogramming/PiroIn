@@ -3,13 +3,155 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import styles from './QnAListPage.module.css';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { authFetch } from '../../utils/Api';
+import { subscribeQuestionEvents } from '../../utils/sse';
 import {
     CommentImoji, MeCuriousToo, SortBtn,
     OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
-    DAY_PART_KO, DAY_OF_WEEK_KO, uploadImage,
+    DAY_PART_KO, DAY_OF_WEEK_KO, uploadImages,
 } from '../../utils/qnaUtils';
 
 const MAX_VISIBLE_COMMENTS = 3;
+const POPULAR_LIKE_THRESHOLD = 5;
+
+const getCreatedAtTime = (question) => new Date(question.createdAt ?? 0).getTime();
+
+const sortQuestionGroups = (groups) => ({
+    popularQuestions: [...groups.popularQuestions].sort(
+        (a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0) || getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+    unresolvedQuestions: [...groups.unresolvedQuestions].sort(
+        (a, b) => getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+    resolvedQuestions: [...groups.resolvedQuestions].sort(
+        (a, b) => getCreatedAtTime(b) - getCreatedAtTime(a)
+    ),
+});
+
+const getQuestionGroupKey = (question) => {
+    if (question.isResolved) return 'resolvedQuestions';
+    if ((question.likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD) return 'popularQuestions';
+    return 'unresolvedQuestions';
+};
+
+const regroupQuestions = (questions) => {
+    const groups = {
+        popularQuestions: [],
+        unresolvedQuestions: [],
+        resolvedQuestions: [],
+    };
+    const seenQuestionIds = new Set();
+
+    questions.forEach(question => {
+        if (seenQuestionIds.has(question.questionId)) return;
+        seenQuestionIds.add(question.questionId);
+        groups[getQuestionGroupKey(question)].push(question);
+    });
+
+    return sortQuestionGroups(groups);
+};
+
+const updateQuestionGroupsByCommentEvent = (groups, eventData) => {
+    if (!eventData?.questionId) return groups;
+
+    let hasUpdatedQuestion = false;
+    const questions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ].map(question => {
+        if (question.questionId !== eventData.questionId) return question;
+
+        hasUpdatedQuestion = true;
+        const isResolved = eventData.isResolved ?? question.isResolved;
+
+        return {
+            ...question,
+            isResolved,
+            isPopular: !isResolved && (question.likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD,
+            commentCount: eventData.commentCount ?? question.commentCount,
+            previewComments: eventData.previewComments ?? question.previewComments,
+        };
+    });
+
+    return hasUpdatedQuestion ? regroupQuestions(questions) : groups;
+};
+
+const updateQuestionGroupsByQuestionEvent = (groups, eventData) => {
+    if (!eventData?.questionId) return groups;
+
+    const questions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ];
+
+    if (eventData.isDeleted) {
+        return regroupQuestions(questions.filter(question => question.questionId !== eventData.questionId));
+    }
+
+    let hasUpdatedQuestion = false;
+    const updatedQuestions = questions.map(question => {
+        if (question.questionId !== eventData.questionId) return question;
+
+        hasUpdatedQuestion = true;
+        const isResolved = eventData.isResolved ?? question.isResolved;
+        const likeCount = eventData.likeCount ?? question.likeCount;
+
+        return {
+            ...question,
+            content: eventData.content ?? question.content,
+            isResolved,
+            isPopular: !isResolved && (likeCount ?? 0) >= POPULAR_LIKE_THRESHOLD,
+            likeCount,
+            iLiked: eventData.isLiked ?? question.iLiked,
+            isLiked: eventData.isLiked ?? question.isLiked,
+        };
+    });
+
+    return hasUpdatedQuestion ? regroupQuestions(updatedQuestions) : groups;
+};
+
+const addQuestionToGroups = (groups, question) => {
+    if (!question?.questionId) return groups;
+
+    const existingQuestions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ];
+    const alreadyExists = existingQuestions.some(item => item.questionId === question.questionId);
+
+    if (alreadyExists) return groups;
+    return regroupQuestions([question, ...existingQuestions]);
+};
+
+const buildUnderstandingCheckFromEvent = (eventData) => ({
+    checkId: eventData.checkId,
+    content: eventData.content,
+    respondedCount: eventData.respondedCount ?? 0,
+    attendanceCount: eventData.attendanceCount ?? 0,
+    understoodCount: eventData.understoodCount ?? 0,
+    notUnderstoodCount: eventData.notUnderstoodCount ?? 0,
+    selectedChoice: null,
+    createdAt: eventData.createdAt,
+});
+
+const updateCurrentUnderstandingCounts = (understanding, eventData) => {
+    if (!understanding?.current || understanding.current.checkId !== eventData?.checkId) {
+        return understanding;
+    }
+
+    return {
+        ...understanding,
+        current: {
+            ...understanding.current,
+            respondedCount: eventData.respondedCount ?? understanding.current.respondedCount,
+            attendanceCount: eventData.attendanceCount ?? understanding.current.attendanceCount,
+            understoodCount: eventData.understoodCount ?? understanding.current.understoodCount,
+            notUnderstoodCount: eventData.notUnderstoodCount ?? understanding.current.notUnderstoodCount,
+        },
+    };
+};
 
 function QnAListPage() {
     const { sessionId } = useParams();
@@ -23,11 +165,17 @@ function QnAListPage() {
     const [understanding, setUnderstanding] = useState(null);
     const [understandingIndex, setUnderstandingIndex] = useState(0);
     const [myChoices, setMyChoices] = useState({});
+    const understandingRef = useRef(null);
 
     // ── 질문 목록 상태 ───────────────────────────────
     const [popularQuestions, setPopularQuestions] = useState([]);
     const [unresolvedQuestions, setUnresolvedQuestions] = useState([]);
     const [resolvedQuestions, setResolvedQuestions] = useState([]);
+    const questionGroupsRef = useRef({
+        popularQuestions: [],
+        unresolvedQuestions: [],
+        resolvedQuestions: [],
+    });
 
     // ── 필터 / 정렬 상태 ─────────────────────────────
     const [filterCurious, setFilterCurious] = useState(false);
@@ -38,7 +186,9 @@ function QnAListPage() {
     // ── 댓글 입력 상태 ───────────────────────────────
     const [commentOpenId, setCommentOpenId] = useState(null);
     const [commentInputs, setCommentInputs] = useState({});
+    // 질문별 댓글 이미지 여러 장: { [questionId]: File[] }
     const [commentImages, setCommentImages] = useState({});
+    // 질문별 댓글 이미지 미리보기: { [questionId]: string[] }
     const [commentImagePreviews, setCommentImagePreviews] = useState({});
     const commentFileRefs = useRef({});
 
@@ -46,9 +196,29 @@ function QnAListPage() {
     const [newQuestion, setNewQuestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState(null);
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    // 질문 이미지 여러 장
+    const [selectedImages, setSelectedImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
     const fileInputRef = useRef(null);
+
+    const applyQuestionGroups = useCallback((groups) => {
+        questionGroupsRef.current = groups;
+        setPopularQuestions(groups.popularQuestions);
+        setUnresolvedQuestions(groups.unresolvedQuestions);
+        setResolvedQuestions(groups.resolvedQuestions);
+    }, []);
+
+    useEffect(() => {
+        understandingRef.current = understanding;
+    }, [understanding]);
+
+    useEffect(() => {
+        questionGroupsRef.current = {
+            popularQuestions,
+            unresolvedQuestions,
+            resolvedQuestions,
+        };
+    }, [popularQuestions, unresolvedQuestions, resolvedQuestions]);
 
     // ── 질문 목록 불러오기 ───────────────────────────
     const fetchQuestions = useCallback(async (index) => {
@@ -62,6 +232,13 @@ function QnAListPage() {
 
             setSessionTitle(`${session.week}주차 ${DAY_OF_WEEK_KO[session.dayOfWeek]}요일 ${DAY_PART_KO[session.dayPart]} (${session.title})`);
             setUnderstanding(understanding);
+            const currentCheck = understanding?.current;
+            if (currentCheck?.checkId) {
+                setMyChoices(prev => ({
+                    ...prev,
+                    [currentCheck.checkId]: currentCheck.selectedChoice ?? null,
+                }));
+            }
 
             const allQ = [
                 ...(questions.popularQuestions ?? []),
@@ -69,20 +246,22 @@ function QnAListPage() {
                 ...(questions.resolvedQuestions ?? []),
             ];
 
-            // 질문 이미지 blob URL 변환
+            // 질문 이미지 blob URL 변환 (여러 장: imageUrls 배열)
             const withBlob = await Promise.all(
                 allQ.map(async (q) => {
-                    let blobImageUrl = null;
-                    if (q.imageUrl) {
-                        try {
-                            const imgRes = await authFetch(q.imageUrl);
-                            const blob = await imgRes.blob();
-                            blobImageUrl = URL.createObjectURL(blob);
-                        } catch {
-                            blobImageUrl = null;
-                        }
-                    }
-                    return { ...q, iLiked: q.isLiked, imageUrl: blobImageUrl };
+                    const rawUrls = q.imageUrls ?? [];
+                    const blobUrls = await Promise.all(
+                        rawUrls.map(async (url) => {
+                            try {
+                                const imgRes = await authFetch(url);
+                                const blob = await imgRes.blob();
+                                return URL.createObjectURL(blob);
+                            } catch {
+                                return null;
+                            }
+                        })
+                    );
+                    return { ...q, iLiked: q.isLiked, imageUrls: blobUrls.filter(Boolean) };
                 })
             );
 
@@ -91,18 +270,172 @@ function QnAListPage() {
             const unresolvedIds = idSet(questions.unresolvedQuestions ?? []);
             const resolvedIds = idSet(questions.resolvedQuestions ?? []);
 
-            setPopularQuestions(withBlob.filter(q => popularIds.has(q.questionId)));
-            setUnresolvedQuestions(withBlob.filter(q => unresolvedIds.has(q.questionId)));
-            setResolvedQuestions(withBlob.filter(q => resolvedIds.has(q.questionId)));
+            applyQuestionGroups({
+                popularQuestions: withBlob.filter(q => popularIds.has(q.questionId)),
+                unresolvedQuestions: withBlob.filter(q => unresolvedIds.has(q.questionId)),
+                resolvedQuestions: withBlob.filter(q => resolvedIds.has(q.questionId)),
+            });
 
         } catch (err) {
             console.error('질문 불러오기 실패:', err);
         }
-    }, [sessionId]);
+    }, [sessionId, applyQuestionGroups]);
 
     useEffect(() => {
         if (sessionId) fetchQuestions(understandingIndex);
     }, [sessionId, understandingIndex, fetchQuestions]);
+
+    const handleCommentCreatedEvent = useCallback((eventData) => {
+        const nextGroups = updateQuestionGroupsByCommentEvent(questionGroupsRef.current, eventData);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups]);
+
+    const buildQuestionFromCreatedEvent = useCallback(async (eventData) => {
+        if (!eventData?.questionId) return null;
+
+        // SSE 이벤트의 imageUrls 배열을 blob URL로 변환
+        const rawUrls = eventData.imageUrls ?? [];
+        const blobUrls = await Promise.all(
+            rawUrls.map(async (url) => {
+                try {
+                    const imgRes = await authFetch(url);
+                    const blob = await imgRes.blob();
+                    return URL.createObjectURL(blob);
+                } catch {
+                    return null;
+                }
+            })
+        );
+
+        return {
+            questionId: eventData.questionId,
+            content: eventData.content,
+            imageUrls: blobUrls.filter(Boolean),
+            isResolved: false,
+            isPopular: false,
+            isLiked: false,
+            isMine: false,
+            iLiked: false,
+            likeCount: eventData.likeCount ?? 0,
+            commentCount: eventData.commentCount ?? 0,
+            previewComments: [],
+            createdAt: eventData.createdAt,
+        };
+    }, []);
+
+    const handleQuestionCreatedEvent = useCallback(async (eventData) => {
+        const createdQuestion = await buildQuestionFromCreatedEvent(eventData);
+        if (!createdQuestion) return;
+
+        const nextGroups = addQuestionToGroups(questionGroupsRef.current, createdQuestion);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups, buildQuestionFromCreatedEvent]);
+
+    const handleQuestionUpdatedEvent = useCallback((eventData) => {
+        const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, eventData);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups]);
+
+    const handleUnderstandingCheckCreatedEvent = useCallback((eventData) => {
+        if (!eventData?.checkId) return;
+        if (understandingRef.current?.current?.checkId === eventData.checkId) return;
+
+        if (understandingIndex === 0) {
+            setUnderstanding(prev => {
+                if (prev?.current?.checkId === eventData.checkId) return prev;
+
+                const previousTotalCount = prev?.totalCount ?? 0;
+                const nextUnderstanding = {
+                    current: buildUnderstandingCheckFromEvent(eventData),
+                    currentIndex: 0,
+                    totalCount: previousTotalCount + 1,
+                    hasOlder: previousTotalCount > 0,
+                    hasNewer: false,
+                };
+                understandingRef.current = nextUnderstanding;
+                return nextUnderstanding;
+            });
+            return;
+        }
+
+        setUnderstanding(prev => {
+            if (prev?.current?.checkId === eventData.checkId) return prev;
+
+            const nextTotalCount = (prev?.totalCount ?? understandingIndex + 1) + 1;
+            const nextCurrentIndex = (prev?.currentIndex ?? understandingIndex) + 1;
+            const nextUnderstanding = {
+                ...(prev ?? {}),
+                currentIndex: nextCurrentIndex,
+                totalCount: nextTotalCount,
+                hasOlder: nextCurrentIndex < nextTotalCount - 1,
+                hasNewer: true,
+            };
+            understandingRef.current = nextUnderstanding;
+            return nextUnderstanding;
+        });
+        setUnderstandingIndex(prev => prev + 1);
+    }, [understandingIndex]);
+
+    const handleUnderstandingResponseUpdatedEvent = useCallback((eventData) => {
+        setUnderstanding(prev => {
+            const nextUnderstanding = updateCurrentUnderstandingCounts(prev, eventData);
+            understandingRef.current = nextUnderstanding;
+            return nextUnderstanding;
+        });
+    }, []);
+
+    const handleQuestionEvent = useCallback((message) => {
+        const { event, data } = message;
+
+        switch (event) {
+            case 'connected':
+                console.debug('질문방 SSE 연결 완료');
+                break;
+            case 'comment-created':
+                handleCommentCreatedEvent(data);
+                break;
+            case 'comment-updated':
+                handleCommentCreatedEvent(data);
+                break;
+            case 'question-created':
+                void handleQuestionCreatedEvent(data);
+                break;
+            case 'question-updated':
+                handleQuestionUpdatedEvent(data);
+                break;
+            case 'understanding-check-created':
+                handleUnderstandingCheckCreatedEvent(data);
+                break;
+            case 'understanding-response-updated':
+                handleUnderstandingResponseUpdatedEvent(data);
+                break;
+            default:
+                console.debug('알 수 없는 질문방 SSE 이벤트 수신:', message);
+                break;
+        }
+    }, [
+        handleCommentCreatedEvent,
+        handleQuestionCreatedEvent,
+        handleQuestionUpdatedEvent,
+        handleUnderstandingCheckCreatedEvent,
+        handleUnderstandingResponseUpdatedEvent,
+    ]);
+
+    useEffect(() => {
+        if (!sessionId) {
+            return undefined;
+        }
+
+        return subscribeQuestionEvents(sessionId, {
+            onOpen: () => {
+                console.debug('질문방 SSE 연결 열림');
+            },
+            onEvent: handleQuestionEvent,
+            onError: (error) => {
+                console.error('질문방 SSE 연결 실패:', error);
+            },
+        });
+    }, [sessionId, handleQuestionEvent]);
 
     // ── 이해도 네비게이션 ────────────────────────────
     const goPrevUnderstand = () => {
@@ -116,29 +449,31 @@ function QnAListPage() {
     const handleUnderstandChoice = async (choice) => {
         if (!understanding?.current?.checkId) return;
         const checkId = understanding.current.checkId;
-        const newChoice = myChoices[checkId] === choice ? null : choice;
+        const previousChoice = myChoices[checkId] ?? null;
+        const newChoice = previousChoice === choice ? null : choice;
         setMyChoices(prev => ({ ...prev, [checkId]: newChoice }));
-        if (!newChoice) return;
         try {
             const res = await authFetch(
                 `/api/sessions/${sessionId}/understanding-checks/${checkId}/responses`,
-                { method: 'POST', body: JSON.stringify({ choice: newChoice }) }
+                { method: 'POST', body: JSON.stringify({ choice }) }
             );
             if (!res.ok) throw new Error();
             const json = await res.json();
-            if (json.isSuccess) {
-                setUnderstanding(prev => ({
-                    ...prev,
-                    current: {
-                        ...prev.current,
-                        understoodCount: json.result.understoodCount,
-                        notUnderstoodCount: json.result.notUnderstoodCount,
-                        attendanceCount: json.result.attendanceCount,
-                        respondedCount: json.result.respondedCount,
-                    }
-                }));
-            }
+            if (!json.isSuccess) throw new Error(json.message);
+            setMyChoices(prev => ({ ...prev, [checkId]: json.result.selectedChoice ?? null }));
+            setUnderstanding(prev => ({
+                ...prev,
+                current: {
+                    ...prev.current,
+                    understoodCount: json.result.understoodCount,
+                    notUnderstoodCount: json.result.notUnderstoodCount,
+                    attendanceCount: json.result.attendanceCount,
+                    respondedCount: json.result.respondedCount,
+                    selectedChoice: json.result.selectedChoice,
+                }
+            }));
         } catch (err) {
+            setMyChoices(prev => ({ ...prev, [checkId]: previousChoice }));
             console.error('이해도 응답 실패:', err);
         }
     };
@@ -152,14 +487,12 @@ function QnAListPage() {
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? { ...q, likeCount: json.result.likeCount, iLiked: json.result.isLiked }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
+                const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, {
+                    questionId,
+                    likeCount: json.result.likeCount,
+                    isLiked: json.result.isLiked,
+                });
+                applyQuestionGroups(nextGroups);
             }
         } catch (err) {
             console.error('좋아요 실패:', err);
@@ -181,15 +514,16 @@ function QnAListPage() {
     const handleCommentSubmit = async (e, questionId) => {
         e.stopPropagation();
         const text = (commentInputs[questionId] || '').trim();
-        if (!text) return;
+        const images = commentImages[questionId] ?? [];
+        if (!text && images.length === 0) return;
         try {
-            let imageUrl = null;
-            if (commentImages[questionId]) {
-                imageUrl = await uploadImage(commentImages[questionId]);
+            let imageUrls = [];
+            if (images.length > 0) {
+                imageUrls = await uploadImages(images);
             }
             const res = await authFetch(`/api/questions/${questionId}/comments`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, parentCommentId: null, imageUrl }),
+                body: JSON.stringify({ content: text, parentCommentId: null, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
@@ -216,8 +550,8 @@ function QnAListPage() {
                 setUnresolvedQuestions(update);
                 setResolvedQuestions(update);
                 setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
-                setCommentImages(prev => ({ ...prev, [questionId]: null }));
-                setCommentImagePreviews(prev => ({ ...prev, [questionId]: null }));
+                setCommentImages(prev => ({ ...prev, [questionId]: [] }));
+                setCommentImagePreviews(prev => ({ ...prev, [questionId]: [] }));
                 setCommentOpenId(null);
             }
         } catch (err) {
@@ -227,10 +561,20 @@ function QnAListPage() {
 
     // ── 댓글 이미지 선택 / 붙여넣기 ─────────────────
     const handleCommentImageSelect = (e, questionId) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setCommentImages(prev => ({ ...prev, [questionId]: file }));
-        setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const prev = commentImages[questionId] ?? [];
+        const merged = [...prev, ...files].slice(0, 5);
+        setCommentImages(p => ({ ...p, [questionId]: merged }));
+        setCommentImagePreviews(p => ({ ...p, [questionId]: merged.map(f => URL.createObjectURL(f)) }));
+        e.target.value = '';
+    };
+
+    const handleCommentRemoveImage = (questionId, idx) => {
+        const prev = commentImages[questionId] ?? [];
+        const next = prev.filter((_, i) => i !== idx);
+        setCommentImages(p => ({ ...p, [questionId]: next }));
+        setCommentImagePreviews(p => ({ ...p, [questionId]: next.map(f => URL.createObjectURL(f)) }));
     };
 
     const handleCommentPaste = (e, questionId) => {
@@ -240,43 +584,53 @@ function QnAListPage() {
             if (item.type.startsWith('image/')) {
                 const file = item.getAsFile();
                 if (file) {
-                    setCommentImages(prev => ({ ...prev, [questionId]: file }));
-                    setCommentImagePreviews(prev => ({ ...prev, [questionId]: URL.createObjectURL(file) }));
+                    const prev = commentImages[questionId] ?? [];
+                    const merged = [...prev, file].slice(0, 5);
+                    setCommentImages(p => ({ ...p, [questionId]: merged }));
+                    setCommentImagePreviews(p => ({ ...p, [questionId]: merged.map(f => URL.createObjectURL(f)) }));
                 }
                 break;
             }
         }
     };
 
-    // ── 질문 이미지 선택 ─────────────────────────────
+    // ── 질문 이미지 선택 (여러 장) ───────────────────
     const handleImageSelect = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setSelectedImage(file);
-        setImagePreview(URL.createObjectURL(file));
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+        const merged = [...selectedImages, ...files].slice(0, 5);
+        setSelectedImages(merged);
+        setImagePreviews(merged.map(f => URL.createObjectURL(f)));
+        e.target.value = '';
+    };
+
+    const handleRemoveImage = (idx) => {
+        const next = selectedImages.filter((_, i) => i !== idx);
+        setSelectedImages(next);
+        setImagePreviews(next.map(f => URL.createObjectURL(f)));
     };
 
     // ── 새 질문 등록 ─────────────────────────────────
     const handleNewQuestion = async () => {
         const text = newQuestion.trim();
-        if (!text) return;
+        if (!text && selectedImages.length === 0) return;
         setIsSubmitting(true);
         setSubmitError(null);
         try {
-            let imageUrl = null;
-            if (selectedImage) {
-                imageUrl = await uploadImage(selectedImage);
+            let imageUrls = [];
+            if (selectedImages.length > 0) {
+                imageUrls = await uploadImages(selectedImages);
             }
             const res = await authFetch(`/api/sessions/${sessionId}/questions`, {
                 method: 'POST',
-                body: JSON.stringify({ content: text, imageUrl }),
+                body: JSON.stringify({ content: text, imageUrls }),
             });
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
                 setNewQuestion('');
-                setSelectedImage(null);
-                setImagePreview(null);
+                setSelectedImages([]);
+                setImagePreviews([]);
                 fetchQuestions(understandingIndex);
             }
         } catch (err) {
@@ -445,11 +799,14 @@ function QnAListPage() {
                             </div>
                         </div>
 
-                        {/* 질문 첨부 이미지 */}
-                        {question.imageUrl && (
-                            <img src={question.imageUrl} alt="첨부 이미지"
-                                className={styles.questionImage}
-                                onClick={e => e.stopPropagation()} />
+                        {/* 질문 첨부 이미지 (여러 장) */}
+                        {question.imageUrls?.length > 0 && (
+                            <div className={styles.questionImages} onClick={e => e.stopPropagation()}>
+                                {question.imageUrls.map((url, idx) => (
+                                    <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`}
+                                        className={styles.questionImage} />
+                                ))}
+                            </div>
                         )}
 
                         {/* 댓글 미리보기 */}
@@ -492,17 +849,20 @@ function QnAListPage() {
                         {/* 댓글 입력창 */}
                         {commentOpenId === question.questionId && (
                             <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                {commentImagePreviews[question.questionId] && (
-                                    <div className={styles.imagePreviewWrapper}>
-                                        <img src={commentImagePreviews[question.questionId]} alt="미리보기" className={styles.imagePreview} />
-                                        <button
-                                            className={styles.imageRemoveBtn}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                setCommentImages(prev => ({ ...prev, [question.questionId]: null }));
-                                                setCommentImagePreviews(prev => ({ ...prev, [question.questionId]: null }));
-                                            }}
-                                        >✕</button>
+                                {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
+                                    <div className={styles.imagePreviewList}>
+                                        {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
+                                            <div key={idx} className={styles.imagePreviewWrapper}>
+                                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                                <button
+                                                    className={styles.imageRemoveBtn}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleCommentRemoveImage(question.questionId, idx);
+                                                    }}
+                                                >✕</button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                                 <div className={styles.commentInputInner}>
@@ -514,6 +874,7 @@ function QnAListPage() {
                                                 commentFileRefs.current[question.questionId] = document.createElement('input');
                                                 commentFileRefs.current[question.questionId].type = 'file';
                                                 commentFileRefs.current[question.questionId].accept = 'image/*';
+                                                commentFileRefs.current[question.questionId].multiple = true;
                                                 commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
                                             }
                                             commentFileRefs.current[question.questionId].click();
@@ -545,13 +906,17 @@ function QnAListPage() {
             {!isPast && (
                 <div className={styles.newQuestionBar}>
                     {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                    {imagePreview && (
-                        <div className={styles.imagePreviewWrapper}>
-                            <img src={imagePreview} alt="미리보기" className={styles.imagePreview} />
-                            <button
-                                className={styles.imageRemoveBtn}
-                                onClick={() => { setSelectedImage(null); setImagePreview(null); }}
-                            >✕</button>
+                    {imagePreviews.length > 0 && (
+                        <div className={styles.imagePreviewList}>
+                            {imagePreviews.map((preview, idx) => (
+                                <div key={idx} className={styles.imagePreviewWrapper}>
+                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                    <button
+                                        className={styles.imageRemoveBtn}
+                                        onClick={() => handleRemoveImage(idx)}
+                                    >✕</button>
+                                </div>
+                            ))}
                         </div>
                     )}
                     <div className={styles.newQuestionInputRow}>
@@ -565,6 +930,7 @@ function QnAListPage() {
                                 <input
                                     type="file"
                                     accept="image/*"
+                                    multiple
                                     ref={fileInputRef}
                                     style={{ display: 'none' }}
                                     onChange={handleImageSelect}

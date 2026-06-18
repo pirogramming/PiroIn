@@ -2,7 +2,7 @@ import '../../assets/styles/global.css';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './QnADetailPage.module.css';
-import { FiMoreVertical, FiCornerDownRight } from 'react-icons/fi';
+import { FiMoreVertical, FiCornerDownRight, FiChevronLeft } from 'react-icons/fi';
 import {
     CommentImoji,
     MeCuriousToo,
@@ -25,7 +25,7 @@ const formatTime = (dateStr) => {
 };
 
 function QnADetailPage() {
-    const { questionId } = useParams();
+    const { sessionId, questionId } = useParams();
     const navigate = useNavigate();
     const isStaff = localStorage.getItem('role') === 'ADMIN';
 
@@ -53,7 +53,7 @@ function QnADetailPage() {
     // ── 질문 불러오기 ────────────────────────────────
     useEffect(() => {
         document.title = "Q&A | PIROIN";
-        
+
         const fetchQuestion = async () => {
             try {
                 setLoading(true);
@@ -111,6 +111,11 @@ function QnADetailPage() {
         if (showMenu || commentMenuId) document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, [showMenu, commentMenuId]);
+
+    // ── 목록으로 가기 ────────────────────────────────
+    const handleBackToList = () => {
+        navigate(`/sessions/${sessionId}/questions/`);
+    };
 
     // ── 좋아요 토글 ──────────────────────────────────
     const toggleLike = async () => {
@@ -301,6 +306,15 @@ function QnADetailPage() {
 
     return (
         <div className={styles.page}>
+
+            {/* ── 목록으로 가기 ── */}
+            <button
+                className={styles.backToListBtn}
+                onClick={handleBackToList}
+            >
+                <FiChevronLeft size={18} />
+                목록으로
+            </button>
 
             {/* ── 작성자 행 ── */}
             <div className={styles.authorRow}>

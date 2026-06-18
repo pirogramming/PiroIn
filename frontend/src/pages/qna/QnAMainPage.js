@@ -18,7 +18,7 @@ function QNAMainPage() {
     // ── 세션 목록 불러오기 ──────────────────────────
     useEffect(() => {
         document.title = "Q&A | PIROIN";
-        
+
         const fetchSessions = async () => {
             try {
                 setLoading(true);

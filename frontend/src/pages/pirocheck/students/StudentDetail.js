@@ -99,7 +99,7 @@ function WeekBlock({ weekData, onChange }) {
                                         </div>
                                     )}
 
-                                    <button className={styles.saveWeekBtn}>저장하기</button>
+                                    {/* <button className={styles.saveWeekBtn}>저장하기</button> */}
                                 </div>
                             )}
 

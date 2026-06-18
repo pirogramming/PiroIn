@@ -62,7 +62,7 @@ function WeekBlock({ weekData, onChange }) {
                                         <div className={styles.statusItems}>
                                             {day.attendances.map((att, j) => (
                                                 <div key={j} className={styles.statusItem}>
-                                                    <span className={styles.itemLabel}>{att.attendanceOrder}</span>
+                                                    <span className={styles.itemLabel}>{att.attendanceOrder}차</span>
                                                     <select
                                                         className={styles.select}
                                                         value={att.attended ? 'true' : 'false'}
@@ -99,7 +99,7 @@ function WeekBlock({ weekData, onChange }) {
                                         </div>
                                     )}
 
-                                    <button className={styles.saveWeekBtn}>저장하기</button>
+                                    {/* <button className={styles.saveWeekBtn}>저장하기</button> */}
                                 </div>
                             )}
 
@@ -119,6 +119,19 @@ function StudentDetail() {
 
     const [data, setData] = useState(null);
     const [defence, setDefence] = useState('');
+
+    // 보증금 정보 새로고침 함수
+    const refreshDeposit = async () => {
+        const depositRes = await authFetch(`/api/deposit/${userId}/deposit/view`);
+        const depositData = await depositRes.json();
+
+        setDefence(depositData.ascentDefence.toString());
+
+        setData(prev => ({
+            ...prev,
+            deposit: depositData,
+        }));
+    };
 
     useEffect(() => {
 
@@ -166,6 +179,9 @@ function StudentDetail() {
             method: 'PATCH',
             body: JSON.stringify({ ascentDefence: Number(defence) }),
         });
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 
@@ -214,6 +230,7 @@ function StudentDetail() {
                                 submitted: a.submitted,
                             })),
                         };
+
                         return authFetch(`/api/admin/users/${userId}/weeks/${w.week}`, {
                             method: 'PATCH',
                             body: JSON.stringify(body),
@@ -222,6 +239,9 @@ function StudentDetail() {
                 )
             )
         );
+
+        await refreshDeposit();
+
         alert('저장됐습니다!');
     };
 

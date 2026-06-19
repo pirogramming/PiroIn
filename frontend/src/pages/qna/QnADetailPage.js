@@ -674,7 +674,7 @@ function QnADetailPage() {
                         placeholder="댓글을 입력해주세요..."
                         value={commentText}
                         onChange={e => setCommentText(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(); }}
+                        onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCommentSubmit(); }}
                         onPaste={handlePaste}
                         disabled={isSubmitting}
                     />

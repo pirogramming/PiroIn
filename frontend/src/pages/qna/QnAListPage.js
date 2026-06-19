@@ -529,27 +529,9 @@ function QnAListPage() {
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                if (isStaff) {
-                    await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
-                }
-                const newComment = {
-                    commentId: json.result.commentId,
-                    displayName: json.result.displayName,
-                    content: json.result.content,
-                };
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? {
-                            ...q,
-                            isResolved: isStaff ? true : q.isResolved,
-                            previewComments: [...(q.previewComments ?? []), newComment],
-                            commentCount: (q.commentCount ?? 0) + 1
-                        }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
+                // NOTE: 댓글 작성으로 인한 '해결됨' 자동 전환 없음 (해결 처리는 운영진 수동 조작만 허용).
+                // previewComments / commentCount UI 갱신도 SSE comment-created 이벤트에서 단일 처리.
+                // 여기서 직접 상태를 업데이트하면 SSE 이벤트와 중복되어 댓글이 2개 표시되므로 제거.
                 setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
                 setCommentImages(prev => ({ ...prev, [questionId]: [] }));
                 setCommentImagePreviews(prev => ({ ...prev, [questionId]: [] }));
@@ -795,13 +777,13 @@ function QnAListPage() {
                     </div>
                 )}
 
-                {/* ── 질문 목록 ── */}
-                <div className={styles.questionList}>
-                    {displayedQuestions.map(question => (
-                        <div
-                            key={question.questionId}
-                            className={`${styles.questionCard} ${question.isResolved ? styles.resolvedCard : ''}`}
-                            onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
+            {/* ── 질문 목록 ── */}
+            <div className={styles.questionList}>
+                {displayedQuestions.map(question => (
+                    <div key={question.questionId}
+                        className={`${styles.questionCard} ${question.isResolved ? styles.questionCardResolved : ''}`}
+
+                        onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
 
                             {/* 질문 헤더 */}
                             <div className={styles.questionHeader}>
@@ -873,119 +855,119 @@ function QnAListPage() {
                                 </div>
                             )}
 
-                            {/* 댓글 입력창 */}
-                            {commentOpenId === question.questionId && (
-                                <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                    {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
-                                        <div className={styles.imagePreviewList}>
-                                            {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
-                                                <div key={idx} className={styles.imagePreviewWrapper}>
-                                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
-                                                    <button
-                                                        className={styles.imageRemoveBtn}
-                                                        onClick={e => {
-                                                            e.stopPropagation();
-                                                            handleCommentRemoveImage(question.questionId, idx);
-                                                        }}
-                                                    >✕</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className={styles.commentInputInner}>
-                                        <button
-                                            className={styles.commentPlusBtn}
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                if (!commentFileRefs.current[question.questionId]) {
-                                                    commentFileRefs.current[question.questionId] = document.createElement('input');
-                                                    commentFileRefs.current[question.questionId].type = 'file';
-                                                    commentFileRefs.current[question.questionId].accept = 'image/*';
-                                                    commentFileRefs.current[question.questionId].multiple = true;
-                                                    commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
-                                                }
-                                                commentFileRefs.current[question.questionId].click();
-                                            }}
-                                        >+</button>
-                                        <input
-                                            className={styles.commentInput}
-                                            placeholder="댓글을 입력해주세요..."
-                                            value={commentInputs[question.questionId] || ''}
-                                            onChange={e => handleCommentChange(question.questionId, e.target.value)}
-                                            onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
-                                            onPaste={e => handleCommentPaste(e, question.questionId)}
-                                            autoFocus
-                                        />
-                                        <button className={styles.submitBtn}
-                                            onClick={e => handleCommentSubmit(e, question.questionId)}>
-                                            <SumitBtn />
-                                        </button>
+                        {/* 댓글 입력창 */}
+                        {commentOpenId === question.questionId && (
+                            <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
+                                {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
+                                    <div className={styles.imagePreviewList}>
+                                        {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
+                                            <div key={idx} className={styles.imagePreviewWrapper}>
+                                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                                <button
+                                                    className={styles.imageRemoveBtn}
+                                                    onClick={e => {
+                                                        e.stopPropagation();
+                                                        handleCommentRemoveImage(question.questionId, idx);
+                                                    }}
+                                                >✕</button>
+                                            </div>
+                                        ))}
                                     </div>
+                                )}
+                                <div className={styles.commentInputInner}>
+                                    <button
+                                        className={styles.commentPlusBtn}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            if (!commentFileRefs.current[question.questionId]) {
+                                                commentFileRefs.current[question.questionId] = document.createElement('input');
+                                                commentFileRefs.current[question.questionId].type = 'file';
+                                                commentFileRefs.current[question.questionId].accept = 'image/*';
+                                                commentFileRefs.current[question.questionId].multiple = true;
+                                                commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
+                                            }
+                                            commentFileRefs.current[question.questionId].click();
+                                        }}
+                                    >+</button>
+                                    <input
+                                        className={styles.commentInput}
+                                        placeholder="댓글을 입력해주세요..."
+                                        value={commentInputs[question.questionId] || ''}
+                                        onChange={e => handleCommentChange(question.questionId, e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
+                                        onPaste={e => handleCommentPaste(e, question.questionId)}
+                                        autoFocus
+                                    />
+                                    <button className={styles.submitBtn}
+                                        onClick={e => handleCommentSubmit(e, question.questionId)}>
+                                        <SumitBtn />
+                                    </button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
 
                 <div className={styles.bottomCover} />
 
-                {/* ── 하단 입력바 (지난 세션이면 숨김) ── */}
-                {!isPast && (
-                    <div className={styles.newQuestionBar}>
-                        {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                        {imagePreviews.length > 0 && (
-                            <div className={styles.imagePreviewList}>
-                                {imagePreviews.map((preview, idx) => (
-                                    <div key={idx} className={styles.imagePreviewWrapper}>
-                                        <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
-                                        <button
-                                            className={styles.imageRemoveBtn}
-                                            onClick={() => handleRemoveImage(idx)}
-                                        >✕</button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <div className={styles.newQuestionInputRow}>
-                            {/* 운영진일 때 + 버튼 숨김 */}
-                            {!isStaff && (
-                                <>
+            {/* ── 하단 입력바 (지난 세션이면 숨김) ── */}
+            {!isPast && (
+                <div className={styles.newQuestionBar}>
+                    {submitError && <p className={styles.errorMsg}>{submitError}</p>}
+                    {imagePreviews.length > 0 && (
+                        <div className={styles.imagePreviewList}>
+                            {imagePreviews.map((preview, idx) => (
+                                <div key={idx} className={styles.imagePreviewWrapper}>
+                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
                                     <button
-                                        className={styles.newQuestionPlus}
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >+</button>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        ref={fileInputRef}
-                                        style={{ display: 'none' }}
-                                        onChange={handleImageSelect}
-                                    />
-                                </>
-                            )}
-                            <input
-                                className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
-                                placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
-                                value={newQuestion}
-                                onChange={e => setNewQuestion(e.target.value)}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
-                                }}
-                                onPaste={handleNewQuestionPaste}
-                                disabled={isSubmitting}
-                            />
-                            <button
-                                className={styles.newQuestionSubmit}
-                                onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? '⏳' : <SumitBtn />}
-                            </button>
+                                        className={styles.imageRemoveBtn}
+                                        onClick={() => handleRemoveImage(idx)}
+                                    >✕</button>
+                                </div>
+                            ))}
                         </div>
+                    )}
+                    <div className={styles.newQuestionInputRow}>
+                        {/* 운영진일 때 + 버튼 숨김 */}
+                        {!isStaff && (
+                            <>
+                                <button
+                                    className={styles.newQuestionPlus}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >+</button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleImageSelect}
+                                />
+                            </>
+                        )}
+                        <input
+                            className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
+                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
+                            value={newQuestion}
+                            onChange={e => setNewQuestion(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                            }}
+                            onPaste={handleNewQuestionPaste}
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            className={styles.newQuestionSubmit}
+                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? '⏳' : <SumitBtn />}
+                        </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+        </div>
         </div>
     );
 }

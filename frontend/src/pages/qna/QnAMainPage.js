@@ -44,69 +44,71 @@ function QNAMainPage() {
     if (error) return <div className={styles.page}>오류: {error}</div>;
 
     return (
-        <div className={styles.page}>
+        <div className={styles.pageWrapper}>
+            <div className={styles.page}>
 
-            {/* ── 진행 중인 세션 ── */}
-            {activeSessions.length > 0 && (
-                <>
+                {/* ── 진행 중인 세션 ── */}
+                {activeSessions.length > 0 && (
+                    <>
+                        <section className={styles.section}>
+                            <h2 className={styles.sectionTitle}>현재 세션</h2>
+                            {activeSessions.map(session => (
+                                <div
+                                    key={session.sessionId}
+                                    className={styles.card}
+                                    onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'IN_SESSION' } })}
+                                >
+                                    <p className={styles.cardTitle}>
+                                        <span className={styles.icon}>{getIcon(session.dayPart)}</span>
+                                        {session.title}
+                                    </p>
+                                    <p className={styles.cardWeek}>
+                                        {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
+                                    </p>
+                                    <p className={styles.cardDate}>{formatDate(session.sessionDate)}</p>
+                                    <p className={styles.cardTime}>{getTime(session.dayPart)}</p>
+                                </div>
+                            ))}
+                        </section>
+                        <hr className={styles.divider} />
+                    </>
+                )}
+
+                {/* ── 지난 세션 ── */}
+                {pastSessions.length > 0 && (
                     <section className={styles.section}>
-                        <h2 className={styles.sectionTitle}>현재 세션</h2>
-                        {activeSessions.map(session => (
-                            <div
-                                key={session.sessionId}
-                                className={styles.card}
-                                onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'IN_SESSION' } })}
-                            >
-                                <p className={styles.cardTitle}>
-                                    <span className={styles.icon}>{getIcon(session.dayPart)}</span>
-                                    {session.title}
-                                </p>
-                                <p className={styles.cardWeek}>
-                                    {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
-                                </p>
-                                <p className={styles.cardDate}>{formatDate(session.sessionDate)}</p>
-                                <p className={styles.cardTime}>{getTime(session.dayPart)}</p>
-                            </div>
-                        ))}
-                    </section>
-                    <hr className={styles.divider} />
-                </>
-            )}
-
-            {/* ── 지난 세션 ── */}
-            {pastSessions.length > 0 && (
-                <section className={styles.section}>
-                    <h2 className={styles.sectionTitle}>지난 세션</h2>
-                    <div className={styles.list}>
-                        {pastSessions.map(session => (
-                            <div
-                                key={session.sessionId}
-                                className={styles.listItem}
-                                onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'AFTER_SESSION' } })}
-                            >
-                                <span>
-                                    <span className={styles.icon}>{getIcon(session.dayPart)}</span>
-                                    <span className={styles.listTitle}>{session.title}</span>
-                                    <span className={styles.listWeek}>
-                                        &nbsp;• {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
+                        <h2 className={styles.sectionTitle}>지난 세션</h2>
+                        <div className={styles.list}>
+                            {pastSessions.map(session => (
+                                <div
+                                    key={session.sessionId}
+                                    className={styles.listItem}
+                                    onClick={() => navigate(`/sessions/${session.sessionId}/questions`, { state: { status: 'AFTER_SESSION' } })}
+                                >
+                                    <span>
+                                        <span className={styles.icon}>{getIcon(session.dayPart)}</span>
+                                        <span className={styles.listTitle}>{session.title}</span>
+                                        <span className={styles.listWeek}>
+                                            &nbsp;• {session.week}주차 {DAY_OF_WEEK_KO[session.dayOfWeek]} {DAY_PART_KO[session.dayPart]}
+                                        </span>
                                     </span>
-                                </span>
-                                <button className={styles.enterBtn}>
-                                    <FiLogIn size={25} />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+                                    <button className={styles.enterBtn}>
+                                        <FiLogIn size={20} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
 
-            {/* ── 세션 없을 때 ── */}
-            {activeSessions.length === 0 && pastSessions.length === 0 && (
-                <section className={styles.section}>
-                    <p className={styles.empty}>아직 생성된 Q&A가 없어요</p>
-                </section>
-            )}
+                {/* ── 세션 없을 때 ── */}
+                {activeSessions.length === 0 && pastSessions.length === 0 && (
+                    <section className={styles.section}>
+                        <p className={styles.empty}>아직 생성된 Q&A가 없어요</p>
+                    </section>
+                )}
 
+            </div>
         </div>
     );
 }

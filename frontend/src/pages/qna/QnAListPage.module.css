@@ -1,5 +1,11 @@
 /* ── 페이지 레이아웃 ── */
+/* .pageWrapper {
+  background: var(--gray50);
+  min-height: 100vh;
+} */
+
 .page {
+    /* background: var(--gray50); */
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -19,6 +25,7 @@
     margin: 10px;
     color: var(--black);
     padding-top: 60px;
+    padding-bottom: 40px;
     font-weight: 700;
     line-height: normal;
 }
@@ -108,17 +115,20 @@
 
 /* ── 이해도 바 ── */
 .understandBar {
+    padding: 8px 16px;
     margin-top: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     border-radius: 10px;
     border: 1px solid var(--dark);
     background: var(--white);
-    box-shadow: 1px 2px 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow: none;
     width: 100%;
-    height: 56px;
+    min-height: 56px;
+    padding: 10px 16px;
     box-sizing: border-box;
 }
 
@@ -129,6 +139,8 @@
     color: var(--gray600);
     display: flex;
     align-items: center;
+    align-self: center;
+    flex-shrink: 0;
     padding: 0;
     line-height: 1;
 }
@@ -145,12 +157,18 @@
     font-size: 24px;
     font-weight: 500;
     color: var(--black);
+    /* padding: 12px */
+}
+
+.longText {
+    font-size: 19px;
 }
 
 .understandCount {
     font-weight: 300;
     color: var(--black);
     font-size: 18px;
+    white-space: nowrap;
 }
 
 /* ── O/X 버튼 ── */
@@ -207,18 +225,35 @@
 }
 
 .questionCard {
-    padding: 14px 16px;
+    padding: 16px 18px;
     cursor: pointer;
     transition: box-shadow 0.2s;
-    border-radius: 30px;
+    border-radius: 20px;
     background: var(--white);
-    box-shadow: 1px 2px 3px 0 rgba(0, 0, 0, 0.25);
+    box-shadow:
+        0 1px 4px rgba(0,0,0,0.06),
+        0 0 0 1px rgba(0,0,0,0.03);
     width: 95%;
     box-sizing: border-box;
     min-height: 40px;
 }
 
+/* 해결된 질문: 미해결 질문과 한눈에 구분되도록 배경을 연한 회색으로 + 카드 전체를 흐리게 처리 (초록 테두리는 미해결 질문 전용이므로 제외) */
+.questionCardResolved {
+    background: var(--gray50);
+    opacity: 0.6;
+    border-color: transparent;
+    box-shadow:
+        0 1px 4px rgba(0,0,0,0.06),
+        0 0 0 1px rgba(0,0,0,0.03);
+}
+
 .questionCard:hover {
+    transform: translateY(-1px);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.questionCardResolved:hover {
     box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -620,7 +655,13 @@
     }
 
     .understandName {
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    .longText {
+        font-size: 17px;
+        margin: 15px;
+
     }
 
     .understandCount {
@@ -634,6 +675,40 @@
     .oxCount {
         font-size: 18px;
         margin-left: 10px;
+    }
+}
+
+/* ════════════════════════════════════════
+   반응형 — (600px 이하)
+════════════════════════════════════════ */
+@media (max-width: 600px) {
+    .understandBar {
+        padding: 10px 12px;
+        gap: 4px;
+    }
+
+    .understandName {
+        font-size: 18px;
+        margin: 6px
+    }
+
+    .longText {
+        font-size: 15px;
+        margin: 8px
+    }
+
+    .understandCount {
+        font-size: 15px;
+    }
+
+    .oxBtn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .arrowBtn svg {
+        width: 24px;
+        height: 24px;
     }
 }
 
@@ -661,14 +736,18 @@
 
     /* ── 이해도 바 ── */
     .understandBar {
-        height: auto;
         min-height: 48px;
         padding: 8px 10px;
-        flex-wrap: wrap;
     }
 
     .understandName {
-        font-size: 17px;
+        font-size: 18px;
+        margin: 6px
+    }
+
+    .longText {
+        font-size: 15px;
+        margin: 8px
     }
 
     .understandCount {
@@ -676,8 +755,8 @@
     }
 
     .oxBtn {
-        width: 30px;
-        height: 30px;
+        width: 29px;
+        height: 29px;
         font-size: 12px;
         margin: 0 2px;
     }

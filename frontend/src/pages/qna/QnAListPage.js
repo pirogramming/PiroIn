@@ -712,269 +712,273 @@ function QnAListPage() {
     }, []);
 
     return (
-        <div className={styles.page}>
-            <h1 className={styles.title}>{sessionTitle}</h1>
+        <div className={styles.pageWrapper}>
+            <div className={styles.page}>
+                <h1 className={styles.title}>{sessionTitle}</h1>
 
-            {/* ── 필터 / 정렬 행 ── */}
-            <div className={styles.filterRow}>
-                {isStaff ? (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterUnsolved}
-                            onChange={e => setFilterUnsolved(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        미해결 질문
-                    </label>
-                ) : (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterCurious}
-                            onChange={e => setFilterCurious(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        저도 궁금해요
-                    </label>
-                )}
-                <div className={styles.sortWrapper}>
-                    <button className={styles.sortBtn} onClick={() => setShowSortMenu(prev => !prev)}>
-                        {sortOrder} <SortBtn />
-                    </button>
-                    {showSortMenu && (
-                        <ul className={styles.sortMenu}>
-                            {['기본', '최신순', '저도궁금해요순'].map(option => (
-                                <li key={option} className={styles.sortOption}
-                                    onClick={() => { setSortOrder(option); setShowSortMenu(false); }}>
-                                    {option}
-                                </li>
-                            ))}
-                        </ul>
+                {/* ── 필터 / 정렬 행 ── */}
+                <div className={styles.filterRow}>
+                    {isStaff ? (
+                        <label className={styles.curiousLabel}>
+                            <input type="checkbox" checked={filterUnsolved}
+                                onChange={e => setFilterUnsolved(e.target.checked)}
+                                className={styles.curiousCheckbox} />
+                            미해결 질문
+                        </label>
+                    ) : (
+                        <label className={styles.curiousLabel}>
+                            <input type="checkbox" checked={filterCurious}
+                                onChange={e => setFilterCurious(e.target.checked)}
+                                className={styles.curiousCheckbox} />
+                            저도 궁금해요
+                        </label>
                     )}
-                </div>
-            </div>
-            <hr className={styles.divider} />
-
-            {/* ── 이해도 바 (이해도 체크가 없으면 숨김) ── */}
-            {understanding?.current?.checkId != null && (
-                <div className={styles.understandBar}>
-                    <button className={styles.arrowBtn} onClick={goPrevUnderstand}
-                        disabled={!understanding?.hasOlder}>
-                        <FiChevronLeft size={30} />
-                    </button>
-                    <span className={styles.understandName}>
-                        {understanding.current.content}
-                        <span className={styles.understandCount}>
-                            ({understanding.current.respondedCount ?? 0}/
-                            {understanding.current.attendanceCount ?? 0})
-                        </span>
-                    </span>
-                    <button
-                        className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
-                        onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                        disabled={isStaff || isPast}
-                    >
-                        <OBtn />
-                        {isStaff && <span className={styles.oxCount}>{understanding.current.understoodCount ?? 0}</span>}
-                    </button>
-                    <button
-                        className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
-                        onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                        disabled={isStaff || isPast}
-                    >
-                        <XBtn />
-                        {isStaff && <span className={styles.oxCount}>{understanding.current.notUnderstoodCount ?? 0}</span>}
-                    </button>
-                    <button className={styles.arrowBtn} onClick={goNextUnderstand}
-                        disabled={!understanding?.hasNewer}>
-                        <FiChevronRight size={30} />
-                    </button>
-                </div>
-            )}
-
-            {/* ── 질문 목록 ── */}
-            <div className={styles.questionList}>
-                {displayedQuestions.map(question => (
-                    <div key={question.questionId} className={styles.questionCard}
-                        onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
-
-                        {/* 질문 헤더 */}
-                        <div className={styles.questionHeader}>
-                            <span
-                                className={styles.qIcon}
-                                style={{ color: question.isResolved ? 'var(--gray600)' : '' }}
-                            >Q.</span>
-                            <span className={styles.questionText}>{question.content}</span>
-                            <div className={styles.questionActions}>
-                                <button
-                                    className={`${styles.likeBtn} ${question.iLiked ? styles.liked : ''}`}
-                                    onClick={e => toggleLike(e, question.questionId)}
-                                >
-                                    <MeCuriousToo />{question.likeCount}
-                                </button>
-                                {!isPast && (
-                                    <button className={styles.commentBtn}
-                                        onClick={e => toggleCommentInput(e, question.questionId)}>
-                                        <CommentImoji />&nbsp;댓글달기
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 질문 첨부 이미지 (여러 장) */}
-                        {question.imageUrls?.length > 0 && (
-                            <div className={styles.questionImages} onClick={e => e.stopPropagation()}>
-                                {question.imageUrls.map((url, idx) => (
-                                    <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`}
-                                        className={styles.questionImage} />
+                    <div className={styles.sortWrapper}>
+                        <button className={styles.sortBtn} onClick={() => setShowSortMenu(prev => !prev)}>
+                            {sortOrder} <SortBtn />
+                        </button>
+                        {showSortMenu && (
+                            <ul className={styles.sortMenu}>
+                                {['기본', '최신순', '저도궁금해요순'].map(option => (
+                                    <li key={option} className={styles.sortOption}
+                                        onClick={() => { setSortOrder(option); setShowSortMenu(false); }}>
+                                        {option}
+                                    </li>
                                 ))}
-                            </div>
-                        )}
-
-                        {/* 댓글 미리보기 */}
-                        {question.previewComments?.length > 0 && (
-                            <div className={styles.commentPreview}>
-                                {question.previewComments.slice(0, MAX_VISIBLE_COMMENTS).map(comment => (
-                                    <div key={comment.commentId} className={styles.commentWrapper}>
-                                        <span className={styles.commentAuthorName}>
-                                            {comment.displayName}
-                                            {comment.displayName?.startsWith('운영진') && (
-                                                <span className={styles.staffBadge}><StaffCheck /></span>
-                                            )}
-                                        </span>
-                                        <div className={styles.commentItem}>
-                                            <div className={styles.commentContent}>
-                                                <CommentCommentArraw /> {comment.content}
-                                            </div>
-                                            {comment.hasImage && (
-                                                <div
-                                                    className={styles.commentImagePreview}
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        navigate(`/sessions/${sessionId}/questions/${question.questionId}`);
-                                                    }}
-                                                >
-                                                    <ImgPreview /><span>사진보기</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                                {question.commentCount > MAX_VISIBLE_COMMENTS && (
-                                    <span className={styles.commentMore}>
-                                        외 {question.commentCount - MAX_VISIBLE_COMMENTS}개 댓글
-                                    </span>
-                                )}
-                            </div>
-                        )}
-
-                        {/* 댓글 입력창 */}
-                        {commentOpenId === question.questionId && (
-                            <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
-                                {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
-                                    <div className={styles.imagePreviewList}>
-                                        {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
-                                            <div key={idx} className={styles.imagePreviewWrapper}>
-                                                <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
-                                                <button
-                                                    className={styles.imageRemoveBtn}
-                                                    onClick={e => {
-                                                        e.stopPropagation();
-                                                        handleCommentRemoveImage(question.questionId, idx);
-                                                    }}
-                                                >✕</button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <div className={styles.commentInputInner}>
-                                    <button
-                                        className={styles.commentPlusBtn}
-                                        onClick={e => {
-                                            e.stopPropagation();
-                                            if (!commentFileRefs.current[question.questionId]) {
-                                                commentFileRefs.current[question.questionId] = document.createElement('input');
-                                                commentFileRefs.current[question.questionId].type = 'file';
-                                                commentFileRefs.current[question.questionId].accept = 'image/*';
-                                                commentFileRefs.current[question.questionId].multiple = true;
-                                                commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
-                                            }
-                                            commentFileRefs.current[question.questionId].click();
-                                        }}
-                                    >+</button>
-                                    <input
-                                        className={styles.commentInput}
-                                        placeholder="댓글을 입력해주세요..."
-                                        value={commentInputs[question.questionId] || ''}
-                                        onChange={e => handleCommentChange(question.questionId, e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
-                                        onPaste={e => handleCommentPaste(e, question.questionId)}
-                                        autoFocus
-                                    />
-                                    <button className={styles.submitBtn}
-                                        onClick={e => handleCommentSubmit(e, question.questionId)}>
-                                        <SumitBtn />
-                                    </button>
-                                </div>
-                            </div>
+                            </ul>
                         )}
                     </div>
-                ))}
-            </div>
+                </div>
+                <hr className={styles.divider} />
 
-            <div className={styles.bottomCover} />
-
-            {/* ── 하단 입력바 (지난 세션이면 숨김) ── */}
-            {!isPast && (
-                <div className={styles.newQuestionBar}>
-                    {submitError && <p className={styles.errorMsg}>{submitError}</p>}
-                    {imagePreviews.length > 0 && (
-                        <div className={styles.imagePreviewList}>
-                            {imagePreviews.map((preview, idx) => (
-                                <div key={idx} className={styles.imagePreviewWrapper}>
-                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
-                                    <button
-                                        className={styles.imageRemoveBtn}
-                                        onClick={() => handleRemoveImage(idx)}
-                                    >✕</button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    <div className={styles.newQuestionInputRow}>
-                        {/* 운영진일 때 + 버튼 숨김 */}
-                        {!isStaff && (
-                            <>
-                                <button
-                                    className={styles.newQuestionPlus}
-                                    onClick={() => fileInputRef.current?.click()}
-                                >+</button>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    ref={fileInputRef}
-                                    style={{ display: 'none' }}
-                                    onChange={handleImageSelect}
-                                />
-                            </>
-                        )}
-                        <input
-                            className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
-                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
-                            value={newQuestion}
-                            onChange={e => setNewQuestion(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
-                            }}
-                            onPaste={handleNewQuestionPaste}
-                            disabled={isSubmitting}
-                        />
+                {/* ── 이해도 바 (이해도 체크가 없으면 숨김) ── */}
+                {understanding?.current?.checkId != null && (
+                    <div className={styles.understandBar}>
+                        <button className={styles.arrowBtn} onClick={goPrevUnderstand}
+                            disabled={!understanding?.hasOlder}>
+                            <FiChevronLeft size={30} />
+                        </button>
+                        <span className={styles.understandName}>
+                            {understanding.current.content}
+                            <span className={styles.understandCount}>
+                                ({understanding.current.respondedCount ?? 0}/
+                                {understanding.current.attendanceCount ?? 0})
+                            </span>
+                        </span>
                         <button
-                            className={styles.newQuestionSubmit}
-                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
-                            disabled={isSubmitting}
+                            className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
+                            onClick={() => handleUnderstandChoice('UNDERSTOOD')}
+                            disabled={isStaff || isPast}
                         >
-                            {isSubmitting ? '⏳' : <SumitBtn />}
+                            <OBtn />
+                            {isStaff && <span className={styles.oxCount}>{understanding.current.understoodCount ?? 0}</span>}
+                        </button>
+                        <button
+                            className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
+                            onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
+                            disabled={isStaff || isPast}
+                        >
+                            <XBtn />
+                            {isStaff && <span className={styles.oxCount}>{understanding.current.notUnderstoodCount ?? 0}</span>}
+                        </button>
+                        <button className={styles.arrowBtn} onClick={goNextUnderstand}
+                            disabled={!understanding?.hasNewer}>
+                            <FiChevronRight size={30} />
                         </button>
                     </div>
+                )}
+
+                {/* ── 질문 목록 ── */}
+                <div className={styles.questionList}>
+                    {displayedQuestions.map(question => (
+                        <div
+                            key={question.questionId}
+                            className={`${styles.questionCard} ${question.isResolved ? styles.resolvedCard : ''}`}
+                            onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
+
+                            {/* 질문 헤더 */}
+                            <div className={styles.questionHeader}>
+                                <span
+                                    className={styles.qIcon}
+                                    style={{ color: question.isResolved ? '#7c7c7c' : '' }}
+                                >Q.</span>
+                                <span className={styles.questionText}>{question.content}</span>
+                                <div className={styles.questionActions}>
+                                    <button
+                                        className={`${styles.likeBtn} ${question.iLiked ? styles.liked : ''}`}
+                                        onClick={e => toggleLike(e, question.questionId)}
+                                    >
+                                        <MeCuriousToo />{question.likeCount}
+                                    </button>
+                                    {!isPast && (
+                                        <button className={styles.commentBtn}
+                                            onClick={e => toggleCommentInput(e, question.questionId)}>
+                                            <CommentImoji />&nbsp;댓글달기
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 질문 첨부 이미지 (여러 장) */}
+                            {question.imageUrls?.length > 0 && (
+                                <div className={styles.questionImages} onClick={e => e.stopPropagation()}>
+                                    {question.imageUrls.map((url, idx) => (
+                                        <img key={idx} src={url} alt={`첨부 이미지 ${idx + 1}`}
+                                            className={styles.questionImage} />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* 댓글 미리보기 */}
+                            {question.previewComments?.length > 0 && (
+                                <div className={styles.commentPreview}>
+                                    {question.previewComments.slice(0, MAX_VISIBLE_COMMENTS).map(comment => (
+                                        <div key={comment.commentId} className={styles.commentWrapper}>
+                                            <span className={styles.commentAuthorName}>
+                                                {comment.displayName}
+                                                {comment.displayName?.startsWith('운영진') && (
+                                                    <span className={styles.staffBadge}><StaffCheck /></span>
+                                                )}
+                                            </span>
+                                            <div className={styles.commentItem}>
+                                                <div className={styles.commentContent}>
+                                                    <CommentCommentArraw /> {comment.content}
+                                                </div>
+                                                {comment.hasImage && (
+                                                    <div
+                                                        className={styles.commentImagePreview}
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            navigate(`/sessions/${sessionId}/questions/${question.questionId}`);
+                                                        }}
+                                                    >
+                                                        <ImgPreview /><span>사진보기</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {question.commentCount > MAX_VISIBLE_COMMENTS && (
+                                        <span className={styles.commentMore}>
+                                            외 {question.commentCount - MAX_VISIBLE_COMMENTS}개 댓글
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* 댓글 입력창 */}
+                            {commentOpenId === question.questionId && (
+                                <div className={styles.commentInputRow} onClick={e => e.stopPropagation()}>
+                                    {(commentImagePreviews[question.questionId] ?? []).length > 0 && (
+                                        <div className={styles.imagePreviewList}>
+                                            {(commentImagePreviews[question.questionId] ?? []).map((preview, idx) => (
+                                                <div key={idx} className={styles.imagePreviewWrapper}>
+                                                    <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                                    <button
+                                                        className={styles.imageRemoveBtn}
+                                                        onClick={e => {
+                                                            e.stopPropagation();
+                                                            handleCommentRemoveImage(question.questionId, idx);
+                                                        }}
+                                                    >✕</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    <div className={styles.commentInputInner}>
+                                        <button
+                                            className={styles.commentPlusBtn}
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                if (!commentFileRefs.current[question.questionId]) {
+                                                    commentFileRefs.current[question.questionId] = document.createElement('input');
+                                                    commentFileRefs.current[question.questionId].type = 'file';
+                                                    commentFileRefs.current[question.questionId].accept = 'image/*';
+                                                    commentFileRefs.current[question.questionId].multiple = true;
+                                                    commentFileRefs.current[question.questionId].onchange = (ev) => handleCommentImageSelect(ev, question.questionId);
+                                                }
+                                                commentFileRefs.current[question.questionId].click();
+                                            }}
+                                        >+</button>
+                                        <input
+                                            className={styles.commentInput}
+                                            placeholder="댓글을 입력해주세요..."
+                                            value={commentInputs[question.questionId] || ''}
+                                            onChange={e => handleCommentChange(question.questionId, e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') handleCommentSubmit(e, question.questionId); }}
+                                            onPaste={e => handleCommentPaste(e, question.questionId)}
+                                            autoFocus
+                                        />
+                                        <button className={styles.submitBtn}
+                                            onClick={e => handleCommentSubmit(e, question.questionId)}>
+                                            <SumitBtn />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
-            )}
+
+                <div className={styles.bottomCover} />
+
+                {/* ── 하단 입력바 (지난 세션이면 숨김) ── */}
+                {!isPast && (
+                    <div className={styles.newQuestionBar}>
+                        {submitError && <p className={styles.errorMsg}>{submitError}</p>}
+                        {imagePreviews.length > 0 && (
+                            <div className={styles.imagePreviewList}>
+                                {imagePreviews.map((preview, idx) => (
+                                    <div key={idx} className={styles.imagePreviewWrapper}>
+                                        <img src={preview} alt={`미리보기 ${idx + 1}`} className={styles.imagePreview} />
+                                        <button
+                                            className={styles.imageRemoveBtn}
+                                            onClick={() => handleRemoveImage(idx)}
+                                        >✕</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className={styles.newQuestionInputRow}>
+                            {/* 운영진일 때 + 버튼 숨김 */}
+                            {!isStaff && (
+                                <>
+                                    <button
+                                        className={styles.newQuestionPlus}
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >+</button>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        ref={fileInputRef}
+                                        style={{ display: 'none' }}
+                                        onChange={handleImageSelect}
+                                    />
+                                </>
+                            )}
+                            <input
+                                className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
+                                placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
+                                value={newQuestion}
+                                onChange={e => setNewQuestion(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                                }}
+                                onPaste={handleNewQuestionPaste}
+                                disabled={isSubmitting}
+                            />
+                            <button
+                                className={styles.newQuestionSubmit}
+                                onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? '⏳' : <SumitBtn />}
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

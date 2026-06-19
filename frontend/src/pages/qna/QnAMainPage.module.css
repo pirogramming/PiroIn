@@ -39,12 +39,12 @@
     width: 356px;
     height: 148px;
 
-    border: 1px solid rgba(0,0,0,0.04);
+    border: 1px solid rgba(0,0,0,0.06);
 
     box-shadow:
         0 1px 0 rgba(255,255,255,0.8) inset,
-        0 6px 14px rgba(0,0,0,0.08),
-        0 2px 4px rgba(0,0,0,0.04);
+        0 3px 8px rgba(0,0,0,0.10),
+        0 1px 3px rgba(0,0,0,0.06);
 
 
     cursor: pointer;
@@ -56,7 +56,10 @@
 }
 
 .card:hover {
-    box-shadow: 4px 4px 10px 0 rgba(0, 0, 0, 0.2);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.8) inset,
+        0 6px 12px rgba(0,0,0,0.14),
+        0 2px 5px rgba(0,0,0,0.08);
 }
 
 .card:hover .cardTitle {
@@ -96,8 +99,16 @@
 
 /* ── 지난 세션 목록 ── */
 .icon {
+    display: inline-block;
+    position: relative;
+    top: -2px;  
+
     margin-right: 20px;
     transition: color 0.2s;
+}
+
+.enterIcon {
+    font-size: 20px;
 }
 
 .list {
@@ -235,6 +246,7 @@
 
     .card {
         width: min(356px, 80%);
+        min-height: 140px;
         padding: 14px 12px;
     }
 
@@ -254,6 +266,10 @@
     }
 
     .listItem {
+        width: 88%;
+        margin: 0 auto;
+        min-height: 40px;
+
         padding: 12px;
         gap: 8px;
     }
@@ -263,12 +279,22 @@
     }
 
     .listWeek {
-        font-size: 13px;
+        font-size: 12px;
     }
 
-    .icon {
-        margin-right: 10px;
+    .cardTitle .icon {
+        margin-right: 6px;
+    }
+
+    .listItem .icon {
+        margin-left: 8px;
+        margin-right: 12px;
+        margin-top: 2px;
         flex-shrink: 0;
+    }
+
+    .enterIcon {
+        font-size: 18px;
     }
 
     .enterBtn {

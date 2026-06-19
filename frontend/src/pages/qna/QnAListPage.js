@@ -9,6 +9,7 @@ import {
     OBtn, XBtn, CommentCommentArraw, SumitBtn, StaffCheck, ImgPreview,
     DAY_PART_KO, DAY_OF_WEEK_KO, uploadImages,
 } from '../../utils/qnaUtils';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const MAX_VISIBLE_COMMENTS = 3;
 const POPULAR_LIKE_THRESHOLD = 5;
@@ -758,7 +759,13 @@ function QnAListPage() {
                             disabled={!understanding?.hasOlder}>
                             <FiChevronLeft size={30} />
                         </button>
-                        <span className={styles.understandName}>
+                        <span
+                            className={`${styles.understandName} ${
+                                understanding.current.content.length > 35
+                                    ? styles.longText
+                                    : ''
+                            }`}
+                        >
                             {understanding.current.content}
                             <span className={styles.understandCount}>
                                 ({understanding.current.respondedCount ?? 0}/

@@ -93,7 +93,7 @@ function QNAMainPage() {
                                         </span>
                                     </span>
                                     <button className={styles.enterBtn}>
-                                        <FiLogIn size={20} />
+                                        <FiLogIn className={styles.enterIcon} />
                                     </button>
                                 </div>
                             ))}

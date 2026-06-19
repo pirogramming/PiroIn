@@ -529,27 +529,9 @@ function QnAListPage() {
             if (!res.ok) throw new Error();
             const json = await res.json();
             if (json.isSuccess) {
-                if (isStaff) {
-                    await authFetch(`/api/questions/${questionId}/status`, { method: 'PATCH' });
-                }
-                const newComment = {
-                    commentId: json.result.commentId,
-                    displayName: json.result.displayName,
-                    content: json.result.content,
-                };
-                const update = (list) => list.map(q =>
-                    q.questionId === questionId
-                        ? {
-                            ...q,
-                            isResolved: isStaff ? true : q.isResolved,
-                            previewComments: [...(q.previewComments ?? []), newComment],
-                            commentCount: (q.commentCount ?? 0) + 1
-                        }
-                        : q
-                );
-                setPopularQuestions(update);
-                setUnresolvedQuestions(update);
-                setResolvedQuestions(update);
+                // NOTE: 댓글 작성으로 인한 '해결됨' 자동 전환 없음 (해결 처리는 운영진 수동 조작만 허용).
+                // previewComments / commentCount UI 갱신도 SSE comment-created 이벤트에서 단일 처리.
+                // 여기서 직접 상태를 업데이트하면 SSE 이벤트와 중복되어 댓글이 2개 표시되므로 제거.
                 setCommentInputs(prev => ({ ...prev, [questionId]: '' }));
                 setCommentImages(prev => ({ ...prev, [questionId]: [] }));
                 setCommentImagePreviews(prev => ({ ...prev, [questionId]: [] }));
@@ -772,28 +754,59 @@ function QnAListPage() {
                                 {understanding.current.attendanceCount ?? 0})
                             </span>
                         </span>
-                        <button
-                            className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
-                            onClick={() => handleUnderstandChoice('UNDERSTOOD')}
-                            disabled={isStaff || isPast}
-                        >
-                            <OBtn />
-                            {isStaff && <span className={styles.oxCount}>{understanding.current.understoodCount ?? 0}</span>}
-                        </button>
-                        <button
-                            className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
-                            onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
-                            disabled={isStaff || isPast}
-                        >
-                            <XBtn />
-                            {isStaff && <span className={styles.oxCount}>{understanding.current.notUnderstoodCount ?? 0}</span>}
-                        </button>
-                        <button className={styles.arrowBtn} onClick={goNextUnderstand}
-                            disabled={!understanding?.hasNewer}>
-                            <FiChevronRight size={30} />
-                        </button>
-                    </div>
-                )}
+                    </span>
+                    <button
+                        className={`${styles.oxBtn} ${styles.oxO} ${currentChoice === 'UNDERSTOOD' ? styles.oxActive : ''}`}
+                        onClick={() => handleUnderstandChoice('UNDERSTOOD')}
+                        disabled={isStaff || isPast}
+                    >
+                        <OBtn />
+                        {isStaff && <span className={styles.oxCount}>{understanding.current.understoodCount ?? 0}</span>}
+                    </button>
+                    <button
+                        className={`${styles.oxBtn} ${styles.oxX} ${currentChoice === 'NOT_UNDERSTOOD' ? styles.oxActive : ''}`}
+                        onClick={() => handleUnderstandChoice('NOT_UNDERSTOOD')}
+                        disabled={isStaff || isPast}
+                    >
+                        <XBtn />
+                        {isStaff && <span className={styles.oxCount}>{understanding.current.notUnderstoodCount ?? 0}</span>}
+                    </button>
+                    <button className={styles.arrowBtn} onClick={goNextUnderstand}
+                        disabled={!understanding?.hasNewer}>
+                        <FiChevronRight size={30} />
+                    </button>
+                </div>
+            )}
+
+            {/* ── 질문 목록 ── */}
+            <div className={styles.questionList}>
+                {displayedQuestions.map(question => (
+                    <div key={question.questionId}
+                        className={`${styles.questionCard} ${question.isResolved ? styles.questionCardResolved : ''}`}
+                        onClick={() => navigate(`/sessions/${sessionId}/questions/${question.questionId}`)}>
+
+                        {/* 질문 헤더 */}
+                        <div className={styles.questionHeader}>
+                            <span
+                                className={styles.qIcon}
+                                style={{ color: question.isResolved ? 'var(--gray600)' : '' }}
+                            >Q.</span>
+                            <span className={styles.questionText}>{question.content}</span>
+                            <div className={styles.questionActions}>
+                                <button
+                                    className={`${styles.likeBtn} ${question.iLiked ? styles.liked : ''}`}
+                                    onClick={e => toggleLike(e, question.questionId)}
+                                >
+                                    <MeCuriousToo />{question.likeCount}
+                                </button>
+                                {!isPast && (
+                                    <button className={styles.commentBtn}
+                                        onClick={e => toggleCommentInput(e, question.questionId)}>
+                                        <CommentImoji />&nbsp;댓글달기
+                                    </button>
+                                )}
+                            </div>
+                        </div>
 
                 {/* ── 질문 목록 ── */}
                 <div className={styles.questionList}>
@@ -955,12 +968,13 @@ function QnAListPage() {
                                         onClick={() => fileInputRef.current?.click()}
                                     >+</button>
                                     <input
-                                        type="file"
-                                        accept="image/*"
-                                        multiple
-                                        ref={fileInputRef}
-                                        style={{ display: 'none' }}
-                                        onChange={handleImageSelect}
+                                        className={styles.commentInput}
+                                        placeholder="댓글을 입력해주세요..."
+                                        value={commentInputs[question.questionId] || ''}
+                                        onChange={e => handleCommentChange(question.questionId, e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCommentSubmit(e, question.questionId); }}
+                                        onPaste={e => handleCommentPaste(e, question.questionId)}
+                                        autoFocus
                                     />
                                 </>
                             )}
@@ -983,6 +997,43 @@ function QnAListPage() {
                                 {isSubmitting ? '⏳' : <SumitBtn />}
                             </button>
                         </div>
+                    )}
+                    <div className={styles.newQuestionInputRow}>
+                        {/* 운영진일 때 + 버튼 숨김 */}
+                        {!isStaff && (
+                            <>
+                                <button
+                                    className={styles.newQuestionPlus}
+                                    onClick={() => fileInputRef.current?.click()}
+                                >+</button>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    ref={fileInputRef}
+                                    style={{ display: 'none' }}
+                                    onChange={handleImageSelect}
+                                />
+                            </>
+                        )}
+                        <input
+                            className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
+                            placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
+                            value={newQuestion}
+                            onChange={e => setNewQuestion(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter' && !e.nativeEvent.isComposing) isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                            }}
+                            onPaste={handleNewQuestionPaste}
+                            disabled={isSubmitting}
+                        />
+                        <button
+                            className={styles.newQuestionSubmit}
+                            onClick={isStaff ? handleNewUnderstandCheck : handleNewQuestion}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? '⏳' : <SumitBtn />}
+                        </button>
                     </div>
                 )}
             </div>

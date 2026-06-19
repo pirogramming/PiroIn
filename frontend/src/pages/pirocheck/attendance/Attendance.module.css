@@ -118,6 +118,7 @@
     font-weight: 500;
     cursor: pointer;
     transition: opacity 0.2s;
+    white-space: nowrap;
 }
 
 .submitBtn:hover { background: var(--main); transition: all ease-in-out 0.2s; }
@@ -206,6 +207,10 @@
     }
 
     /* MEMBER */
+    .inputRow {
+        width: calc(100vw - 56px);
+    }
+
     .cloverSvg {
         width: 63px;
         height: 63px;

@@ -75,7 +75,7 @@
 
 | [<img src="https://github.com/user-attachments/assets/ce54b066-6fa6-4e86-a76a-f2a1abe11fe3" width="180" height="240"/><br/>**양현서**](https://github.com/lilyyang0077)<br/>PM \| BE \| INFRA | [<img src="https://github.com/user-attachments/assets/6d120c58-f5f4-4a81-8162-b7e3b73ac1b2" width="180" height="240"/><br/>**장민지**](https://github.com/plumbestie)<br/>PM \| FE \| DESIGN | [<img src="https://github.com/user-attachments/assets/f8f2b166-ec8c-4e25-a4a2-a15287786fab" width="180" height="240"/><br/>**김서윤**](https://github.com/kdhye1119)<br/>FE \| DESIGN |
 |:---:|:---:|:---:|
-| [<img  src="https://github.com/user-attachments/assets/0cc22948-af79-4346-b13a-4b126e318fe3" width="180" height="240"/><br/>**김경원**](https://github.com/kkw610)<br/>BE | [<img src="https://github.com/user-attachments/assets/fe0eb4a3-c877-4edf-af2a-ebef7bde0f2f" width="180" height="240"/><br/>**안시현**](https://github.com/xihxxn)<br/> BE \| INFRA | [<img src="https://github.com/user-attachments/assets/1d954476-c07b-4f1a-a6f8-f1b0b6dba4d7" width="180" height="240"/><br/>**이수종**](https://github.com/issuejong)<br/>BE |
+| [<img  src="https://github.com/user-attachments/assets/0cc22948-af79-4346-b13a-4b126e318fe3" width="180" height="240"/><br/>**김경원**](https://github.com/kkw610)<br/>**BE**  | [<img src="https://github.com/user-attachments/assets/fe0eb4a3-c877-4edf-af2a-ebef7bde0f2f" width="180" height="240"/><br/>**안시현**](https://github.com/xihxxn)<br/> **BE \| INFRA** | [<img src="https://github.com/user-attachments/assets/1d954476-c07b-4f1a-a6f8-f1b0b6dba4d7" width="180" height="240"/><br/>**이수종**](https://github.com/issuejong)<br/>**BE** |
 
 ---
 

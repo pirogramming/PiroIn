@@ -14,8 +14,8 @@ const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT_MINOR', 'INSUFFICIENT
 const statusLabel = {
     PENDING: '채점 중',
     SUCCESS: '성공',
-    INSUFFICIENT_MINOR: '경미한 미달',
-    INSUFFICIENT_MAJOR: '심각한 미달',
+    INSUFFICIENT_MINOR: '미달 (-1)',
+    INSUFFICIENT_MAJOR: '미달 (-2)',
     FAILURE: '실패',
 };
 

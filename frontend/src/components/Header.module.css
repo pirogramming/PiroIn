@@ -161,6 +161,49 @@
     visibility: visible;
 }
 
+.drawerCloseBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: var(--header-color);
+    font-size: 1.8rem;
+    cursor: pointer;
+    opacity: 0.6;
+    line-height: 1;
+    padding: 4px 8px;
+    transition: opacity 0.2s ease;
+}
+
+.drawerCloseBtn:hover {
+    opacity: 1;
+}
+
+.drawerLogoutBtn {
+    position: absolute;    
+    top: 22px;             
+    right: 60px;           
+    background: transparent;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 8px;
+    color: var(--header-color);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 7px 35px;
+    transition: all ease-in-out 0.2s;
+    margin-right: 15%;
+}
+
+.drawerLogoutBtn:hover {
+    background: var(--logo-color);
+    color: var(--white);
+    transition: all 0.2 ease-in-out;
+    cursor: pointer;
+}
+
 .drawer a {
     color: var(--header-color);
     font-family: var(--font-main);
@@ -180,27 +223,6 @@
     color: var(--logo-color);
 }
 
-.drawerLogoutBtn {
-    margin-top: auto;
-    background: transparent;
-    border: 1px solid rgba(128, 128, 128, 0.3);
-    border-radius: 8px;
-    color: var(--dark);
-    font-family: var(--font-main);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    opacity: 1;
-    padding: 10px 0;
-    transition: opacity 0.2s ease;
-}
-
-.drawerLogoutBtn:hover {
-    background: var(--dark);
-    color: var(--white);
-    transition: all ease-in-out 0.2s;
-}
-
 /* ── 반응형: 1024px 이하에서 햄버거로 전환 ── */
 @media (max-width: 1024px) {
     .header {
@@ -217,23 +239,3 @@
     }
 }
 
-/* ── 드로어 닫기 버튼 ── */
-.drawerCloseBtn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: transparent;
-    border: none;
-    color: var(--header-color);
-    font-size: 1.8rem;
-    cursor: pointer;
-    opacity: 0.6;
-    line-height: 1;
-    padding: 4px 8px;
-    transition: opacity 0.2s ease;
-}
- 
-.drawerCloseBtn:hover {
-    opacity: 1;
-}
- 

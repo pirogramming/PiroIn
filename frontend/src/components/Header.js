@@ -32,6 +32,7 @@ function Header({ type }) {
             <header className={`${styles.header} ${themeClass}`}>
                 <NavLink to="/" className={styles.logo}>PIROIN</NavLink>
 
+                {/* 기본 화면 헤더 */}
                 <nav className={styles.nav}>
                     <NavLink to="/pirocheck"  className={({ isActive }) => isActive ? styles.active : ''}>PIROCHECK</NavLink>
                     <NavLink to="/sessions"   className={({ isActive }) => isActive ? styles.active : ''}>Q&A</NavLink>
@@ -61,19 +62,14 @@ function Header({ type }) {
                 aria-hidden="true"
             />
 
-            {/* 드로어: themeClass 추가로 CSS 변수 상속 */}
-            <nav
-                className={`${styles.drawer} ${themeClass} ${menuOpen ? styles.drawerOpen : ''}`}
-                aria-hidden={!menuOpen}
-            >
+            {/* 태블릿 / 모바일 화면 헤더 */}
+            <nav className={`${styles.drawer} ${themeClass} ${menuOpen ? styles.drawerOpen : ''}`} aria-hidden={!menuOpen}>
+                <button className={styles.drawerLogoutBtn} onClick={handleLogout}>로그아웃</button>
                 <button className={styles.drawerCloseBtn} onClick={closeMenu} aria-label="메뉴 닫기">✕</button>
+
                 <NavLink to="/pirocheck"  className={({ isActive }) => isActive ? styles.active : ''} onClick={closeMenu}>PIROCHECK</NavLink>
                 <NavLink to="/sessions"   className={({ isActive }) => isActive ? styles.active : ''} onClick={closeMenu}>Q&A</NavLink>
                 <NavLink to="/curriculum" className={({ isActive }) => isActive ? styles.active : ''} onClick={closeMenu}>커리큘럼</NavLink>
-
-                <button className={styles.drawerLogoutBtn} onClick={handleLogout}>
-                    로그아웃
-                </button>
             </nav>
         </>
     );

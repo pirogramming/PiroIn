@@ -736,11 +736,11 @@
 }
 
 /* ════════════════════════════════════════
-   반응형 — 태블릿 (768px 이하)
+   반응형 — 태블릿 (910px 이하)
 ════════════════════════════════════════ */
-@media (max-width: 768px) {
+@media (max-width: 910px) {
     .page {
-        margin-top: 40px;
+        margin: 40px 50px 0;
         padding: 36px 48px 100px;
         border-radius: 24px 24px 0 0;
     }
@@ -760,9 +760,10 @@
 ════════════════════════════════════════ */
 @media (max-width: 480px) {
     .page {
-        margin-top: 20px;
+        margin: 0px;
         padding: 24px 20px 100px;
-        border-radius: 16px 16px 0 0;
+        border-radius: 0;
+        box-shadow: none;
     }
 
     /* ── 목록으로 가기 ── */

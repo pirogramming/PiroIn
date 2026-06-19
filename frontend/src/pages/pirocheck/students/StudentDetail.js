@@ -10,8 +10,14 @@ import Toggle2 from '../../../assets/images/icon_togle2.svg';
 const IS_MOCK = false;
 
 const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
-const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT', 'FAILURE'];
-const statusLabel = { PENDING: '채점 중', SUCCESS: '성공', INSUFFICIENT: '미달', FAILURE: '실패' };
+const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT_MINOR', 'INSUFFICIENT_MAJOR', 'FAILURE'];
+const statusLabel = {
+    PENDING: '채점 중',
+    SUCCESS: '성공',
+    INSUFFICIENT_MINOR: '경미한 미달',
+    INSUFFICIENT_MAJOR: '심각한 미달',
+    FAILURE: '실패',
+};
 
 function WeekBlock({ weekData, onChange }) {
     const [isOpen, setIsOpen] = useState(false);

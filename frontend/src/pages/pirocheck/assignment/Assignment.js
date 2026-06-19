@@ -19,9 +19,23 @@ const IS_MOCK = false;
 
 // 제출 상태 아이콘 (부원용)
 function StatusIcon({ status }) {
-    if (status === 'SUBMITTED') return <img src={StatusO} className={styles.statusIcon} alt="제출" />;
-    if (status === 'LATE') return <img src={StatusT} className={styles.statusIcon} alt="지각제출" />;
-    return <img src={StatusX} className={styles.statusIcon} alt="미제출" />;
+    if (status === 'PENDING') {
+        return <span className={styles.pendingText}>채점 중</span>;
+    }
+
+    if (status === 'SUCCESS') {
+        return <img src={StatusO} className={styles.statusIcon} alt="성공" />;
+    }
+
+    if (status === 'INSUFFICIENT_MINOR' || status === 'INSUFFICIENT_MAJOR') {
+        return <img src={StatusT} className={styles.statusIcon} alt="불충분" />;
+    }
+
+    if (status === 'FAILURE') {
+        return <img src={StatusX} className={styles.statusIcon} alt="실패" />;
+    }
+
+    return <span className={styles.pendingText}>채점 중</span>;
 }
 
 // 세션별 과제 묶기
@@ -147,15 +161,20 @@ function Assignment() {
     const [modalItem, setModalItem] = useState(undefined); // undefined=닫힘, null=생성, object=수정
 
     const fetchAll = async () => {
-        const results = await Promise.all(
-            ['1', '2', '3', '4', '5'].map(w =>
-                authFetch(`/api/assignments/me/${w}`)
-                    .then(r => r.json())
-                    .catch(() => ({ week: w, assignments: [] }))
-            )
-        );
-        setWeeks(results);
-    };
+    const results = await Promise.all(
+        ['1', '2', '3', '4', '5'].map(w =>
+            authFetch(`/api/assignments/me/${w}`)
+                .then(r => r.json())
+                .then(json => {
+                    console.log('week', w, json);
+                    return json;
+                })
+                .catch(() => ({ week: w, assignments: [] }))
+        )
+    );
+
+    setWeeks(results);
+};
 
     // 수정 시 로컬 state만 업데이트 (순서 유지)
     const handleEditSave = (updatedItem) => {

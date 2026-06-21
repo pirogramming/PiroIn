@@ -84,4 +84,17 @@ public class CurriculumReqDTO {
         private String assignmentName;
     }
 
+    // 과제 MVP 명예의 전당 수정 요청
+    // 운영진이 한 번에 전체 필드를 저장
+    @Getter
+    @NoArgsConstructor
+    public static class UpdateMvpReq {
+        private String week1Mvp;
+        private String week2Mvp;
+        private String week3Mvp;
+        private String week4Mvp;
+        private String week5Mvp;
+        private String challengeMvp;
+    }
+
 }

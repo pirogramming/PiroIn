@@ -3,6 +3,7 @@ package com.example.Piroin.project.domain.curriculum.converter;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumReqDTO;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumResDTO;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.entity.WeeklyMvp;
 import com.example.Piroin.project.domain.curriculum.enums.SessionDayPart;
 import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import com.example.Piroin.project.domain.user.entity.User;
@@ -67,6 +68,17 @@ public class CurriculumConverter {
                 session.getSessionMaterialName(),
                 session.getRecordingUrl(),
                 session.getRecordingPassword()
+        );
+    }
+
+    public static CurriculumResDTO.MvpRes toMvpRes(WeeklyMvp mvp) {
+        return new CurriculumResDTO.MvpRes(
+                mvp.getWeek1Mvp(),
+                mvp.getWeek2Mvp(),
+                mvp.getWeek3Mvp(),
+                mvp.getWeek4Mvp(),
+                mvp.getWeek5Mvp(),
+                mvp.getChallengeMvp()
         );
     }
 

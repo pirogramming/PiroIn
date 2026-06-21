@@ -1,9 +1,5 @@
 /* ── 페이지 레이아웃 ── */
-.pageWrapper {
-    min-height: 100vh;
-    background: #f2f2f0;
-    padding-top: 1px;
-}
+
 
 .page {
     min-height: 100vh;
@@ -11,7 +7,7 @@
     margin: 0 auto;
     padding: 0 16px;
     box-sizing: border-box;
-    background: #f2f2f0;
+    background: var(--gray20);
 }
 
 /* ── 섹션 공통 ── */
@@ -99,11 +95,19 @@
 
 /* ── 지난 세션 목록 ── */
 .icon {
-    display: inline-block;
-    position: relative;
-    top: -2px;  
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    margin-right: 20px;
+    font-size: 22px;
+    width: 24px;
+    height: 24px;
+
+    margin-right: 14px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+
     transition: color 0.2s;
 }
 

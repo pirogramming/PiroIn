@@ -44,7 +44,7 @@ function QNAMainPage() {
     if (error) return <div className={styles.page}>오류: {error}</div>;
 
     return (
-        <div className={styles.pageWrapper}>
+        
             <div className={styles.page}>
 
                 {/* ── 진행 중인 세션 ── */}
@@ -109,7 +109,7 @@ function QNAMainPage() {
                 )}
 
             </div>
-        </div>
+        
     );
 }
 

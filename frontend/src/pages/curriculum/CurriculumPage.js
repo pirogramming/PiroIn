@@ -331,6 +331,8 @@ function CrownIcon() {
 function HonorOfFame({ isAdmin }) {
     const [mvp, setMvp] = useState(null);
     const [form, setForm] = useState(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const fetchMvp = async () => {
@@ -352,6 +354,16 @@ function HonorOfFame({ isAdmin }) {
     ];
     const filledEntries = entries.filter(e => mvp[e.key] && mvp[e.key].trim());
 
+    const handleEditStart = () => {
+        setForm(mvp);
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setForm(mvp);
+        setIsEditing(false);
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -360,6 +372,7 @@ function HonorOfFame({ isAdmin }) {
                 body: JSON.stringify(form),
             });
             await fetchMvp();
+            setIsEditing(false);
         } catch (e) {
         } finally {
             setSaving(false);
@@ -368,38 +381,60 @@ function HonorOfFame({ isAdmin }) {
 
     return (
         <div className={styles.honorSection}>
-            <div className={styles.honorTitleRow}>
-                <CrownIcon />
-                <span className={styles.honorTitle}>과제 MVP 명예의 전당</span>
-                <CrownIcon />
-            </div>
-
-            {!isAdmin && filledEntries.length > 0 && (
-                <div className={styles.honorList}>
-                    {filledEntries.map(e => (
-                        <div key={e.key} className={styles.honorItem}>
-                            {e.label}: <span className={styles.honorName}>{mvp[e.key]}</span>
-                        </div>
-                    ))}
+            <div className={styles.honorHeader} onClick={() => setIsOpen(p => !p)}>
+                <div className={styles.honorTitleRow}>
+                    <CrownIcon />
+                    <span className={styles.honorTitle}>과제 MVP 명예의 전당</span>
+                    <CrownIcon />
                 </div>
-            )}
+                <img src={Toggle1} className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />
+            </div>
+            <hr className={styles.divider} />
 
-            {isAdmin && (
-                <div className={styles.honorEditList}>
-                    {entries.map(e => (
-                        <div key={e.key} className={styles.honorEditRow}>
-                            <label className={styles.honorEditLabel}>{e.label}</label>
-                            <input
-                                className={styles.honorEditInput}
-                                value={form[e.key] || ''}
-                                placeholder="이름을 입력하세요"
-                                onChange={ev => setForm({ ...form, [e.key]: ev.target.value })}
-                            />
+            {isOpen && (
+                <div className={styles.honorBody}>
+                    {!isEditing && (
+                        <>
+                            {filledEntries.length > 0 ? (
+                                <div className={styles.honorList}>
+                                    {filledEntries.map(e => (
+                                        <div key={e.key} className={styles.honorItem}>
+                                            {e.label}: <span className={styles.honorName}>{mvp[e.key]}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={styles.honorEmpty}>아직 등록된 MVP가 없어요.</div>
+                            )}
+                            {isAdmin && (
+                                <button className={styles.honorEditBtn} onClick={handleEditStart}>수정</button>
+                            )}
+                        </>
+                    )}
+
+                    {isAdmin && isEditing && (
+                        <div className={styles.honorEditList}>
+                            {entries.map(e => (
+                                <div key={e.key} className={styles.honorEditRow}>
+                                    <label className={styles.honorEditLabel}>{e.label}</label>
+                                    <input
+                                        className={styles.honorEditInput}
+                                        value={form[e.key] || ''}
+                                        placeholder="이름을 입력하세요"
+                                        onChange={ev => setForm({ ...form, [e.key]: ev.target.value })}
+                                    />
+                                </div>
+                            ))}
+                            <div className={styles.honorEditBtns}>
+                                <button className={styles.honorSaveBtn} onClick={handleSave} disabled={saving}>
+                                    {saving ? '저장 중...' : '저장'}
+                                </button>
+                                <button className={styles.honorCancelBtn} onClick={handleCancel} disabled={saving}>
+                                    취소
+                                </button>
+                            </div>
                         </div>
-                    ))}
-                    <button className={styles.honorSaveBtn} onClick={handleSave} disabled={saving}>
-                        {saving ? '저장 중...' : '저장하기'}
-                    </button>
+                    )}
                 </div>
             )}
         </div>

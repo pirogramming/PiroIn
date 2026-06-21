@@ -43,4 +43,17 @@ public class CurriculumController {
         curriculumService.deleteDay(sessionDate);
         return ResponseEntity.ok(Map.of("message", "세션이 정상적으로 삭제되었습니다."));
     }
+
+    // 과제 MVP 명예의 전당 조회 (로그인한 사용자 전체)
+    @GetMapping("/mvp")
+    public ResponseEntity<CurriculumResDTO.MvpRes> getMvp() {
+        return ResponseEntity.ok(curriculumService.getMvp());
+    }
+
+    // 과제 MVP 명예의 전당 수정 (운영진 전용, SecurityConfig에서 권한 제한)
+    @PutMapping("/mvp")
+    public ResponseEntity<CurriculumResDTO.MvpRes> updateMvp(
+            @RequestBody CurriculumReqDTO.UpdateMvpReq req) {
+        return ResponseEntity.ok(curriculumService.updateMvp(req));
+    }
 }

@@ -56,6 +56,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/curriculums").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/curriculums/{sessionDate}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/curriculums/mvp").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/api/assignments/create").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/assignments/modify/{assignmentId}").hasRole("ADMIN")

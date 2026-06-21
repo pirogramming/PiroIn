@@ -82,6 +82,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    min-width: 0;
 }
 
 .honorHeader .toggleIcon {
@@ -101,6 +102,7 @@
     font-size: 1.3rem;
     font-weight: 700;
     color: var(--black);
+    min-width: 0;
 }
 
 .honorBody {
@@ -157,29 +159,27 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 14px;
     width: 100%;
     max-width: 360px;
 }
 
 .honorEditRow {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
 }
 
 .honorEditLabel {
     font-family: var(--font-main);
     font-size: 0.85rem;
     color: #666;
-    min-width: 92px;
-    text-align: left;
-    flex-shrink: 0;
 }
 
 .honorEditInput {
-    flex: 1;
-    padding: 7px 10px;
+    width: 100%;
+    padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-family: var(--font-main);

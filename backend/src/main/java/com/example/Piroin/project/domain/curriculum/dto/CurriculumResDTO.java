@@ -54,4 +54,16 @@ public class CurriculumResDTO {
             String title
     ) {
     }
+
+    // 과제 MVP 명예의 전당
+    // 값이 없는 주차는 null로 내려가고, 프론트에서 null인 항목은 숨김
+    public record MvpRes(
+            String week1Mvp,
+            String week2Mvp,
+            String week3Mvp,
+            String week4Mvp,
+            String week5Mvp,
+            String challengeMvp
+    ) {
+    }
 }

@@ -316,6 +316,131 @@ function SessionForm({ day, week, onClose, onSave }) {
     );
 }
 
+// ── 명예의 전당 (과제 MVP) ────────────────────────────
+const MVP_WEEKS = [1, 2, 3, 4, 5];
+
+function CrownIcon() {
+    return (
+        <svg className={styles.crownIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 18.5L1.5 7L7 11L12 4L17 11L22.5 7L21 18.5H3Z" fill="currentColor" />
+            <rect x="3" y="19.5" width="18" height="2" rx="1" fill="currentColor" />
+        </svg>
+    );
+}
+
+function HonorOfFame({ isAdmin }) {
+    const [mvp, setMvp] = useState(null);
+    const [form, setForm] = useState(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const fetchMvp = async () => {
+        try {
+            const res = await authFetch('/api/curriculums/mvp');
+            const data = await res.json();
+            setMvp(data);
+            setForm(data);
+        } catch (e) { }
+    };
+
+    useEffect(() => { fetchMvp(); }, []);
+
+    if (!mvp || !form) return null;
+
+    const entries = [
+        ...MVP_WEEKS.map(w => ({ key: `week${w}Mvp`, label: `${w}주차 MVP` })),
+        { key: 'challengeMvp', label: '챌린지 MVP' },
+    ];
+    const filledEntries = entries.filter(e => mvp[e.key] && mvp[e.key].trim());
+
+    const handleEditStart = () => {
+        setForm(mvp);
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
+        setForm(mvp);
+        setIsEditing(false);
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await authFetch('/api/curriculums/mvp', {
+                method: 'PUT',
+                body: JSON.stringify(form),
+            });
+            await fetchMvp();
+            setIsEditing(false);
+        } catch (e) {
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className={styles.honorSection}>
+            <div className={styles.honorHeader} onClick={() => setIsOpen(p => !p)}>
+                <div className={styles.honorTitleRow}>
+                    <CrownIcon />
+                    <span className={styles.honorTitle}>과제 MVP 명예의 전당</span>
+                    <CrownIcon />
+                </div>
+                <img src={Toggle1} className={`${styles.toggleIcon} ${isOpen ? styles.toggleOpen : ''}`} alt="toggle" />
+            </div>
+            <hr className={styles.divider} />
+
+            {isOpen && (
+                <div className={styles.honorBody}>
+                    {!isEditing && (
+                        <>
+                            {filledEntries.length > 0 ? (
+                                <div className={styles.honorList}>
+                                    {filledEntries.map(e => (
+                                        <div key={e.key} className={styles.honorItem}>
+                                            {e.label}: <span className={styles.honorName}>{mvp[e.key]}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={styles.honorEmpty}>아직 등록된 MVP가 없어요</div>
+                            )}
+                            {isAdmin && (
+                                <button className={styles.honorEditBtn} onClick={handleEditStart}>수정</button>
+                            )}
+                        </>
+                    )}
+
+                    {isAdmin && isEditing && (
+                        <div className={styles.honorEditList}>
+                            {entries.map(e => (
+                                <div key={e.key} className={styles.honorEditRow}>
+                                    <label className={styles.honorEditLabel}>{e.label}</label>
+                                    <input
+                                        className={styles.honorEditInput}
+                                        value={form[e.key] || ''}
+                                        placeholder="이름을 입력하세요"
+                                        onChange={ev => setForm({ ...form, [e.key]: ev.target.value })}
+                                    />
+                                </div>
+                            ))}
+                            <div className={styles.honorEditBtns}>
+                                <button className={styles.honorSaveBtn} onClick={handleSave} disabled={saving}>
+                                    {saving ? '저장 중...' : '저장'}
+                                </button>
+                                <button className={styles.honorCancelBtn} onClick={handleCancel} disabled={saving}>
+                                    취소
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 // ── 메인 컴포넌트 ─────────────────────────────────────
 function CurriculumPage() {
     const role = localStorage.getItem('role') || 'MEMBER';
@@ -365,6 +490,9 @@ function CurriculumPage() {
                     </button>
                 </div>
             )}
+
+            <HonorOfFame isAdmin={role === 'ADMIN'} />
+
             {Object.entries(grouped).map(([week, weekDays]) => (
                 <div key={week} className={styles.weekSection}>
                     <div className={styles.weekHeader}>

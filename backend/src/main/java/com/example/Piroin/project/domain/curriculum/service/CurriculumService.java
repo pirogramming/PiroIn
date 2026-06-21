@@ -4,9 +4,11 @@ import com.example.Piroin.project.domain.curriculum.converter.CurriculumConverte
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumReqDTO;
 import com.example.Piroin.project.domain.curriculum.dto.CurriculumResDTO;
 import com.example.Piroin.project.domain.curriculum.entity.StudySession;
+import com.example.Piroin.project.domain.curriculum.entity.WeeklyMvp;
 import com.example.Piroin.project.domain.curriculum.enums.SessionStatus;
 import com.example.Piroin.project.domain.curriculum.exception.CurriculumException;
 import com.example.Piroin.project.domain.curriculum.repository.CurriculumRepository;
+import com.example.Piroin.project.domain.curriculum.repository.WeeklyMvpRepository;
 import com.example.Piroin.project.domain.user.entity.User;
 import com.example.Piroin.project.domain.user.repository.UserRepository;
 import com.example.Piroin.project.global.util.SecurityUtil;
@@ -25,7 +27,11 @@ import java.util.stream.Collectors;
 public class CurriculumService {
 
     private final CurriculumRepository curriculumRepository;
+    private final WeeklyMvpRepository weeklyMvpRepository;
     private final UserRepository userRepository;
+
+    // 명예의 전당은 단일 row(고정 id)로만 관리
+    private static final Long MVP_ID = 1L;
 
     @Transactional(readOnly = true)
     public List<CurriculumResDTO.CreateDayRes> getAllDays() {
@@ -137,5 +143,23 @@ public class CurriculumService {
                 session.getDayPart().name(),
                 session.getTitle()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public CurriculumResDTO.MvpRes getMvp() {
+        WeeklyMvp mvp = weeklyMvpRepository.findById(MVP_ID)
+                .orElseGet(() -> WeeklyMvp.builder().id(MVP_ID).build());
+        return CurriculumConverter.toMvpRes(mvp);
+    }
+
+    @Transactional
+    public CurriculumResDTO.MvpRes updateMvp(CurriculumReqDTO.UpdateMvpReq req) {
+        WeeklyMvp mvp = weeklyMvpRepository.findById(MVP_ID)
+                .orElseGet(() -> weeklyMvpRepository.save(WeeklyMvp.builder().id(MVP_ID).build()));
+
+        mvp.update(req.getWeek1Mvp(), req.getWeek2Mvp(), req.getWeek3Mvp(),
+                req.getWeek4Mvp(), req.getWeek5Mvp(), req.getChallengeMvp());
+
+        return CurriculumConverter.toMvpRes(mvp);
     }
 }

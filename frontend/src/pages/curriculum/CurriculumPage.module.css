@@ -137,7 +137,7 @@
 
 .honorEditBtn {
     margin-top: 14px;
-    padding: 6px 24px;
+    padding: 6px 20px;
     background: transparent;
     border: 1.5px solid var(--dark);
     border-radius: 10px;
@@ -145,10 +145,13 @@
     font-family: var(--font-main);
     font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
-.honorEditBtn:hover { background: var(--dark); color: var(--white); }
+.honorEditBtn:hover {
+    background: var(--dark);
+    color: var(--white);
+    transition: all ease-in-out 0.2s;
+}
 
 .honorEditList {
     display: flex;
@@ -196,32 +199,39 @@
 }
 
 .honorSaveBtn {
-    padding: 8px 30px;
+    padding: 6px 20px;
     background: transparent;
     border: 1.5px solid var(--dark);
     border-radius: 10px;
     color: var(--dark);
     font-family: var(--font-main);
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.2s;
 }
 
-.honorSaveBtn:hover { background: var(--dark); color: var(--white); }
+.honorSaveBtn:hover {
+    background: var(--dark);
+    color: var(--white);
+    transition: all ease-in-out 0.2s;
+}
 .honorSaveBtn:disabled { opacity: 0.6; cursor: default; }
 
 .honorCancelBtn {
-    padding: 8px 24px;
+    padding: 6px 20px;
     background: transparent;
-    border: none;
-    color: #aaa;
+    border: 1.5px solid var(--dark);
+    border-radius: 10px;
+    color: var(--dark);
     font-family: var(--font-main);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     cursor: pointer;
 }
 
-.honorCancelBtn:hover { color: #777; }
+.honorCancelBtn:hover {
+    background: var(--dark);
+    color: var(--white);
+    transition: all ease-in-out 0.2s;
+}
 .honorCancelBtn:disabled { opacity: 0.6; cursor: default; }
 
 /* 카드 행 */

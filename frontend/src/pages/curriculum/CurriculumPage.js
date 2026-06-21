@@ -404,7 +404,7 @@ function HonorOfFame({ isAdmin }) {
                                     ))}
                                 </div>
                             ) : (
-                                <div className={styles.honorEmpty}>아직 등록된 MVP가 없어요.</div>
+                                <div className={styles.honorEmpty}>아직 등록된 MVP가 없어요</div>
                             )}
                             {isAdmin && (
                                 <button className={styles.honorEditBtn} onClick={handleEditStart}>수정</button>

@@ -87,27 +87,28 @@
     align-items: center;
     background: var(--gray600);
     border-radius: 10px;
-    overflow: hidden;
     width: 480px;
     max-width: calc(100vw - 56px);
     margin-bottom: 16px;
-    padding: 3px 3px 3px 20px;
+    padding: 3px;  
     box-sizing: border-box;
 }
 
 .codeInput {
     flex: 1;
+    min-width: 0;
     background: transparent;
     border: none;
     outline: none;
     color: var(--white);
     font-family: var(--font-main);
     font-size: 1rem;
+    padding-left: 20px; 
 }
-
 .codeInput::placeholder { color: var(--gray200); }
 
 .submitBtn {
+    flex-shrink: 0;
     padding: 10px 20px;
     background: var(--dark);
     border: none;
@@ -211,6 +212,10 @@
         width: calc(100vw - 56px);
     }
 
+    .codeInput {
+        font-size: 85%;
+    }
+
     .cloverSvg {
         width: 63px;
         height: 63px;
@@ -226,5 +231,9 @@
         width: calc(100vw - 56px);
         padding: 24px 28px;
         box-sizing: border-box;
+    }
+
+    .submitBtn {
+        flex-shrink: 0;
     }
 }

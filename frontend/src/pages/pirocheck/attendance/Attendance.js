@@ -48,13 +48,13 @@ function AdminView() {
     const handleGenerate = async () => {
         const res = await authFetch('/api/admin/attendance/start', { method: 'POST' });
         const data = await res.json();
-        setCode(data.code);
-        if (data.isSuccess) {
-            setCode(data.result.code);
+
+        if (res.ok && data.code) {
+            setCode(data.code);
             setHasCode(true);
             setMessage('');
         } else {
-            setMessage(data.message);
+            setMessage(data.message || '코드 생성 실패');
         }
     };
 

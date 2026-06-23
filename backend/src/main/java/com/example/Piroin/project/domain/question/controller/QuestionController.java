@@ -124,6 +124,18 @@ public class QuestionController {
                 questionService.updateQuestionStatus(questionId, userId));
     }
 
+    // 운영진 질문 확인 처리 (관리자 전용)
+    // 부원이 상세 페이지를 조회하는 GET /api/questions/{questionId}와 별개로 동작한다.
+    // POST /api/questions/{questionId}/admin-check
+    @PostMapping("/api/questions/{questionId}/admin-check")
+    public ResponseEntity<ApiResponse<QuestionResDTO.AdminCheckRes>> checkQuestionByAdmin(
+            @PathVariable Long questionId,
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ResponseUtil.success(QuestionSuccessCode.QUESTION_ADMIN_CHECKED,
+                questionService.checkQuestionByAdmin(questionId, userId));
+    }
+
     // 댓글 수정
     // PATCH /api/comments/{commentId}
     @PatchMapping("/api/comments/{commentId}")

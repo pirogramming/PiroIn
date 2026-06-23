@@ -108,6 +108,14 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 운영진 질문 확인 응답. 확인된 질문은 더 이상 NEW 표시 대상이 아니다.
+    public record AdminCheckRes(
+            Long questionId,
+            Boolean isNew,
+            LocalDateTime adminCheckedAt
+    ) {
+    }
+
     // 질문 방 전체 응답
     public record QuestionRoomResponse(
             SessionResponse session,

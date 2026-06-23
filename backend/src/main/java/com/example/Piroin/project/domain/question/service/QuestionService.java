@@ -450,6 +450,23 @@ public class QuestionService {
         );
     }
 
+    // 운영진 질문 확인 처리
+    // POST /api/questions/{questionId}/admin-check
+    @Transactional
+    public QuestionResDTO.AdminCheckRes checkQuestionByAdmin(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        validateAdmin(loginUser);
+
+        Question question = findQuestion(questionId);
+        question.markAdminChecked(loginUser.getId());
+
+        return new QuestionResDTO.AdminCheckRes(
+                question.getId(),
+                question.getAdminCheckedAt() == null,
+                question.getAdminCheckedAt()
+        );
+    }
+
     // 이해도 체크 생성
     @Transactional
     public QuestionResDTO.UnderstandingCheckCreateResponse createUnderstandingCheck(

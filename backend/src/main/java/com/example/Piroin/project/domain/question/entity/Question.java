@@ -58,6 +58,12 @@ public class Question {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "admin_checked_at")
+    private LocalDateTime adminCheckedAt;
+
+    @Column(name = "admin_checked_by")
+    private Long adminCheckedBy;
+
     // 이미지 URL 목록 조회 (JSON 배열 → List<String> 변환)
     @Transient
     public List<String> getImageUrls() {

@@ -458,7 +458,10 @@ public class QuestionService {
         validateAdmin(loginUser);
 
         Question question = findQuestion(questionId);
-        question.markAdminChecked(loginUser.getId());
+        boolean firstChecked = question.markAdminChecked(loginUser.getId());
+        if (firstChecked) {
+            publishQuestionCheckedEventAfterCommit(question);
+        }
 
         return new QuestionResDTO.AdminCheckRes(
                 question.getId(),
@@ -895,6 +898,20 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishQuestionUpdated(sessionId, event));
+    }
+
+    private void publishQuestionCheckedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+
+        QuestionResDTO.QuestionCheckedEvent event = new QuestionResDTO.QuestionCheckedEvent(
+                "QUESTION_CHECKED",
+                sessionId,
+                question.getId(),
+                false,
+                question.getAdminCheckedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishQuestionChecked(sessionId, event));
     }
 
     private void publishUnderstandingCheckCreatedEventAfterCommit(

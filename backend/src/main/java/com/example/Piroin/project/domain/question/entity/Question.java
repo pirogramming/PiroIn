@@ -115,14 +115,15 @@ public class Question {
     }
 
     // 운영진이 질문을 확인했음을 기록한다. 이미 확인한 질문이면 기존 확인 정보를 유지한다.
-    public void markAdminChecked(Long adminId) {
+    public boolean markAdminChecked(Long adminId) {
         if (this.adminCheckedAt != null) {
-            return;
+            return false;
         }
         LocalDateTime now = LocalDateTime.now();
         this.adminCheckedAt = now;
         this.adminCheckedBy = adminId;
         this.updatedAt = now;
+        return true;
     }
 
     // JSON 배열 문자열 파싱 유틸 (하위 호환: 기존 단일 URL도 1개짜리 리스트로 반환)

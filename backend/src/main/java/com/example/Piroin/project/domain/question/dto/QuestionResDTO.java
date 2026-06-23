@@ -281,6 +281,16 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 운영진이 질문을 확인했을 때 SSE로 내려가는 이벤트. 프론트는 이 이벤트로 NEW 표시를 제거한다.
+    public record QuestionCheckedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            Boolean isNew,
+            LocalDateTime adminCheckedAt
+    ) {
+    }
+
     // 운영진이 이해도 체크를 생성했을 때 SSE로 내려가는 이벤트.
     // 같은 세션 질문방을 보고 있는 모든 클라이언트에게 전파된다.
     public record UnderstandingCheckCreatedEvent(

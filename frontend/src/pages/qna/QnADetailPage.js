@@ -75,6 +75,7 @@ function QnADetailPage() {
     const { sessionId, questionId } = useParams();
     const navigate = useNavigate();
     const isStaff = localStorage.getItem('role') === 'ADMIN';
+    const adminCheckRequestedRef = useRef(new Set());
 
     // ── 질문 / 로딩 상태 ─────────────────────────────
     const [question, setQuestion] = useState(null);
@@ -190,6 +191,34 @@ function QnADetailPage() {
             void fetchQuestion({ showLoading: true });
         }
     }, [questionId, fetchQuestion]);
+
+    const markQuestionCheckedByAdmin = useCallback(async () => {
+        if (!isStaff || !questionId) return;
+
+        const requestKey = String(questionId);
+        if (adminCheckRequestedRef.current.has(requestKey)) return;
+        adminCheckRequestedRef.current.add(requestKey);
+
+        try {
+            const res = await authFetch(`/api/questions/${questionId}/admin-check`, { method: 'POST' });
+            if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+            const json = await res.json();
+            if (!json.isSuccess) throw new Error(json.message);
+
+            setQuestion(prev => prev ? ({
+                ...prev,
+                isNew: json.result?.isNew ?? false,
+                adminCheckedAt: json.result?.adminCheckedAt ?? prev.adminCheckedAt,
+            }) : prev);
+        } catch (err) {
+            adminCheckRequestedRef.current.delete(requestKey);
+            console.error('운영진 질문 확인 처리 실패:', err);
+        }
+    }, [isStaff, questionId]);
+
+    useEffect(() => {
+        void markQuestionCheckedByAdmin();
+    }, [markQuestionCheckedByAdmin]);
 
     const handleQuestionEvent = useCallback((message) => {
         if (String(message.data?.questionId) !== String(questionId)) {

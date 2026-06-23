@@ -200,6 +200,7 @@
     color: var(--dark);
 }
 
+
 .oxBtn:disabled {
     cursor: default;
     background: var(--pale);
@@ -209,11 +210,15 @@
 }
 
 .oxCount {
+    width: 24px;
+    text-align: center;
     font-size: 20px;
-    margin-left: 14px;
+    margin-left: 8px;
     color: var(--gray600);
     font-family: var(--font-main);
     font-weight: 500;
+    line-height: 1;
+    flex-shrink: 0;
 }
 
 /* ── 질문 목록 ── */
@@ -395,7 +400,12 @@
 }
 
 .commentContent svg {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
     flex-shrink: 0;
+    display: block;
 }
 
 .commentMore {

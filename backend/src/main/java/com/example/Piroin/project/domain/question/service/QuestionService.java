@@ -722,6 +722,7 @@ public class QuestionService {
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 isLiked,
                 isMine,
+                question.getAdminCheckedAt() == null,
                 question.getLikeCount(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 // 목록 화면은 최상위 댓글 중 먼저 달린 3개만 미리보기로 보여준다.

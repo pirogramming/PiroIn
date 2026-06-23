@@ -169,6 +169,8 @@ public class QuestionResDTO {
             Boolean isPopular,
             Boolean isLiked,
             Boolean isMine,
+            // 운영진이 아직 확인하지 않은 질문이면 true. 부원이 읽어도 이 값은 바뀌지 않는다.
+            Boolean isNew,
             Integer likeCount,
             Integer commentCount,
             // 댓글이 없으면 빈 배열로 내려가며, 프론트는 빈 배열일 때 미리보기 영역을 숨긴다.

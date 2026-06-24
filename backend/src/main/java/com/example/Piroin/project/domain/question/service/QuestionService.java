@@ -875,6 +875,7 @@ public class QuestionService {
                 question.getId(),
                 question.getContent(),
                 question.getImageUrls(),
+                question.getAdminCheckedAt() == null,
                 question.getLikeCount(),
                 0,  // 방금 만들어진 질문이므로 댓글 수는 0
                 question.getCreatedAt()

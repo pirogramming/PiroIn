@@ -200,7 +200,19 @@ function QnADetailPage() {
         adminCheckRequestedRef.current.add(requestKey);
 
         try {
-            const res = await authFetch(`/api/questions/${questionId}/admin-check`, { method: 'POST' });
+            const token = localStorage.getItem('token');
+            if (!token) {
+                adminCheckRequestedRef.current.delete(requestKey);
+                return;
+            }
+
+            const res = await fetch(`/api/questions/${questionId}/admin-check`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
             if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
             const json = await res.json();
             if (!json.isSuccess) throw new Error(json.message);

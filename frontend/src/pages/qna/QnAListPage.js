@@ -815,7 +815,7 @@ function QnAListPage() {
                             >Q.</span>
                             <div className={styles.questionMain}>
                                 <span className={styles.questionText}>{question.content}</span>
-                                {isStaff && question.isNew && (
+                                {question.isNew && (
                                     <span className={styles.newBadge}>NEW</span>
                                 )}
                             </div>

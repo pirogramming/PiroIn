@@ -260,6 +260,8 @@ public class QuestionResDTO {
             String content,
             // 이미지 여러 장 지원
             List<String> imageUrls,
+            // 운영진이 아직 확인하지 않은 새 질문이면 true
+            Boolean isNew,
             // 좋아요 수 (생성 직후에는 0)
             Integer likeCount,
             // 댓글 수 (생성 직후에는 0)

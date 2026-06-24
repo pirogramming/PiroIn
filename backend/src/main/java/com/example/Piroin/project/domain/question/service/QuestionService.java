@@ -382,7 +382,7 @@ public class QuestionService {
     public QuestionResDTO.UpdateDeleteRes deleteQuestion(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
         Question question = findQuestion(questionId);
-        validateQuestionOwner(question, loginUser);
+        validateQuestionDeletePermission(question, loginUser);
 
         question.softDelete();
 
@@ -577,8 +577,15 @@ public class QuestionService {
 
     private void validateQuestionOwner(Question question, User loginUser) {
         if (!question.getUser().getId().equals(loginUser.getId())) {
-            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정/삭제할 수 있습니다.");
+            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정할 수 있습니다.");
         }
+    }
+
+    private void validateQuestionDeletePermission(Question question, User loginUser) {
+        if (loginUser.getRole() == Role.ADMIN || question.getUser().getId().equals(loginUser.getId())) {
+            return;
+        }
+        throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 삭제할 수 있습니다.");
     }
 
     private void validateCommentOwner(QuestionComment comment, User loginUser) {

@@ -17,6 +17,7 @@ public class QuestionResDTO {
         private Long id;
         private String content;
         private Boolean isSolved;
+        private Boolean isNew;
         private Integer likeCount;
         private LocalDateTime createdAt;
 
@@ -25,6 +26,7 @@ public class QuestionResDTO {
                     .id(question.getId())
                     .content(question.getContent())
                     .isSolved(question.getIsResolved())
+                    .isNew(question.getAdminCheckedAt() == null)
                     .likeCount(question.getLikeCount())
                     .createdAt(question.getCreatedAt())
                     .build();

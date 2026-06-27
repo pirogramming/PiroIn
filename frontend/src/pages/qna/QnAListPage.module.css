@@ -207,6 +207,7 @@
     width: 70px;
     height: 36px;
     color: var(--dark);
+    padding: 0 8px;
 }
 
 .oxCount {

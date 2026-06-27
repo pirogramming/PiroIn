@@ -6,7 +6,11 @@ public enum AssignmentStatus {
 
     INSUFFICIENT_MINOR,   // 경미한 불충분 (-10000)
 
+    INSUFFICIENT_15000,
+
     INSUFFICIENT_MAJOR,   // 심각한 불충분 (-20000)
+
+    INSUFFICIENT_25000,
 
     FAILURE,              // 미제출 (-20000)
 

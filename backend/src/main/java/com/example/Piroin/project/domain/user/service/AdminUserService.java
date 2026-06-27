@@ -167,7 +167,11 @@ public class AdminUserService {
 
             case INSUFFICIENT_MINOR -> 10_000;
 
+            case INSUFFICIENT_15000 -> 15_000;
+
             case INSUFFICIENT_MAJOR -> 20_000;
+
+            case INSUFFICIENT_25000 -> 25_000;
 
             case FAILURE -> 30_000;
         };

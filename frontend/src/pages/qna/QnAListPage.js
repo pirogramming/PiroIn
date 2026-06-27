@@ -111,6 +111,27 @@ const updateQuestionGroupsByQuestionEvent = (groups, eventData) => {
     return hasUpdatedQuestion ? regroupQuestions(updatedQuestions) : groups;
 };
 
+const updateQuestionGroupsByCheckedEvent = (groups, eventData) => {
+    if (!eventData?.questionId) return groups;
+
+    let hasUpdatedQuestion = false;
+    const updatedQuestions = [
+        ...groups.popularQuestions,
+        ...groups.unresolvedQuestions,
+        ...groups.resolvedQuestions,
+    ].map(question => {
+        if (question.questionId !== eventData.questionId) return question;
+
+        hasUpdatedQuestion = true;
+        return {
+            ...question,
+            isNew: eventData.isNew ?? false,
+        };
+    });
+
+    return hasUpdatedQuestion ? regroupQuestions(updatedQuestions) : groups;
+};
+
 const addQuestionToGroups = (groups, question) => {
     if (!question?.questionId) return groups;
 
@@ -315,6 +336,7 @@ function QnAListPage() {
             isPopular: false,
             isLiked: false,
             isMine: false,
+            isNew: eventData.isNew ?? true,
             iLiked: false,
             likeCount: eventData.likeCount ?? 0,
             commentCount: eventData.commentCount ?? 0,
@@ -333,6 +355,11 @@ function QnAListPage() {
 
     const handleQuestionUpdatedEvent = useCallback((eventData) => {
         const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, eventData);
+        applyQuestionGroups(nextGroups);
+    }, [applyQuestionGroups]);
+
+    const handleQuestionCheckedEvent = useCallback((eventData) => {
+        const nextGroups = updateQuestionGroupsByCheckedEvent(questionGroupsRef.current, eventData);
         applyQuestionGroups(nextGroups);
     }, [applyQuestionGroups]);
 
@@ -403,6 +430,9 @@ function QnAListPage() {
             case 'question-updated':
                 handleQuestionUpdatedEvent(data);
                 break;
+            case 'question-checked':
+                handleQuestionCheckedEvent(data);
+                break;
             case 'understanding-check-created':
                 handleUnderstandingCheckCreatedEvent(data);
                 break;
@@ -415,6 +445,7 @@ function QnAListPage() {
         }
     }, [
         handleCommentCreatedEvent,
+        handleQuestionCheckedEvent,
         handleQuestionCreatedEvent,
         handleQuestionUpdatedEvent,
         handleUnderstandingCheckCreatedEvent,
@@ -782,7 +813,12 @@ function QnAListPage() {
                                 className={styles.qIcon}
                                 style={{ color: question.isResolved ? 'var(--gray600)' : '' }}
                             >Q.</span>
-                            <span className={styles.questionText}>{question.content}</span>
+                            <div className={styles.questionMain}>
+                                <span className={styles.questionText}>{question.content}</span>
+                                {question.isNew && (
+                                    <span className={styles.newBadge}>NEW</span>
+                                )}
+                            </div>
                             <div className={styles.questionActions}>
                                 <button
                                     className={`${styles.likeBtn} ${question.iLiked ? styles.liked : ''}`}

@@ -382,7 +382,7 @@ public class QuestionService {
     public QuestionResDTO.UpdateDeleteRes deleteQuestion(Long questionId, Long userId) {
         User loginUser = findLoginUser(userId);
         Question question = findQuestion(questionId);
-        validateQuestionOwner(question, loginUser);
+        validateQuestionDeletePermission(question, loginUser);
 
         question.softDelete();
 
@@ -447,6 +447,26 @@ public class QuestionService {
 
         return new QuestionResDTO.StatusUpdateRes(
                 question.getId(), question.getIsResolved(), question.getUpdatedAt()
+        );
+    }
+
+    // 운영진 질문 확인 처리
+    // POST /api/questions/{questionId}/admin-check
+    @Transactional
+    public QuestionResDTO.AdminCheckRes checkQuestionByAdmin(Long questionId, Long userId) {
+        User loginUser = findLoginUser(userId);
+        validateAdmin(loginUser);
+
+        Question question = findQuestion(questionId);
+        boolean firstChecked = question.markAdminChecked(loginUser.getId());
+        if (firstChecked) {
+            publishQuestionCheckedEventAfterCommit(question);
+        }
+
+        return new QuestionResDTO.AdminCheckRes(
+                question.getId(),
+                question.getAdminCheckedAt() == null,
+                question.getAdminCheckedAt()
         );
     }
 
@@ -557,8 +577,15 @@ public class QuestionService {
 
     private void validateQuestionOwner(Question question, User loginUser) {
         if (!question.getUser().getId().equals(loginUser.getId())) {
-            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정/삭제할 수 있습니다.");
+            throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 수정할 수 있습니다.");
         }
+    }
+
+    private void validateQuestionDeletePermission(Question question, User loginUser) {
+        if (loginUser.getRole() == Role.ADMIN || question.getUser().getId().equals(loginUser.getId())) {
+            return;
+        }
+        throw new QuestionException(HttpStatus.FORBIDDEN, "본인의 질문만 삭제할 수 있습니다.");
     }
 
     private void validateCommentOwner(QuestionComment comment, User loginUser) {
@@ -722,6 +749,7 @@ public class QuestionService {
                 !question.getIsResolved() && question.getLikeCount() >= POPULAR_LIKE_THRESHOLD,
                 isLiked,
                 isMine,
+                question.getAdminCheckedAt() == null,
                 question.getLikeCount(),
                 summaryContext.commentCounts().getOrDefault(questionId, 0),
                 // 목록 화면은 최상위 댓글 중 먼저 달린 3개만 미리보기로 보여준다.
@@ -854,6 +882,7 @@ public class QuestionService {
                 question.getId(),
                 question.getContent(),
                 question.getImageUrls(),
+                question.getAdminCheckedAt() == null,
                 question.getLikeCount(),
                 0,  // 방금 만들어진 질문이므로 댓글 수는 0
                 question.getCreatedAt()
@@ -877,6 +906,20 @@ public class QuestionService {
         );
 
         publishAfterCommit(() -> questionEventService.publishQuestionUpdated(sessionId, event));
+    }
+
+    private void publishQuestionCheckedEventAfterCommit(Question question) {
+        Long sessionId = question.getSession().getId();
+
+        QuestionResDTO.QuestionCheckedEvent event = new QuestionResDTO.QuestionCheckedEvent(
+                "QUESTION_CHECKED",
+                sessionId,
+                question.getId(),
+                false,
+                question.getAdminCheckedAt()
+        );
+
+        publishAfterCommit(() -> questionEventService.publishQuestionChecked(sessionId, event));
     }
 
     private void publishUnderstandingCheckCreatedEventAfterCommit(

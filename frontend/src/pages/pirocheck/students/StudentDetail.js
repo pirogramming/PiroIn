@@ -10,12 +10,22 @@ import Toggle2 from '../../../assets/images/icon_togle2.svg';
 const IS_MOCK = false;
 
 const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
-const statusOptions = ['PENDING', 'SUCCESS', 'INSUFFICIENT_MINOR', 'INSUFFICIENT_MAJOR', 'FAILURE'];
+const statusOptions = [
+    'PENDING',
+    'SUCCESS',
+    'INSUFFICIENT_MINOR',
+    'INSUFFICIENT_15000',
+    'INSUFFICIENT_MAJOR',
+    'INSUFFICIENT_25000',
+    'FAILURE',
+];
 const statusLabel = {
     PENDING: '채점 중',
     SUCCESS: '성공',
     INSUFFICIENT_MINOR: '미달 (-1)',
+    INSUFFICIENT_15000: '미달 (-1.5)',
     INSUFFICIENT_MAJOR: '미달 (-2)',
+    INSUFFICIENT_25000: '미달 (-2.5)',
     FAILURE: '실패',
 };
 

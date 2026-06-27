@@ -13,6 +13,7 @@ const dayLabel = { TUESDAY: 'TUE', THURSDAY: 'THU', SATURDAY: 'SAT' };
 const statusOptions = [
     'PENDING',
     'SUCCESS',
+    'INSUFFICIENT_5000',
     'INSUFFICIENT_MINOR',
     'INSUFFICIENT_15000',
     'INSUFFICIENT_MAJOR',
@@ -22,6 +23,7 @@ const statusOptions = [
 const statusLabel = {
     PENDING: '채점 중',
     SUCCESS: '성공',
+    INSUFFICIENT_5000: '미달 (-0.5)',
     INSUFFICIENT_MINOR: '미달 (-1)',
     INSUFFICIENT_15000: '미달 (-1.5)',
     INSUFFICIENT_MAJOR: '미달 (-2)',

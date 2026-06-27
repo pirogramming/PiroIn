@@ -4,6 +4,8 @@ public enum AssignmentStatus {
 
     SUCCESS,              // 정상 제출 (0원)
 
+    INSUFFICIENT_5000,
+
     INSUFFICIENT_MINOR,   // 경미한 불충분 (-10000)
 
     INSUFFICIENT_15000,

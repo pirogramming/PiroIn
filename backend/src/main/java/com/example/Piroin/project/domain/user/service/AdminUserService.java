@@ -165,6 +165,8 @@ public class AdminUserService {
 
             case SUCCESS, PENDING -> 0;
 
+            case INSUFFICIENT_5000 -> 5_000;
+
             case INSUFFICIENT_MINOR -> 10_000;
 
             case INSUFFICIENT_15000 -> 15_000;

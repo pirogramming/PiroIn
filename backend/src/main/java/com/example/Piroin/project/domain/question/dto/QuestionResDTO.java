@@ -17,6 +17,7 @@ public class QuestionResDTO {
         private Long id;
         private String content;
         private Boolean isSolved;
+        private Boolean isNew;
         private Integer likeCount;
         private LocalDateTime createdAt;
 
@@ -25,6 +26,7 @@ public class QuestionResDTO {
                     .id(question.getId())
                     .content(question.getContent())
                     .isSolved(question.getIsResolved())
+                    .isNew(question.getAdminCheckedAt() == null)
                     .likeCount(question.getLikeCount())
                     .createdAt(question.getCreatedAt())
                     .build();
@@ -108,6 +110,14 @@ public class QuestionResDTO {
     ) {
     }
 
+    // 운영진 질문 확인 응답. 확인된 질문은 더 이상 NEW 표시 대상이 아니다.
+    public record AdminCheckRes(
+            Long questionId,
+            Boolean isNew,
+            LocalDateTime adminCheckedAt
+    ) {
+    }
+
     // 질문 방 전체 응답
     public record QuestionRoomResponse(
             SessionResponse session,
@@ -169,6 +179,8 @@ public class QuestionResDTO {
             Boolean isPopular,
             Boolean isLiked,
             Boolean isMine,
+            // 운영진이 아직 확인하지 않은 질문이면 true. 부원이 읽어도 이 값은 바뀌지 않는다.
+            Boolean isNew,
             Integer likeCount,
             Integer commentCount,
             // 댓글이 없으면 빈 배열로 내려가며, 프론트는 빈 배열일 때 미리보기 영역을 숨긴다.
@@ -250,6 +262,8 @@ public class QuestionResDTO {
             String content,
             // 이미지 여러 장 지원
             List<String> imageUrls,
+            // 운영진이 아직 확인하지 않은 새 질문이면 true
+            Boolean isNew,
             // 좋아요 수 (생성 직후에는 0)
             Integer likeCount,
             // 댓글 수 (생성 직후에는 0)
@@ -268,6 +282,16 @@ public class QuestionResDTO {
             Integer likeCount,
             Boolean isDeleted,
             LocalDateTime updatedAt
+    ) {
+    }
+
+    // 운영진이 질문을 확인했을 때 SSE로 내려가는 이벤트. 프론트는 이 이벤트로 NEW 표시를 제거한다.
+    public record QuestionCheckedEvent(
+            String type,
+            Long sessionId,
+            Long questionId,
+            Boolean isNew,
+            LocalDateTime adminCheckedAt
     ) {
     }
 

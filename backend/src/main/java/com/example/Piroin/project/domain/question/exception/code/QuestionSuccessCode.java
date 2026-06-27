@@ -16,6 +16,7 @@ public enum QuestionSuccessCode implements BaseCode {
     QUESTION_UPDATED(HttpStatus.OK, "QUESTION200_5", "질문이 수정되었습니다."),
     QUESTION_DELETED(HttpStatus.OK, "QUESTION200_6", "질문이 삭제되었습니다."),
     QUESTION_STATUS_UPDATED(HttpStatus.OK, "QUESTION200_7", "질문 상태가 변경되었습니다."),
+    QUESTION_ADMIN_CHECKED(HttpStatus.OK, "QUESTION200_10", "질문 확인 처리가 완료되었습니다."),
     QUESTION_CREATED(HttpStatus.CREATED, "QUESTION201_1", "질문이 등록되었습니다."),
     COMMENT_CREATED(HttpStatus.CREATED, "QUESTION201_2", "댓글이 등록되었습니다."),
     COMMENT_UPDATED(HttpStatus.OK, "QUESTION200_8", "댓글이 수정되었습니다."),

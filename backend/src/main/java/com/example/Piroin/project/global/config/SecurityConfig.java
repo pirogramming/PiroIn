@@ -68,6 +68,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/sessions/{sessionId}/understanding-checks").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/questions/{questionId}/status").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/questions/{questionId}/admin-check").hasRole("ADMIN")
 
                         // 나머지는 로그인한 사용자면 접근 가능
                         .anyRequest().authenticated()

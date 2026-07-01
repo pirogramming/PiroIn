@@ -59,7 +59,7 @@ jobs:
               --restart unless-stopped \
               -p 8080:8080 \
               -v piroin-uploads:/app/uploads \
-              --health-cmd="curl -f http://localhost:8080/actuator/health || exit 1" \
+              --health-cmd="wget -q -O /dev/null http://localhost:8080/actuator/health || exit 1" \
               --health-interval=30s \
               --health-timeout=10s \
               --health-retries=3 \
@@ -70,3 +70,4 @@ jobs:
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e JWT_EXPIRATION="${{ secrets.JWT_EXPIRATION }}" \
               ${{ secrets.DOCKERHUB_USERNAME }}/piroin-backend:latest
+            docker image prune -a -f

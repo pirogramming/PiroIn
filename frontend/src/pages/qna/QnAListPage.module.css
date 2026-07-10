@@ -34,9 +34,46 @@
 .filterRow {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 12px;
     padding: 8px 16px;
+}
+
+.scopeTabs {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border: 1px solid var(--gray200);
+    border-radius: 20px;
+    background: var(--white);
+    flex-shrink: 0;
+}
+
+.scopeTab {
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    padding: 5px 12px;
+    color: var(--gray600);
+    font-family: var(--font-main);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.scopeTabActive {
+    background: var(--main);
+    color: var(--black);
+    font-weight: 700;
+}
+
+.filterControls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    min-width: 0;
 }
 
 .curiousLabel {
@@ -228,6 +265,16 @@
     flex-direction: column;
     gap: 20px;
     align-items: center;
+}
+
+.emptyState {
+    width: 95%;
+    box-sizing: border-box;
+    padding: 56px 16px;
+    color: var(--gray600);
+    font-family: var(--font-main);
+    font-size: 15px;
+    text-align: center;
 }
 
 .questionCard {
@@ -768,6 +815,16 @@
 
     .filterRow {
         padding: 8px 4px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .scopeTab {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+
+    .filterControls {
         gap: 8px;
     }
 

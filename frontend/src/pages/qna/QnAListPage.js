@@ -132,20 +132,6 @@ const updateQuestionGroupsByCheckedEvent = (groups, eventData) => {
     return hasUpdatedQuestion ? regroupQuestions(updatedQuestions) : groups;
 };
 
-const addQuestionToGroups = (groups, question) => {
-    if (!question?.questionId) return groups;
-
-    const existingQuestions = [
-        ...groups.popularQuestions,
-        ...groups.unresolvedQuestions,
-        ...groups.resolvedQuestions,
-    ];
-    const alreadyExists = existingQuestions.some(item => item.questionId === question.questionId);
-
-    if (alreadyExists) return groups;
-    return regroupQuestions([question, ...existingQuestions]);
-};
-
 const buildUnderstandingCheckFromEvent = (eventData) => ({
     checkId: eventData.checkId,
     content: eventData.content,
@@ -199,6 +185,7 @@ function QnAListPage() {
     });
 
     // ── 필터 / 정렬 상태 ─────────────────────────────
+    const [questionScope, setQuestionScope] = useState('all');
     const [filterCurious, setFilterCurious] = useState(false);
     const [filterUnsolved, setFilterUnsolved] = useState(false);
     const [sortOrder, setSortOrder] = useState('정렬');
@@ -311,47 +298,13 @@ function QnAListPage() {
         applyQuestionGroups(nextGroups);
     }, [applyQuestionGroups]);
 
-    const buildQuestionFromCreatedEvent = useCallback(async (eventData) => {
-        if (!eventData?.questionId) return null;
+    const handleQuestionCreatedEvent = useCallback((eventData) => {
+        if (!eventData?.questionId) return;
 
-        // SSE 이벤트의 imageUrls 배열을 blob URL로 변환
-        const rawUrls = eventData.imageUrls ?? [];
-        const blobUrls = await Promise.all(
-            rawUrls.map(async (url) => {
-                try {
-                    const imgRes = await authFetch(url);
-                    const blob = await imgRes.blob();
-                    return URL.createObjectURL(blob);
-                } catch {
-                    return null;
-                }
-            })
-        );
-
-        return {
-            questionId: eventData.questionId,
-            content: eventData.content,
-            imageUrls: blobUrls.filter(Boolean),
-            isResolved: false,
-            isPopular: false,
-            isLiked: false,
-            isMine: false,
-            isNew: eventData.isNew ?? true,
-            iLiked: false,
-            likeCount: eventData.likeCount ?? 0,
-            commentCount: eventData.commentCount ?? 0,
-            previewComments: [],
-            createdAt: eventData.createdAt,
-        };
-    }, []);
-
-    const handleQuestionCreatedEvent = useCallback(async (eventData) => {
-        const createdQuestion = await buildQuestionFromCreatedEvent(eventData);
-        if (!createdQuestion) return;
-
-        const nextGroups = addQuestionToGroups(questionGroupsRef.current, createdQuestion);
-        applyQuestionGroups(nextGroups);
-    }, [applyQuestionGroups, buildQuestionFromCreatedEvent]);
+        // 생성 이벤트에는 로그인 사용자 기준 isMine 값이 없으므로,
+        // 목록을 다시 조회해 "내 질문" 필터에서도 정확히 분류되도록 한다.
+        void fetchQuestions(understandingIndex);
+    }, [fetchQuestions, understandingIndex]);
 
     const handleQuestionUpdatedEvent = useCallback((eventData) => {
         const nextGroups = updateQuestionGroupsByQuestionEvent(questionGroupsRef.current, eventData);
@@ -706,8 +659,9 @@ function QnAListPage() {
 
     const displayedQuestions = (() => {
         let list = allQuestions;
-        if (isStaff && filterUnsolved) list = unresolvedQuestions;
-        if (!isStaff && filterCurious) list = allQuestions.filter(q => q.iLiked);
+        if (questionScope === 'mine') list = list.filter(q => q.isMine);
+        if (isStaff && filterUnsolved) list = list.filter(q => !q.isResolved);
+        if (!isStaff && filterCurious) list = list.filter(q => q.iLiked);
 
         if (sortOrder === '최신순') {
             list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -730,35 +684,56 @@ function QnAListPage() {
 
             {/* ── 필터 / 정렬 행 ── */}
             <div className={styles.filterRow}>
-                {isStaff ? (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterUnsolved}
-                            onChange={e => setFilterUnsolved(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        미해결 질문
-                    </label>
-                ) : (
-                    <label className={styles.curiousLabel}>
-                        <input type="checkbox" checked={filterCurious}
-                            onChange={e => setFilterCurious(e.target.checked)}
-                            className={styles.curiousCheckbox} />
-                        저도 궁금해요
-                    </label>
-                )}
-                <div className={styles.sortWrapper}>
-                    <button className={styles.sortBtn} onClick={() => setShowSortMenu(prev => !prev)}>
-                        {sortOrder} <SortBtn />
+                <div className={styles.scopeTabs} role="group" aria-label="질문 조회 범위">
+                    <button
+                        type="button"
+                        className={`${styles.scopeTab} ${questionScope === 'all' ? styles.scopeTabActive : ''}`}
+                        aria-pressed={questionScope === 'all'}
+                        onClick={() => setQuestionScope('all')}
+                    >
+                        전체 질문
                     </button>
-                    {showSortMenu && (
-                        <ul className={styles.sortMenu}>
-                            {['기본', '최신순', '저도궁금해요순'].map(option => (
-                                <li key={option} className={styles.sortOption}
-                                    onClick={() => { setSortOrder(option); setShowSortMenu(false); }}>
-                                    {option}
-                                </li>
-                            ))}
-                        </ul>
+                    <button
+                        type="button"
+                        className={`${styles.scopeTab} ${questionScope === 'mine' ? styles.scopeTabActive : ''}`}
+                        aria-pressed={questionScope === 'mine'}
+                        onClick={() => setQuestionScope('mine')}
+                    >
+                        내 질문
+                    </button>
+                </div>
+
+                <div className={styles.filterControls}>
+                    {isStaff ? (
+                        <label className={styles.curiousLabel}>
+                            <input type="checkbox" checked={filterUnsolved}
+                                onChange={e => setFilterUnsolved(e.target.checked)}
+                                className={styles.curiousCheckbox} />
+                            미해결 질문
+                        </label>
+                    ) : (
+                        <label className={styles.curiousLabel}>
+                            <input type="checkbox" checked={filterCurious}
+                                onChange={e => setFilterCurious(e.target.checked)}
+                                className={styles.curiousCheckbox} />
+                            저도 궁금해요
+                        </label>
                     )}
+                    <div className={styles.sortWrapper}>
+                        <button className={styles.sortBtn} onClick={() => setShowSortMenu(prev => !prev)}>
+                            {sortOrder} <SortBtn />
+                        </button>
+                        {showSortMenu && (
+                            <ul className={styles.sortMenu}>
+                                {['기본', '최신순', '저도궁금해요순'].map(option => (
+                                    <li key={option} className={styles.sortOption}
+                                        onClick={() => { setSortOrder(option); setShowSortMenu(false); }}>
+                                        {option}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
                 </div>
             </div>
             <hr className={styles.divider} />
@@ -802,6 +777,15 @@ function QnAListPage() {
 
             {/* ── 질문 목록 ── */}
             <div className={styles.questionList}>
+                {displayedQuestions.length === 0 && (
+                    <div className={styles.emptyState}>
+                        {questionScope === 'mine'
+                            ? '작성한 질문이 없습니다.'
+                            : (filterCurious || filterUnsolved)
+                                ? '조건에 맞는 질문이 없습니다.'
+                                : '등록된 질문이 없습니다.'}
+                    </div>
+                )}
                 {displayedQuestions.map(question => (
                     <div key={question.questionId}
                         className={`${styles.questionCard} ${question.isResolved ? styles.questionCardResolved : ''}`}

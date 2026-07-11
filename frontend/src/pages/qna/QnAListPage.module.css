@@ -63,9 +63,9 @@
 }
 
 .scopeTabActive {
-    background: var(--main);
-    color: var(--black);
-    font-weight: 700;
+    background: var(--dark);
+    color: var(--white);
+    font-weight: 650;
 }
 
 .filterControls {
@@ -319,7 +319,7 @@
 .qIcon {
     flex-shrink: 0;
     padding-top: 1px;
-    color: var(--main);
+    color: var(--dark);
     font-family: var(--font-main);
     font-size: 36px;
     font-weight: 900;
@@ -358,7 +358,7 @@
     color: var(--white);
     font-family: var(--font-main);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 650;
     letter-spacing: 0;
 }
 

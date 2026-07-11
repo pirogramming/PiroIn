@@ -21,7 +21,6 @@
     align-items: center;
     background: var(--gray600);
     border-radius: 10px;
-    overflow: hidden;
     width: 480px;
     max-width: calc(100vw - 56px);
     margin-bottom: 30px;
@@ -31,6 +30,7 @@
 
 .searchInput {
     flex: 1;
+    min-width: 0;      
     background: transparent;
     border: none;
     outline: none;

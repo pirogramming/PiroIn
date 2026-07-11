@@ -63,9 +63,9 @@
 }
 
 .scopeTabActive {
-    background: var(--main);
-    color: var(--black);
-    font-weight: 700;
+    background: var(--dark);
+    color: var(--white);
+    font-weight: 650;
 }
 
 .filterControls {
@@ -319,7 +319,7 @@
 .qIcon {
     flex-shrink: 0;
     padding-top: 1px;
-    color: var(--main);
+    color: var(--dark);
     font-family: var(--font-main);
     font-size: 36px;
     font-weight: 900;
@@ -358,7 +358,7 @@
     color: var(--white);
     font-family: var(--font-main);
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 650;
     letter-spacing: 0;
 }
 
@@ -469,8 +469,9 @@
     font-weight: 400;
     line-height: normal;
     display: flex;
-    align-items: flex-start;
+    align-items: center; 
     gap: 4px;
+    min-width: 0;
 }
 
 .commentContent svg {
@@ -480,6 +481,14 @@
     min-height: 22px;
     flex-shrink: 0;
     display: block;
+    margin-bottom: 1px;
+}
+
+.commentText {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .commentMore {
@@ -528,13 +537,13 @@
 
 .commentInputInner {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     position: relative;
-    height: 44px;
-    border-radius: 44px;
+    min-height: 44px;
+    border-radius: 22px;
     border: 1.5px solid var(--dark);
     background: var(--white);
-    padding: 0 50px 0 15px;
+    padding: 5px 50px 5px 15px; 
     box-sizing: border-box;
 }
 
@@ -555,20 +564,31 @@
     background: var(--white);
     box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.25);
     margin-right: 8px;
+    margin-bottom: 6px;
 }
+
 
 .commentInput {
     flex: 1;
-    height: 44px;
     min-width: 0;
+    resize: none;
     border: none;
     background: none;
-    padding: 0;
+    padding: 7px 0;
     box-sizing: border-box;
     font-family: var(--font-main);
     font-size: 16px;
     color: var(--black);
-    outline: none;
+    outline: none !important;
+    box-shadow: none !important;
+    line-height: 1.4;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.commentInput:focus {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .commentInput::placeholder {
@@ -576,12 +596,13 @@
 }
 
 .submitBtn {
-    position: absolute;
+    position: absolute;   
     right: 5px;
+    bottom: 7.5px;          
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #09C410;
+    background: var(--main);
     border: none;
     cursor: pointer;
     display: flex;
@@ -633,7 +654,7 @@
 
 .newQuestionInputRow {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 8px;
     flex: 1;
     width: 100%;
@@ -656,17 +677,29 @@
     border-radius: 50%;
     background: var(--white);
     box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.25);
+    margin-bottom: 10px;
+    margin-left: 5px;
 }
 
 .newQuestionInput {
     flex: 1;
+    min-width: 0;
+    resize: none;
     border: none;
     background: none;
     font-family: var(--font-main);
     font-size: 20px;
     color: var(--black);
     outline: none;
-    height: 100%;
+    line-height: 1.4;
+    padding: 8px 0;          
+    box-sizing: border-box;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.newQuestionSubmit {
+    margin-bottom: 2px;
 }
 
 /* 운영진일 때 왼쪽 여백 추가 (+ 버튼 없어서 간격 보정) */

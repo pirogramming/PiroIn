@@ -199,6 +199,7 @@ function QnAListPage() {
     // 질문별 댓글 이미지 미리보기: { [questionId]: string[] }
     const [commentImagePreviews, setCommentImagePreviews] = useState({});
     const commentFileRefs = useRef({});
+    const commentTextareaRefs = useRef({});
 
     // ── 새 질문 / 이해도 입력 상태 ──────────────────
     const [newQuestion, setNewQuestion] = useState('');
@@ -208,6 +209,7 @@ function QnAListPage() {
     const [selectedImages, setSelectedImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const fileInputRef = useRef(null);
+    const newQuestionTextareaRef = useRef(null);
 
     const applyQuestionGroups = useCallback((groups) => {
         questionGroupsRef.current = groups;
@@ -519,6 +521,8 @@ function QnAListPage() {
                 setCommentImages(prev => ({ ...prev, [questionId]: [] }));
                 setCommentImagePreviews(prev => ({ ...prev, [questionId]: [] }));
                 setCommentOpenId(null);
+                const textareaEl = commentTextareaRefs.current[questionId]; 
+                if (textareaEl) textareaEl.style.height = 'auto'; 
             }
         } catch (err) {
             console.error('댓글 등록 실패:', err);
@@ -615,6 +619,7 @@ function QnAListPage() {
                 setSelectedImages([]);
                 setImagePreviews([]);
                 fetchQuestions(understandingIndex);
+                if (newQuestionTextareaRef.current) newQuestionTextareaRef.current.style.height = 'auto';
             }
         } catch (err) {
             console.error('질문 등록 실패:', err);
@@ -641,6 +646,7 @@ function QnAListPage() {
                 setNewQuestion('');
                 setUnderstandingIndex(0);
                 fetchQuestions(0);
+                if (newQuestionTextareaRef.current) newQuestionTextareaRef.current.style.height = 'auto';
             }
         } catch (err) {
             console.error('이해도 등록 실패:', err);
@@ -842,7 +848,8 @@ function QnAListPage() {
                                         </span>
                                         <div className={styles.commentItem}>
                                             <div className={styles.commentContent}>
-                                                <CommentCommentArraw /> {comment.content}
+                                                <CommentCommentArraw />
+                                                <span className={styles.commentText}>{comment.content}</span>
                                             </div>
                                             {comment.hasImage && (
                                                 <div
@@ -900,13 +907,24 @@ function QnAListPage() {
                                             commentFileRefs.current[question.questionId].click();
                                         }}
                                     >+</button>
-                                    <input
+                                    <textarea
+                                        ref={el => { commentTextareaRefs.current[question.questionId] = el; }}
                                         className={styles.commentInput}
                                         placeholder="댓글을 입력해주세요..."
                                         value={commentInputs[question.questionId] || ''}
-                                        onChange={e => handleCommentChange(question.questionId, e.target.value)}
-                                        onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCommentSubmit(e, question.questionId); }}
+                                        onChange={e => {
+                                            handleCommentChange(question.questionId, e.target.value);
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                                        }}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                                                e.preventDefault();
+                                                handleCommentSubmit(e, question.questionId);
+                                            }
+                                        }}
                                         onPaste={e => handleCommentPaste(e, question.questionId)}
+                                        rows={1}
                                         autoFocus
                                     />
                                     <button className={styles.submitBtn}
@@ -957,15 +975,24 @@ function QnAListPage() {
                                 />
                             </>
                         )}
-                        <input
+                        <textarea
+                            ref={newQuestionTextareaRef}
                             className={`${styles.newQuestionInput} ${isStaff ? styles.newQuestionInputStaff : ''}`}
                             placeholder={isStaff ? '부원들의 이해도를 체크해보세요' : '질문을 남겨주세요...'}
                             value={newQuestion}
-                            onChange={e => setNewQuestion(e.target.value)}
+                            onChange={e => {
+                                setNewQuestion(e.target.value);
+                                e.target.style.height = 'auto';
+                                e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+                            }}
                             onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.nativeEvent.isComposing) isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                                if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                                    e.preventDefault();
+                                    isStaff ? handleNewUnderstandCheck() : handleNewQuestion();
+                                }
                             }}
                             onPaste={handleNewQuestionPaste}
+                            rows={1}
                             disabled={isSubmitting}
                         />
                         <button

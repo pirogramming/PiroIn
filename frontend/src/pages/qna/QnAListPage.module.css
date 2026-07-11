@@ -471,6 +471,7 @@
     display: flex;
     align-items: flex-start;
     gap: 4px;
+    min-width: 0;
 }
 
 .commentContent svg {
@@ -480,6 +481,13 @@
     min-height: 22px;
     flex-shrink: 0;
     display: block;
+}
+
+.commentText {
+    flex: 1;
+    min-width: 0;
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .commentMore {

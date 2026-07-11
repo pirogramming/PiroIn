@@ -842,7 +842,8 @@ function QnAListPage() {
                                         </span>
                                         <div className={styles.commentItem}>
                                             <div className={styles.commentContent}>
-                                                <CommentCommentArraw /> {comment.content}
+                                                <CommentCommentArraw />
+                                                <span className={styles.commentText}>{comment.content}</span>
                                             </div>
                                             {comment.hasImage && (
                                                 <div

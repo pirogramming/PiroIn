@@ -529,7 +529,7 @@
 
 .commentInputRow {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     width: 100%;
     gap: 8px;
 }
@@ -547,17 +547,24 @@
     justify-content: center;
     flex-shrink: 0;
     color: var(--gray600);
+    margin-bottom: 2px;
 }
 
 .commentInput {
     flex: 1;
+    min-width: 0;
+    resize: none;
     border: none;
     background: none;
     font-family: var(--font-main);
     font-size: 16px;
     color: var(--black);
     outline: none;
-    height: 100%;
+    line-height: 1.4;
+    padding: 7px 0;       
+    box-sizing: border-box;
+    max-height: 150px;
+    overflow-y: auto;
 }
 
 .commentInput::placeholder {
@@ -577,6 +584,7 @@
     flex-shrink: 0;
     padding: 0;
     transition: opacity 0.15s;
+    margin-bottom: 2px;
 }
 
 .submitBtn:disabled {

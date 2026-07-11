@@ -92,6 +92,7 @@ function QnADetailPage() {
     const [selectedImages, setSelectedImages] = useState([]);       // 여러 장
     const [imagePreviews, setImagePreviews] = useState([]);         // 여러 장 미리보기
     const fileInputRef = useRef(null);
+    const commentTextareaRef = useRef(null);
 
     // ── 댓글 수정 상태 ───────────────────────────────
     const [commentMenuId, setCommentMenuId] = useState(null);
@@ -420,6 +421,7 @@ function QnADetailPage() {
                 setImagePreviews([]);
                 // 로컬 상태에 blob URL을 직접 넣으면 새로고침 시 이미지가 깨지므로
                 // 등록 직후 fetchQuestion으로 서버의 정식 URL을 받아온다.
+                if (commentTextareaRef.current) commentTextareaRef.current.style.height = 'auto';
                 await fetchQuestion();
             }
         } catch (err) {
@@ -709,14 +711,25 @@ function QnADetailPage() {
                         style={{ display: 'none' }}
                         onChange={handleImageSelect}
                     />
-                    <input
+                    <textarea
                         id="commentInput"
+                        ref={commentTextareaRef}
                         className={styles.commentInput}
                         placeholder="댓글을 입력해주세요..."
                         value={commentText}
-                        onChange={e => setCommentText(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleCommentSubmit(); }}
+                        onChange={e => {
+                            setCommentText(e.target.value);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+                        }}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                                e.preventDefault();
+                                handleCommentSubmit();
+                            }
+                        }}
                         onPaste={handlePaste}
+                        rows={1}
                         disabled={isSubmitting}
                     />
                     <button

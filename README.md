@@ -65,11 +65,14 @@
 <img width="1990" height="1080" alt="Adobe Express - Q A(운영진용) (1)" src="https://github.com/user-attachments/assets/1820aa55-70af-4120-8489-d0f56e6550e4" />
 
 - #### 커리큘럼 관리
-<img width="3024" height="1640" alt="Adobe Express - 커리큘럼 (운영진용)" src="https://github.com/user-attachments/assets/bb7cb675-fd65-468f-84db-8786175e5d19" />
+<img width="3024" height="1640" alt="Adobe Express - 커리큘럼 (운영진용)" src="https://github.com/user-attachments/assets/c9e4419e-fffe-4153-8158-309b01c53025" />
 
 
 
 ---
+
+
+
 
 ## 👩‍💻 Developers
 
